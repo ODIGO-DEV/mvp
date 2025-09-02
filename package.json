@@ -1,0 +1,20 @@
+{
+  "name": "odigo-mvp",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "build-css": "tailwindcss -i ./src/input.css -o ./app/static/css/style.css --watch",
+    "build-css-prod": "tailwindcss -i ./src/input.css -o ./app/static/css/style.css --minify",
+    "dev": "concurrently \"npm run build-css\" \"uv run python run.py\"",
+    "build": "npm run build-css-prod"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.1",
+    "@tailwindcss/forms": "^0.5.7",
+    "@tailwindcss/typography": "^0.5.10",
+    "concurrently": "^8.2.2"
+  },
+  "keywords": ["food"],
+  "author": "Fon Godwill Ivan Tana",
+  "license": "MIT"
+}
