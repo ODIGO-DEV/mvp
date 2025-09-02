@@ -4,7 +4,7 @@
 
 {% block content %}
     <!-- Register card -->
-    <div class="flex flex-col lg:flex-row w-full min-h-[100vh] bg-gray-800/50 glass-effect shadow-2xl overflow-hidden border border-gray-700/50">
+    <div class="flex flex-col lg:flex-row w-full min-h-[100vh] bg-white/50 glass-effect shadow-2xl overflow-hidden border border-gray-200/50">
         
         <!--Register form -->
         <div class="w-full lg:w-1/3 p-6 sm:p-8 lg:p-12 flex flex-col justify-center">
@@ -12,7 +12,7 @@
             <div class=" mb-8 text-center">
                 <div class="flex justify-center mb-4">
                     <div class="relative logo-glow">
-                        <div class="bg-gradient-to-r from-orange-500 to-red-500 rounded-full p-4">
+                        <div class="bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-full p-4">
                             <svg width="40" height="40" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <ellipse cx="50" cy="20" rx="25" ry="12" fill="white"/>
                                 <rect x="30" y="20" width="40" height="25" rx="3" fill="white"/>
@@ -25,49 +25,49 @@
                         </div>
                     </div>
                 </div>
-                <h1 class="text-3xl font-bold text-white mb-2">ODiGO</h1>
-                <p class="text-gray-400 text-sm">World Recipes at Your Fingertips</p>
+                <h1 class="text-3xl font-bold text-gray-800 mb-2">ODiGO</h1>
+                <p class="text-gray-600 text-sm">World Recipes at Your Fingertips</p>
             </div>
 
             <!-- Form -->
-         <div class="w-full">
+         <div class="max-w-sm mx-auto w-full">
                 <form id="registerForm" class="space-y-6" method="POST" action="{{ url_for('auth.register') }}">
                     {{ form.hidden_tag() }}
                     <!-- Name -->
                     <div>
-                        {{ form.name.label(class="block text-sm font-medium text-gray-200 mb-2") }}
-                        {{ form.name(class="input-focus block w-full rounded-xl bg-gray-700/50 border border-gray-600 px-4 py-3 text-white placeholder-gray-400 focus:border-orange-500 focus:ring-2 focus:ring-orange-500 focus:outline-none text-sm md:text-base", placeholder="Your Name") }}
+                        {{ form.name.label(class="block text-sm font-medium text-gray-600 mb-2") }}
+                        {{ form.name(class="input-focus block w-full rounded-xl bg-gray-100/50 border border-gray-300 px-4 py-3 text-gray-800 placeholder-gray-500 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm md:text-base", placeholder="Your Name") }}
                     </div>
 
                     <!-- Email -->
                     <div>
-                        {{ form.email.label(class="block text-sm font-medium text-gray-200 mb-2") }}
-                        {{ form.email(class="input-focus block w-full rounded-xl bg-gray-700/50 border border-gray-600 px-4 py-3 text-white placeholder-gray-400 focus:border-orange-500 focus:ring-2 focus:ring-orange-500 focus:outline-none text-sm md:text-base", placeholder="chef@example.com") }}
+                        {{ form.email.label(class="block text-sm font-medium text-gray-600 mb-2") }}
+                        {{ form.email(class="input-focus block w-full rounded-xl bg-gray-100/50 border border-gray-300 px-4 py-3 text-gray-800 placeholder-gray-500 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm md:text-base", placeholder="chef@example.com") }}
                     </div>
 
                     <!-- Password -->
                     <div>
-                        {{ form.password.label(class="block text-sm font-medium text-gray-200 mb-2") }}
-                        {{ form.password(class="input-focus block w-full rounded-xl bg-gray-700/50 border border-gray-600 px-4 py-3 text-white placeholder-gray-400 focus:border-orange-500 focus:ring-2 focus:ring-orange-500 focus:outline-none text-sm md:text-base", placeholder="Your secret ingredient") }}
+                        {{ form.password.label(class="block text-sm font-medium text-gray-600 mb-2") }}
+                        {{ form.password(class="input-focus block w-full rounded-xl bg-gray-100/50 border border-gray-300 px-4 py-3 text-gray-800 placeholder-gray-500 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm md:text-base", placeholder="Your secret ingredient") }}
                     </div>
 
                     <!-- Confirm Password -->
                     <div>
-                        {{ form.confirm_password.label(class="block text-sm font-medium text-gray-200 mb-2") }}
-                        {{ form.confirm_password(class="input-focus block w-full rounded-xl bg-gray-700/50 border border-gray-600 px-4 py-3 text-white placeholder-gray-400 focus:border-orange-500 focus:ring-2 focus:ring-orange-500 focus:outline-none text-sm md:text-base", placeholder="Confirm your secret ingredient") }}
+                        {{ form.confirm_password.label(class="block text-sm font-medium text-gray-600 mb-2") }}
+                        {{ form.confirm_password(class="input-focus block w-full rounded-xl bg-gray-100/50 border border-gray-300 px-4 py-3 text-gray-800 placeholder-gray-500 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm md:text-base", placeholder="Confirm your secret ingredient") }}
                     </div>
 
                     <!-- Submit button -->
-                    {{ form.submit(class="button-hover w-full rounded-xl bg-gradient-to-r from-orange-500 to-red-500 px-4 py-3 text-sm md:text-base font-semibold text-white shadow-lg hover:from-orange-600 hover:to-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 focus:ring-offset-gray-800", value="Join the Culinary Community! 🍴") }}
+                    {{ form.submit(class="button-hover w-full rounded-xl bg-gradient-to-r from-indigo-500 to-indigo-600 px-4 py-3 text-sm md:text-base font-semibold text-white shadow-lg hover:from-indigo-600 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 focus:ring-offset-white", value="Join the Culinary Community! 🍴") }}
                 </form>
 
                 <!-- Divider -->
                 <div class="relative mt-8">
                     <div class="absolute inset-0 flex items-center">
-                        <div class="w-full border-t border-gray-600"></div>
+                        <div class="w-full border-t border-gray-300"></div>
                     </div>
                     <div class="relative flex justify-center text-sm">
-                        <span class="bg-gray-800 px-4 text-gray-400">Or sign up with</span>
+                        <span class="bg-white px-4 text-gray-600">Or sign up with</span>
                     </div>
                 </div>
 
@@ -82,7 +82,7 @@
                         </svg>
                         Google
                     </button>
-                    <button class="button-hover flex items-center justify-center gap-3 rounded-xl bg-blue-600 px-4 py-3 text-sm md:text-base font-semibold text-white shadow hover:bg-blue-500">
+                    <button class="button-hover flex items-center justify-center gap-3 rounded-xl bg-indigo-600 px-4 py-3 text-sm md:text-base font-semibold text-white shadow hover:bg-indigo-500">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
                             <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
                         </svg>
@@ -91,14 +91,14 @@
                 </div>
 
                 <!-- Login link -->
-                <p class="mt-8 text-center text-sm md:text-base text-gray-400">
+                <p class="mt-8 text-center text-sm md:text-base text-gray-600">
                     Already have an account? 
-                    <a href="{{ url_for('auth.login') }}" class="font-medium text-orange-400 hover:text-orange-300">Sign In</a>
+                    <a href="{{ url_for('auth.login') }}" class="font-medium text-indigo-400 hover:text-indigo-300">Sign In</a>
                 </p>
 
                 <!-- Featured countries preview -->
-                <div class="mt-8 p-4 bg-gray-700/30 rounded-xl">
-                    <p class="text-xs md:text-sm text-gray-400 text-center mb-3">Featured Recipe Countries</p>
+                <div class="mt-8 p-4 bg-gray-100/30 rounded-xl">
+                    <p class="text-xs md:text-sm text-gray-600 text-center mb-3">Featured Recipe Countries</p>
                     <div class="country-emojis flex justify-center space-x-4 text-2xl md:text-3xl">
                         <span title="Italy">🇮🇹</span>
                         <span title="Japan">🇯🇵</span>
@@ -112,7 +112,7 @@
         </div>
       <!-- Text section with image as background -->
         <!-- Container with video background -->
-        <div class="relative w-full lg:w-2/3 bg-[#F7FAFC]  justify-center items-center p-6 sm:p-10 lg:p-12 overflow-hidden hidden lg:flex">
+        <div class="relative w-full lg:w-2/3 bg-white  justify-center items-center p-6 sm:p-10 lg:p-12 overflow-hidden hidden lg:flex">
             <!-- Background video -->
             <video class="absolute inset-0 w-full h-full object-cover " autoplay muted loop playsinline>
                 <source src="https://www.pexels.com/download/video/4296854/" muted loop autoplay type="video/mp4">
