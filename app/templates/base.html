@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ODiGO - Discover World Recipes{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .recipe-gradient {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 25%, #ff6b9d 50%, #c44569 75%, #f8b500 100%);
+        }
+        
+        .glass-effect {
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+        
+        .floating-animation {
+            animation: float 8s ease-in-out infinite;
+        }
+        
+        .floating-animation-delayed {
+            animation: float 8s ease-in-out infinite;
+            animation-delay: -3s;
+        }
+        
+        .floating-animation-slow {
+            animation: float 10s ease-in-out infinite;
+            animation-delay: -5s;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            33% { transform: translateY(-25px) rotate(2deg); }
+            66% { transform: translateY(-15px) rotate(-1deg); }
+        }
+        
+        .input-focus {
+            transition: all 0.3s ease;
+        }
+        
+        .input-focus:focus {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(255, 107, 107, 0.3);
+        }
+        
+        .button-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .button-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(255, 107, 107, 0.4);
+        }
+        
+        .logo-glow {
+            filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.4));
+        }
+        
+        .recipe-icons {
+            animation: bounce 2s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-900 ">
+    <!-- Animated background elements -->
+    <div class="fixed inset-0 overflow-hidden pointer-events-none">
+        <div class="absolute -top-20 -right-20 w-40 h-40 bg-orange-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 floating-animation"></div>
+        <div class="absolute -bottom-20 -left-20 w-60 h-60 bg-red-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 floating-animation-delayed"></div>
+        <div class="absolute top-1/3 left-1/4 w-32 h-32 bg-yellow-500 rounded-full mix-blend-multiply filter blur-xl opacity-15 floating-animation-slow"></div>
+        <div class="absolute bottom-1/3 right-1/4 w-48 h-48 bg-pink-500 rounded-full mix-blend-multiply filter blur-xl opacity-15 floating-animation"></div>
+    </div>
+
+    <!-- Flash messages -->
+    <div id="flash-messages" class="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 space-y-2 w-full max-w-md px-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="rounded-xl p-4 text-sm font-medium text-white 
+                        {% if category == 'success' %}bg-green-600{% elif category == 'error' %}bg-red-600{% elif category == 'warning' %}bg-yellow-500{% else %}bg-blue-600{% endif %} 
+                        shadow-lg transform transition-all duration-300 ease-out">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- Main content -->
+    <div class="relative ">
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Footer -->
+    <footer class="relative bg-gray-800/50 text-gray-400 text-center text-sm py-6 border-t border-gray-700/50">
+        <div class="flex items-center justify-center gap-2">
+            <span>&copy; 2025 ODiGO - Bringing World Recipes Together</span>
+        </div>
+    </footer>
+
+    <script>
+        // Sample recipe data for demo
+        const featuredRecipes = [
+            "🍝 Authentic Italian Carbonara",
+            "🍲 Thai Green Curry",
+            "🥘 Moroccan Tagine",
+            "🍜 Japanese Ramen",
+            "🌮 Mexican Street Tacos",
+            "🍛 Indian Biryani"
+        ];
+        
+        let currentRecipeIndex = 0;
+
+        // Flash message system
+        function showFlashMessage(message, type) {
+            const container = document.getElementById('flash-messages');
+            const messageDiv = document.createElement('div');
+            
+            let bgColor = 'bg-gray-700';
+            if (type === 'success') bgColor = 'bg-green-600';
+            else if (type === 'error') bgColor = 'bg-red-600';
+            else if (type === 'warning') bgColor = 'bg-yellow-500';
+            else if (type === 'info') bgColor = 'bg-blue-600';
+            
+            messageDiv.className = `rounded-xl p-4 text-sm font-medium text-white ${bgColor} shadow-lg transform transition-all duration-300 ease-out opacity-0 translate-y-[-20px]`;
+            messageDiv.textContent = message;
+            
+            container.appendChild(messageDiv);
+            
+            // Animate in
+            setTimeout(() => {
+                messageDiv.classList.remove('opacity-0', 'translate-y-[-20px]');
+            }, 100);
+            
+            // Remove after 5 seconds
+            setTimeout(() => {
+                messageDiv.classList.add('opacity-0', 'translate-y-[-20px]');
+                setTimeout(() => {
+                    if (messageDiv.parentNode) {
+                        messageDiv.parentNode.removeChild(messageDiv);
+                    }
+                }, 300);
+            }, 5000);
+        }
+
+        // Add cooking-themed hover effects
+        document.querySelectorAll('button, a').forEach(element => {
+            element.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-2px)';
+            });
+            
+            element.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+            });
+        });
+
+        // Input focus effects with recipe theme
+        document.querySelectorAll('input').forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentElement.classList.add('transform', 'scale-105');
+            });
+            
+            input.addEventListener('blur', function() {
+                this.parentElement.classList.remove('transform', 'scale-105');
+            });
+        });
+
+        // Add some interactive elements
+        document.querySelector('h1').addEventListener('click', function() {
+            showFlashMessage('Ready to explore world cuisines? 🌍', 'info');
+        });
+
+        // Rotate featured recipe hint
+        setInterval(() => {
+            const recipeHint = featuredRecipes[currentRecipeIndex];
+            currentRecipeIndex = (currentRecipeIndex + 1) % featuredRecipes.length;
+        }, 4000);
+    </script>
+</body>
+</html>
