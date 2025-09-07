@@ -49,23 +49,40 @@
             background: rgba(255, 255, 255, 0.15);
             backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #1f2937;
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             cursor: pointer;
+            transform: translateY(0) scale(1);
         }
 
         .cuisine-check-card:hover {
             background: rgba(255, 255, 255, 0.25);
-            transform: translateY(-8px) scale(1.05);
+            transform: translateY(-8px) scale(1.05) !important;
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        .cuisine-check-card:hover .emoji {
+            transform: scale(1.1);
         }
 
         .cuisine-check-card.selected {
             background: rgba(255, 255, 255, 0.9);
             color: #1f2937;
             transform: translateY(-4px) scale(1.02);
+            border-color: rgba(255, 255, 255, 0.6);
+        }
+
+        .cuisine-check-card.selected:hover {
+            background: rgba(255, 255, 255, 0.95);
+            transform: translateY(-10px) scale(1.08) !important;
         }
 
         .cuisine-check-card.selected .emoji {
             transform: scale(1.2);
+        }
+
+        .cuisine-check-card.selected:hover .emoji {
+            transform: scale(1.3);
         }
 
         .glass-effect {
@@ -206,7 +223,8 @@
     </nav>
 
     <!-- Enhanced Hero Section -->
-    <section class="hero-gradient hero-pattern min-h-screen flex items-center justify-center relative overflow-hidden">
+    <section
+        class="hero-gradient hero-pattern min-h-screen flex items-center justify-center relative overflow-hidden pt-24">
         <!-- Enhanced Floating Elements -->
         <div class="absolute inset-0 overflow-hidden pointer-events-none">
             <div class="absolute top-20 left-10 w-20 h-20 bg-white/10 rounded-full floating-animation"></div>
@@ -223,7 +241,7 @@
                 <!-- Enhanced Heading -->
                 <div class="mb-8">
                     <div
-                        class="inline-flex items-center px-4 py-2 rounded-full bg-white/20 backdrop-blur-sm text-white mb-6">
+                        class="inline-flex items-center px-4 py-2 rounded-full bg-gradient-to-r from-indigo-500/20 to-purple-500/20 backdrop-blur-sm border border-white/20 text-white mb-6">
                         <span class="text-2xl mr-2">🌍</span>
                         <span class="font-semibold">World's Largest Recipe Collection</span>
                     </div>
@@ -243,7 +261,7 @@
                 <!-- Interactive Cuisine Selection Cards -->
                 <div class="mb-12">
                     <div class="mb-6">
-                        <h3 class="text-2xl font-bold text-white mb-2 text-glow">Which cuisines interest you most?</h3>
+                        <h3 class="text-2xl font-bold text-black mb-2 text-glow">Which cuisines interest you most?</h3>
                         <p class="text-white font-medium">Select your favorites to get personalized recommendations</p>
                     </div>
 
@@ -256,7 +274,7 @@
 
                         <div class="cuisine-check-card p-4 rounded-2xl text-center text-white" data-cuisine="asian">
                             <div class="emoji text-3xl mb-2 transition-transform duration-300">🍜</div>
-                            <h4 class="font-bold text-sm">Asian</h4>
+                            <h4 class="font-bold  text-sm">Asian</h4>
                             <p class="text-xs opacity-75">Noodles & Curry</p>
                         </div>
 
@@ -334,7 +352,7 @@
                 <div class="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
                     {% if current_user.is_authenticated %}
                     <a href="{{ url_for('dashboard.index') }}"
-                        class="bg-white text-indigo-600 px-8 py-4 rounded-xl font-semibold text-lg hover:bg-gray-100 transition-all hover-lift">
+                        class="bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-8 py-4 rounded-xl font-semibold text-lg hover:from-indigo-600 hover:to-purple-700 transition-all hover-lift">
                         Explore My Kitchen
                     </a>
                     <a href="{{ url_for('dashboard.add_recipe') }}"
@@ -343,11 +361,11 @@
                     </a>
                     {% else %}
                     <a href="{{ url_for('auth.register') }}" id="start-cooking-btn"
-                        class="bg-white text-indigo-600 px-8 py-4 rounded-xl font-semibold text-lg hover:bg-gray-100 transition-all hover-lift pulse-animation">
+                        class="bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-8 py-4 rounded-xl font-semibold text-lg hover:from-indigo-600 hover:to-purple-700 transition-all hover-lift pulse-animation">
                         Start Your Culinary Journey
                     </a>
                     <a href="{{ url_for('auth.login') }}"
-                        class="border-2 border-white text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-white hover:text-indigo-600 transition-all hover-lift">
+                        class="border-2 border-white/30 bg-white/10 backdrop-blur-sm text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-white/20 hover:border-white/50 transition-all hover-lift">
                         I'm Already a Chef
                     </a>
                     {% endif %}
@@ -358,22 +376,22 @@
                     <div class="text-center p-4 bg-white/10 rounded-2xl backdrop-blur-sm border border-white/20">
                         <div class="text-4xl font-bold mb-1 text-white">50+</div>
                         <div class="text-white text-sm font-semibold">Countries</div>
-                        <div class="text-gray-100 text-xs mt-1">Represented</div>
+                        <div class="text-gray-200 text-xs mt-1">Represented</div>
                     </div>
                     <div class="text-center p-4 bg-white/10 rounded-2xl backdrop-blur-sm border border-white/20">
                         <div class="text-4xl font-bold mb-1 text-white">10K+</div>
                         <div class="text-white text-sm font-semibold">Recipes</div>
-                        <div class="text-gray-100 text-xs mt-1">& Growing Daily</div>
+                        <div class="text-gray-200 text-xs mt-1">& Growing Daily</div>
                     </div>
                     <div class="text-center p-4 bg-white/10 rounded-2xl backdrop-blur-sm border border-white/20">
                         <div class="text-4xl font-bold mb-1 text-white">150+</div>
                         <div class="text-white text-sm font-semibold">Cuisines</div>
-                        <div class="text-gray-100 text-xs mt-1">Traditional & Modern</div>
+                        <div class="text-gray-200 text-xs mt-1">Traditional & Modern</div>
                     </div>
                     <div class="text-center p-4 bg-white/10 rounded-2xl backdrop-blur-sm border border-white/20">
                         <div class="text-4xl font-bold mb-1 text-white">25K+</div>
                         <div class="text-white text-sm font-semibold">Home Chefs</div>
-                        <div class="text-gray-100 text-xs mt-1">Worldwide</div>
+                        <div class="text-gray-200 text-xs mt-1">Worldwide</div>
                     </div>
                 </div>
             </div>
