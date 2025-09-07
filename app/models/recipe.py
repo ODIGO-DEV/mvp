@@ -11,7 +11,7 @@ class Recipe(db.Model):
     public = db.Column(db.Boolean, default=True)
 
     # Foreign keys
-    user_id = db.Column(db.String(36), db.ForeignKey("users.id"), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     origin_id = db.Column(db.Integer, db.ForeignKey("origins.id"))
     category_id = db.Column(db.Integer, db.ForeignKey("categories.id"))
 
@@ -20,13 +20,14 @@ class Recipe(db.Model):
     review_id = db.Column(db.Integer, db.ForeignKey("reviews.id"))
 
     # Timestamps
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now)
     updated_at = db.Column(
-        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+        db.DateTime, default=datetime.now, onupdate=datetime.now
     )
 
     # Relationships
     steps = db.relationship("Step", backref="recipe", lazy=True)
+    ingredients = db.relationship("Ingredient", backref="recipe", lazy=True)
     images = db.relationship("Image", backref="recipe", lazy=True)
     videos = db.relationship("Video", backref="recipe", lazy=True)
     comments = db.relationship("Comment", backref="recipe", lazy=True)

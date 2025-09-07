@@ -9,10 +9,11 @@ class Ingredient(db.Model):
     name = db.Column(db.String(255), nullable=False)
     unit = db.Column(db.String(50))  # teaspoon, cup, gram, etc.
     quantity = db.Column(db.Float)
+    notes = db.Column(db.String(255))  # optional notes
     image_url = db.Column(db.String(255))
 
     # Foreign keys
-    user_id = db.Column(db.String(36), db.ForeignKey("users.id"))
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
     recipe_id = db.Column(db.Integer, db.ForeignKey("recipes.id"))
 
     public = db.Column(db.Boolean, default=True)
@@ -23,4 +24,4 @@ class Ingredient(db.Model):
     )
 
     def __repr__(self):
-        return f"<Ingredient {self.name}>"
+        return f"<Ingredient {self.quantity} {self.unit} {self.name}>"

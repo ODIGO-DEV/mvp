@@ -1,0 +1,242 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Dashboard - ODiGO{% endblock %}
+
+{% block dashboard_content %}
+<!-- Welcome Section -->
+<div class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl p-8 text-white mb-8">
+    <div class="flex flex-col md:flex-row items-center justify-between">
+        <div>
+            <h1 class="text-3xl font-bold mb-2">Welcome back, {{ current_user.name or 'Chef' }}! 👨‍🍳</h1>
+            <p class="text-indigo-100 text-lg">Ready to discover new flavors from around the world?</p>
+        </div>
+        <div class="mt-4 md:mt-0 flex flex-col items-center">
+            <div class="text-4xl font-bold">{{ total_recipes }}</div>
+            <div class="text-indigo-200 text-sm">Your Recipes</div>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <div class="flex items-center">
+            <div class="bg-green-100 rounded-full p-3 mr-4">
+                <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253">
+                    </path>
+                </svg>
+            </div>
+            <div>
+                <div class="text-2xl font-bold text-gray-800">{{ total_recipes }}</div>
+                <div class="text-gray-600">My Recipes</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <div class="flex items-center">
+            <div class="bg-blue-100 rounded-full p-3 mr-4">
+                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9"></path>
+                </svg>
+            </div>
+            <div>
+                <div class="text-2xl font-bold text-gray-800">{{ total_public_recipes }}</div>
+                <div class="text-gray-600">Global Recipes</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <div class="flex items-center">
+            <div class="bg-purple-100 rounded-full p-3 mr-4">
+                <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z">
+                    </path>
+                </svg>
+            </div>
+            <div>
+                <div class="text-2xl font-bold text-gray-800">{{ categories|length }}</div>
+                <div class="text-gray-600">Categories</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+    <a href="{{ url_for('dashboard.my_recipes') }}"
+        class="bg-white rounded-xl p-6 text-center hover:shadow-lg transition-all duration-300 border border-gray-100 group">
+        <div
+            class="bg-indigo-100 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-3 group-hover:bg-indigo-200 transition-colors">
+            <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253">
+                </path>
+            </svg>
+        </div>
+        <div class="font-semibold text-gray-800">My Recipes</div>
+    </a>
+
+    <a href="{{ url_for('dashboard.explore') }}"
+        class="bg-white rounded-xl p-6 text-center hover:shadow-lg transition-all duration-300 border border-gray-100 group">
+        <div
+            class="bg-green-100 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-3 group-hover:bg-green-200 transition-colors">
+            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9"></path>
+            </svg>
+        </div>
+        <div class="font-semibold text-gray-800">Explore</div>
+    </a>
+
+    <a href="#"
+        class="bg-white rounded-xl p-6 text-center hover:shadow-lg transition-all duration-300 border border-gray-100 group">
+        <div
+            class="bg-orange-100 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-3 group-hover:bg-orange-200 transition-colors">
+            <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6">
+                </path>
+            </svg>
+        </div>
+        <div class="font-semibold text-gray-800">Add Recipe</div>
+    </a>
+
+    <a href="#"
+        class="bg-white rounded-xl p-6 text-center hover:shadow-lg transition-all duration-300 border border-gray-100 group">
+        <div
+            class="bg-purple-100 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-3 group-hover:bg-purple-200 transition-colors">
+            <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z">
+                </path>
+            </svg>
+        </div>
+        <div class="font-semibold text-gray-800">Favorites</div>
+    </a>
+</div>
+
+<!-- My Recent Recipes -->
+{% if user_recipes %}
+<div class="mb-8">
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold text-gray-800">My Recent Recipes</h2>
+        <a href="{{ url_for('dashboard.my_recipes') }}" class="text-indigo-600 hover:text-indigo-700 font-medium">View
+            all →</a>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for recipe in user_recipes %}
+        <div
+            class="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300 group">
+            <div class="aspect-w-16 aspect-h-9 bg-gradient-to-r from-indigo-500 to-purple-600 relative">
+                {% if recipe.images %}
+                <img src="{{ recipe.images[0].url }}" alt="{{ recipe.name }}" class="w-full h-48 object-cover">
+                {% else %}
+                <div
+                    class="w-full h-48 bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center">
+                    <svg class="w-16 h-16 text-white opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z">
+                        </path>
+                    </svg>
+                </div>
+                {% endif %}
+                <div class="absolute top-3 right-3">
+                    <span class="bg-white/20 backdrop-blur-sm text-white px-2 py-1 rounded-full text-xs">
+                        {{ "Public" if recipe.public else "Private" }}
+                    </span>
+                </div>
+            </div>
+            <div class="p-6">
+                <h3 class="font-semibold text-gray-800 mb-2 group-hover:text-indigo-600 transition-colors">{{
+                    recipe.name }}</h3>
+                {% if recipe.description %}
+                <p class="text-gray-600 text-sm mb-3">{{ recipe.description[:100] }}{% if recipe.description|length >
+                    100 %}...{% endif %}</p>
+                {% endif %}
+                <div class="flex items-center justify-between text-sm text-gray-500">
+                    <span>{{ recipe.created_at.strftime('%b %d, %Y') }}</span>
+                    {% if recipe.category %}
+                    <span class="bg-gray-100 px-2 py-1 rounded-full">{{ recipe.category.name }}</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Discover New Recipes -->
+<div>
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold text-gray-800">Discover Global Flavors 🌍</h2>
+        <a href="{{ url_for('dashboard.explore') }}" class="text-indigo-600 hover:text-indigo-700 font-medium">Explore
+            all →</a>
+    </div>
+
+    {% if recent_recipes %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {% for recipe in recent_recipes %}
+        <a href="{{ url_for('dashboard.view_recipe', recipe_id=recipe.id) }}"
+            class="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300 group block">
+            <div class="aspect-w-16 aspect-h-9 bg-gradient-to-r from-green-500 to-blue-600 relative">
+                {% if recipe.images %}
+                <img src="{{ recipe.images[0].url }}" alt="{{ recipe.name }}" class="w-full h-40 object-cover">
+                {% else %}
+                <div class="w-full h-40 bg-gradient-to-r from-green-500 to-blue-600 flex items-center justify-center">
+                    <svg class="w-12 h-12 text-white opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z">
+                        </path>
+                    </svg>
+                </div>
+                {% endif %}
+                {% if recipe.origin %}
+                <div class="absolute top-2 left-2">
+                    <span class="bg-white/20 backdrop-blur-sm text-white px-2 py-1 rounded-full text-xs">
+                        {{ recipe.origin.country }}
+                    </span>
+                </div>
+                {% endif %}
+            </div>
+            <div class="p-4">
+                <h3 class="font-semibold text-gray-800 mb-1 group-hover:text-indigo-600 transition-colors line-clamp-1">
+                    {{ recipe.name }}</h3>
+                <p class="text-gray-600 text-sm mb-2 line-clamp-2">{{ recipe.description or "A delicious recipe from
+                    around the world" }}</p>
+                <div class="flex items-center justify-between text-xs text-gray-500">
+                    <span>by {{ recipe.author.name or 'Anonymous Chef' }}</span>
+                    {% if recipe.category %}
+                    <span class="bg-gray-100 px-2 py-1 rounded-full">{{ recipe.category.name }}</span>
+                    {% endif %}
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-12">
+        <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+        </svg>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">No recipes found</h3>
+        <p class="text-gray-500 mb-4">Be the first to share a recipe with the community!</p>
+        <a href="#"
+            class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6">
+                </path>
+            </svg>
+            Add Recipe
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

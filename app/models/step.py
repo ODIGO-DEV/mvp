@@ -6,6 +6,9 @@ class Step(db.Model):
     __tablename__ = "steps"
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    step_number = db.Column(db.Integer, nullable=False)
+    instruction = db.Column(db.Text, nullable=False)
+    duration = db.Column(db.Integer)  # duration in minutes
     name = db.Column(db.String(255))
     description = db.Column(db.Text)
     video_point = db.Column(db.String(100))  # timestamp marker
@@ -20,4 +23,4 @@ class Step(db.Model):
     tasks = db.relationship("Task", backref="step", lazy=True)
 
     def __repr__(self):
-        return f"<Step {self.name}>"
+        return f"<Step {self.step_number}: {self.instruction[:50]}>"

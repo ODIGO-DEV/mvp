@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Dashboard - ODiGO{% endblock %}</title>
+
+    <!-- Compiled Tailwind CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <!-- Custom Styles -->
+    <style>
+        .glass-effect {
+            backdrop-filter: blur(10px);
+        }
+
+        .floating-animation {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .floating-animation-delayed {
+            animation: float 6s ease-in-out infinite 2s;
+        }
+
+        .floating-animation-slow {
+            animation: float 8s ease-in-out infinite 1s;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-20px);
+            }
+        }
+
+        .line-clamp-1 {
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 1;
+            -webkit-box-orient: vertical;
+        }
+
+        .line-clamp-2 {
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+
+        /* Sidebar styling */
+        .sidebar-transition {
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .sidebar-hidden {
+            transform: translateX(-100%);
+        }
+
+        .sidebar-visible {
+            transform: translateX(0);
+        }
+
+        /* Ensure sidebar takes full height */
+        #sidebar {
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 16rem;
+            /* 64 * 0.25rem = 16rem */
+            overflow-y: auto;
+            z-index: 30;
+        }
+
+        @media (min-width: 1024px) {
+            #sidebar {
+                position: static;
+                transform: translateX(0) !important;
+            }
+        }
+
+        /* Navigation link styling with proper flex alignment */
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            /* 12px gap between icon and text */
+            padding: 0.75rem 1rem;
+            color: #374151;
+            border-radius: 0.5rem;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.875rem;
+            line-height: 1.25rem;
+        }
+
+        .nav-link:hover {
+            background-color: #f3f4f6;
+            color: #1f2937;
+            text-decoration: none;
+        }
+
+        .nav-link svg {
+            width: 1.25rem;
+            /* 20px */
+            height: 1.25rem;
+            /* 20px */
+            flex-shrink: 0;
+            stroke-width: 2;
+        }
+
+        .nav-link.active {
+            background-color: #eef2ff;
+            color: #4338ca;
+            border-left: 3px solid #4338ca;
+        }
+
+        /* Main content adjustment */
+        .main-content {
+            margin-left: 0;
+        }
+
+        @media (min-width: 1024px) {
+            .main-content {
+                margin-left: 16rem;
+                /* Same as sidebar width */
+            }
+        }
+    </style>
+</head>
+
+<body class="min-h-screen bg-gray-50 text-gray-800">
+    <!-- Animated background elements -->
+    <div class="fixed inset-0 overflow-hidden pointer-events-none">
+        <div
+            class="absolute -top-20 -right-20 w-40 h-40 bg-indigo-500 rounded-full mix-blend-multiply filter blur-xl opacity-10 floating-animation">
+        </div>
+        <div
+            class="absolute -bottom-20 -left-20 w-60 h-60 bg-purple-400 rounded-full mix-blend-multiply filter blur-xl opacity-10 floating-animation-delayed">
+        </div>
+        <div
+            class="absolute top-1/3 left-1/4 w-32 h-32 bg-green-300 rounded-full mix-blend-multiply filter blur-xl opacity-10 floating-animation-slow">
+        </div>
+        <div
+            class="absolute bottom-1/3 right-1/4 w-48 h-48 bg-blue-200 rounded-full mix-blend-multiply filter blur-xl opacity-10 floating-animation">
+        </div>
+    </div>
+
+    <!-- Flash messages -->
+    <div id="flash-messages"
+        class="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 space-y-2 w-full max-w-md px-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="rounded-xl p-4 text-sm font-medium text-white
+                        {% if category == 'success' %}bg-green-600{% elif category == 'error' %}bg-red-600{% elif category == 'warning' %}bg-yellow-500{% else %}bg-indigo-600{% endif %}
+                        shadow-lg transform transition-all duration-300 ease-out">
+            {{ message }}
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+    </div>
+
+    <div class="flex min-h-screen">
+        <!-- Sidebar -->
+        <div id="sidebar"
+            class="fixed lg:static w-64 bg-white shadow-xl border-r border-gray-200 z-30 sidebar-transition sidebar-hidden lg:sidebar-visible inset-y-0 left-0"
+            style="height: 100vh; min-height: 100vh;">
+            <div class="h-full flex flex-col p-6">
+                <!-- Logo -->
+                <div class="flex items-center mb-8">
+                    <div class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full p-2 mr-3">
+                        <img width="32px" height="32px" src="{{ url_for('static', filename='brand/logo.png') }}"
+                            alt="ODiGO">
+                    </div>
+                    <h1 class="text-xl font-bold text-gray-800">ODiGO</h1>
+                </div>
+
+                <!-- User Profile -->
+                <div class="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-4 mb-6">
+                    <div class="flex items-center">
+                        <div
+                            class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full w-12 h-12 flex items-center justify-center text-white font-semibold mr-3">
+                            {{ (current_user.name or 'U')[0].upper() }}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-gray-900 truncate">{{ current_user.name or 'Chef' }}</p>
+                            <p class="text-xs text-gray-500 truncate">{{ current_user.email }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Navigation -->
+                <nav class="flex-1 mb-8" style="margin-bottom: 2rem;">
+                    <div style="margin-bottom: 0.5rem;">
+                        <a href="{{ url_for('dashboard.index') }}"
+                            class="nav-link {% if request.endpoint == 'dashboard.index' %}active{% endif %}">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M8 5a2 2 0 012-2h4a2 2 0 012 2v6H8V5z"></path>
+                            </svg>
+                            Dashboard
+                        </a>
+                    </div>
+
+                    <div style="margin-bottom: 0.5rem;">
+                        <a href="{{ url_for('dashboard.my_recipes') }}"
+                            class="nav-link {% if request.endpoint == 'dashboard.my_recipes' %}active{% endif %}">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253">
+                                </path>
+                            </svg>
+                            My Recipes
+                        </a>
+                    </div>
+
+                    <div style="margin-bottom: 0.5rem;">
+                        <a href="{{ url_for('dashboard.explore') }}"
+                            class="nav-link {% if request.endpoint == 'dashboard.explore' %}active{% endif %}">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9"></path>
+                            </svg>
+                            Explore Recipes
+                        </a>
+                    </div>
+
+                    <div style="margin-bottom: 0.5rem;">
+                        <a href="{{ url_for('dashboard.add_recipe') }}"
+                            class="nav-link {% if request.endpoint == 'dashboard.add_recipe' %}active{% endif %}">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                            </svg>
+                            Add Recipe
+                        </a>
+                    </div>
+
+                    <div style="margin-bottom: 0.5rem;">
+                        <a href="#" class="nav-link">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z">
+                                </path>
+                            </svg>
+                            Favorites
+                        </a>
+                    </div>
+
+                    <div style="margin-bottom: 0.5rem;">
+                        <a href="#" class="nav-link">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10">
+                                </path>
+                            </svg>
+                            Collections
+                        </a>
+                    </div>
+                </nav>
+
+                <!-- Bottom Actions -->
+                <div style="padding-top: 1rem; border-top: 1px solid #e5e7eb;">
+                    <div style="margin-bottom: 0.5rem;">
+                        <a href="#" class="nav-link">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z">
+                                </path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                            Settings
+                        </a>
+                    </div>
+
+                    <div style="margin-bottom: 0.5rem;">
+                        <a href="{{ url_for('auth.logout') }}" class="nav-link" style="color: #dc2626;">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1">
+                                </path>
+                            </svg>
+                            Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 lg:ml-0">
+            <!-- Top Bar -->
+            <div class="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <!-- Mobile menu button -->
+                        <button id="mobile-menu-btn"
+                            class="lg:hidden p-2 rounded-md text-gray-600 hover:text-gray-800 hover:bg-gray-100 mr-4">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 6h16M4 12h16M4 18h16"></path>
+                            </svg>
+                        </button>
+
+                        <h2 class="text-lg font-semibold text-gray-800">
+                            {% block page_title %}
+                            {% if request.endpoint == 'dashboard.index' %}Dashboard
+                            {% elif request.endpoint == 'dashboard.my_recipes' %}My Recipes
+                            {% elif request.endpoint == 'dashboard.explore' %}Explore Recipes
+                            {% else %}ODiGO{% endif %}
+                            {% endblock %}
+                        </h2>
+                    </div>
+
+                    <div class="flex items-center space-x-4">
+                        <!-- Search (for larger screens) -->
+                        <div class="hidden md:block relative">
+                            <input type="text" placeholder="Search recipes..."
+                                class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 w-64">
+                            <svg class="w-5 h-5 text-gray-400 absolute left-3 top-2.5" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                        </div>
+
+                        <!-- Notifications -->
+                        <button class="p-2 rounded-full text-gray-600 hover:text-gray-800 hover:bg-gray-100 relative">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15 17h5l-5 5v-5z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 19.5A2.5 2.5 0 016.5 17H15"></path>
+                            </svg>
+                            <span class="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Page Content -->
+            <div class="p-6">
+                {% block dashboard_content %}{% endblock %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile sidebar overlay -->
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-20 hidden lg:hidden"></div>
+
+    <script>
+        // Mobile menu functionality
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebar-overlay');
+
+        function toggleSidebar() {
+            sidebar.classList.toggle('sidebar-hidden');
+            sidebarOverlay.classList.toggle('hidden');
+        }
+
+        mobileMenuBtn.addEventListener('click', toggleSidebar);
+        sidebarOverlay.addEventListener('click', toggleSidebar);
+
+        // Flash message system
+        function showFlashMessage(message, type) {
+            const container = document.getElementById('flash-messages');
+            const messageDiv = document.createElement('div');
+
+            let bgColor = 'bg-gray-700';
+            if (type === 'success') bgColor = 'bg-green-600';
+            else if (type === 'error') bgColor = 'bg-red-600';
+            else if (type === 'warning') bgColor = 'bg-yellow-500';
+            else if (type === 'info') bgColor = 'bg-indigo-600';
+
+            messageDiv.className = `rounded-xl p-4 text-sm font-medium text-white ${bgColor} shadow-lg transform transition-all duration-300 ease-out opacity-0 translate-y-[-20px]`;
+            messageDiv.textContent = message;
+
+            container.appendChild(messageDiv);
+
+            // Animate in
+            setTimeout(() => {
+                messageDiv.classList.remove('opacity-0', 'translate-y-[-20px]');
+            }, 100);
+
+            // Remove after 5 seconds
+            setTimeout(() => {
+                messageDiv.classList.add('opacity-0', 'translate-y-[-20px]');
+                setTimeout(() => {
+                    if (messageDiv.parentNode) {
+                        messageDiv.parentNode.removeChild(messageDiv);
+                    }
+                }, 300);
+            }, 5000);
+        }
+
+        // Auto-hide flash messages
+        setTimeout(() => {
+            const flashMessages = document.querySelectorAll('#flash-messages > div');
+            flashMessages.forEach(msg => {
+                msg.classList.add('opacity-0', 'translate-y-[-20px]');
+                setTimeout(() => {
+                    if (msg.parentNode) {
+                        msg.parentNode.removeChild(msg);
+                    }
+                }, 300);
+            });
+        }, 5000);
+    </script>
+</body>
+
+</html>
