@@ -1,6 +1,716 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
 
-{% block content %}
-    
-   hellow world 
-{% endblock content %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ODiGO - Discover Global Flavors</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .hero-gradient {
+            background: linear-gradient(135deg, #1f2937 0%, #374151 50%, #4f46e5 100%);
+            position: relative;
+        }
+
+        .floating-animation {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .floating-animation-delayed {
+            animation: float 6s ease-in-out infinite 2s;
+        }
+
+        .floating-animation-slow {
+            animation: float 8s ease-in-out infinite 1s;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0px) rotate(0deg);
+            }
+
+            50% {
+                transform: translateY(-20px) rotate(5deg);
+            }
+        }
+
+        .cuisine-check-card {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+
+        .cuisine-check-card:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-8px) scale(1.05);
+        }
+
+        .cuisine-check-card.selected {
+            background: rgba(255, 255, 255, 0.9);
+            color: #1f2937;
+            transform: translateY(-4px) scale(1.02);
+        }
+
+        .cuisine-check-card.selected .emoji {
+            transform: scale(1.2);
+        }
+
+        .glass-effect {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .hover-lift {
+            transition: all 0.3s ease;
+        }
+
+        .hover-lift:hover {
+            transform: translateY(-5px);
+        }
+
+        .feature-icon {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+        }
+
+        .text-glow {
+            /* No shadows - removed completely */
+        }
+
+        .pulse-animation {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: .8;
+            }
+        }
+
+        .hero-pattern {
+            background-image:
+                radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 75% 75%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+        }
+
+        .selection-counter {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            animation: bounce 1s ease-in-out;
+        }
+
+        @keyframes bounce {
+
+            0%,
+            20%,
+            53%,
+            80%,
+            100% {
+                transform: translate3d(0, 0, 0);
+            }
+
+            40%,
+            43% {
+                transform: translate3d(0, -10px, 0);
+            }
+
+            70% {
+                transform: translate3d(0, -5px, 0);
+            }
+
+            90% {
+                transform: translate3d(0, -2px, 0);
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white/90 backdrop-blur-md fixed w-full z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Logo -->
+                <div class="flex items-center space-x-3">
+                    <div class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full p-2">
+                        <img width="32px" height="32px" src="{{ url_for('static', filename='brand/logo.png') }}"
+                            alt="ODiGO">
+                    </div>
+                    <span class="text-xl font-bold text-gray-800">ODiGO</span>
+                </div>
+
+                <!-- Navigation Links -->
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="#features" class="text-gray-600 hover:text-indigo-600 transition-colors">Features</a>
+                    <a href="#cuisines" class="text-gray-600 hover:text-indigo-600 transition-colors">Cuisines</a>
+                    <a href="#about" class="text-gray-600 hover:text-indigo-600 transition-colors">About</a>
+                    {% if current_user.is_authenticated %}
+                    <a href="{{ url_for('dashboard.index') }}"
+                        class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors">Dashboard</a>
+                    {% else %}
+                    <a href="{{ url_for('auth.login') }}"
+                        class="text-gray-600 hover:text-indigo-600 transition-colors">Login</a>
+                    <a href="{{ url_for('auth.register') }}"
+                        class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors">Get
+                        Started</a>
+                    {% endif %}
+                </div>
+
+                <!-- Mobile menu button -->
+                <div class="md:hidden">
+                    <button id="mobile-menu-btn" class="text-gray-600 hover:text-indigo-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile menu -->
+        <div id="mobile-menu" class="hidden md:hidden bg-white border-t">
+            <div class="px-4 py-3 space-y-3">
+                <a href="#features" class="block text-gray-600 hover:text-indigo-600 transition-colors">Features</a>
+                <a href="#cuisines" class="block text-gray-600 hover:text-indigo-600 transition-colors">Cuisines</a>
+                <a href="#about" class="block text-gray-600 hover:text-indigo-600 transition-colors">About</a>
+                {% if current_user.is_authenticated %}
+                <a href="{{ url_for('dashboard.index') }}"
+                    class="block bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors text-center">Dashboard</a>
+                {% else %}
+                <a href="{{ url_for('auth.login') }}"
+                    class="block text-gray-600 hover:text-indigo-600 transition-colors">Login</a>
+                <a href="{{ url_for('auth.register') }}"
+                    class="block bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors text-center">Get
+                    Started</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- Enhanced Hero Section -->
+    <section class="hero-gradient hero-pattern min-h-screen flex items-center justify-center relative overflow-hidden">
+        <!-- Enhanced Floating Elements -->
+        <div class="absolute inset-0 overflow-hidden pointer-events-none">
+            <div class="absolute top-20 left-10 w-20 h-20 bg-white/10 rounded-full floating-animation"></div>
+            <div class="absolute top-40 right-20 w-32 h-32 bg-yellow-400/20 rounded-full floating-animation-delayed">
+            </div>
+            <div class="absolute bottom-20 left-1/4 w-16 h-16 bg-pink-400/20 rounded-full floating-animation-slow">
+            </div>
+            <div class="absolute bottom-40 right-1/3 w-24 h-24 bg-purple-400/20 rounded-full floating-animation"></div>
+            <div class="absolute top-1/3 left-1/2 w-12 h-12 bg-green-400/20 rounded-full floating-animation-slow"></div>
+        </div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+            <div class="max-w-5xl mx-auto">
+                <!-- Enhanced Heading -->
+                <div class="mb-8">
+                    <div
+                        class="inline-flex items-center px-4 py-2 rounded-full bg-white/20 backdrop-blur-sm text-white mb-6">
+                        <span class="text-2xl mr-2">🌍</span>
+                        <span class="font-semibold">World's Largest Recipe Collection</span>
+                    </div>
+
+                    <h1 class="text-4xl md:text-6xl lg:text-7xl font-bold text-gray-900 mb-6 leading-tight">
+                        Cook Authentic Recipes<br>
+                        <span class="text-indigo-800 font-extrabold">From Every Corner</span><br>
+                        <span class="text-purple-800 font-extrabold">of the World</span>
+                    </h1>
+
+                    <p class="text-xl md:text-2xl text-gray-800 mb-8 max-w-4xl mx-auto leading-relaxed font-medium">
+                        Discover 10,000+ authentic recipes from 50+ countries. Share your family traditions and explore
+                        global flavors with our community of passionate home cooks and professional chefs.
+                    </p>
+                </div>
+
+                <!-- Interactive Cuisine Selection Cards -->
+                <div class="mb-12">
+                    <div class="mb-6">
+                        <h3 class="text-2xl font-bold text-white mb-2 text-glow">Which cuisines interest you most?</h3>
+                        <p class="text-white font-medium">Select your favorites to get personalized recommendations</p>
+                    </div>
+
+                    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-6">
+                        <div class="cuisine-check-card p-4 rounded-2xl text-center text-white" data-cuisine="italian">
+                            <div class="emoji text-3xl mb-2 transition-transform duration-300">🍝</div>
+                            <h4 class="font-bold text-sm">Italian</h4>
+                            <p class="text-xs opacity-75">Pasta & Pizza</p>
+                        </div>
+
+                        <div class="cuisine-check-card p-4 rounded-2xl text-center text-white" data-cuisine="asian">
+                            <div class="emoji text-3xl mb-2 transition-transform duration-300">🍜</div>
+                            <h4 class="font-bold text-sm">Asian</h4>
+                            <p class="text-xs opacity-75">Noodles & Curry</p>
+                        </div>
+
+                        <div class="cuisine-check-card p-4 rounded-2xl text-center text-white" data-cuisine="mexican">
+                            <div class="emoji text-3xl mb-2 transition-transform duration-300">🌮</div>
+                            <h4 class="font-bold text-sm">Mexican</h4>
+                            <p class="text-xs opacity-75">Tacos & Salsa</p>
+                        </div>
+
+                        <div class="cuisine-check-card p-4 rounded-2xl text-center text-white" data-cuisine="french">
+                            <div class="emoji text-3xl mb-2 transition-transform duration-300">🥖</div>
+                            <h4 class="font-bold text-sm">French</h4>
+                            <p class="text-xs opacity-75">Pastries & Classics</p>
+                        </div>
+
+                        <div class="cuisine-check-card p-4 rounded-2xl text-center text-white" data-cuisine="indian">
+                            <div class="emoji text-3xl mb-2 transition-transform duration-300">🍛</div>
+                            <h4 class="font-bold text-sm">Indian</h4>
+                            <p class="text-xs opacity-75">Spices & Rice</p>
+                        </div>
+
+                        <div class="cuisine-check-card p-4 rounded-2xl text-center text-white" data-cuisine="japanese">
+                            <div class="emoji text-3xl mb-2 transition-transform duration-300">🍱</div>
+                            <h4 class="font-bold text-sm">Japanese</h4>
+                            <p class="text-xs opacity-75">Sushi & Ramen</p>
+                        </div>
+
+                        <div class="cuisine-check-card p-4 rounded-2xl text-center text-white"
+                            data-cuisine="middle-eastern">
+                            <div class="emoji text-3xl mb-2 transition-transform duration-300">🥘</div>
+                            <h4 class="font-bold text-sm">Middle Eastern</h4>
+                            <p class="text-xs opacity-75">Kebabs & Hummus</p>
+                        </div>
+
+                        <div class="cuisine-check-card p-4 rounded-2xl text-center text-white" data-cuisine="african">
+                            <div class="emoji text-3xl mb-2 transition-transform duration-300">🍲</div>
+                            <h4 class="font-bold text-sm">African</h4>
+                            <p class="text-xs opacity-75">Stews & Spices</p>
+                        </div>
+
+                        <div class="cuisine-check-card p-4 rounded-2xl text-center text-white" data-cuisine="thai">
+                            <div class="emoji text-3xl mb-2 transition-transform duration-300">🍤</div>
+                            <h4 class="font-bold text-sm">Thai</h4>
+                            <p class="text-xs opacity-75">Pad Thai & Curry</p>
+                        </div>
+
+                        <div class="cuisine-check-card p-4 rounded-2xl text-center text-white"
+                            data-cuisine="mediterranean">
+                            <div class="emoji text-3xl mb-2 transition-transform duration-300">🫒</div>
+                            <h4 class="font-bold text-sm">Mediterranean</h4>
+                            <p class="text-xs opacity-75">Olive Oil & Herbs</p>
+                        </div>
+
+                        <div class="cuisine-check-card p-4 rounded-2xl text-center text-white" data-cuisine="latin">
+                            <div class="emoji text-3xl mb-2 transition-transform duration-300">🥩</div>
+                            <h4 class="font-bold text-sm">Latin American</h4>
+                            <p class="text-xs opacity-75">Grilled & Spicy</p>
+                        </div>
+
+                        <div class="cuisine-check-card p-4 rounded-2xl text-center text-white" data-cuisine="american">
+                            <div class="emoji text-3xl mb-2 transition-transform duration-300">🍔</div>
+                            <h4 class="font-bold text-sm">American</h4>
+                            <p class="text-xs opacity-75">BBQ & Comfort</p>
+                        </div>
+                    </div>
+
+                    <!-- Selection Counter -->
+                    <div id="selection-counter"
+                        class="inline-block selection-counter text-gray-800 px-4 py-2 rounded-full font-bold hidden">
+                        <span id="selected-count">0</span> cuisines selected
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
+                    {% if current_user.is_authenticated %}
+                    <a href="{{ url_for('dashboard.index') }}"
+                        class="bg-white text-indigo-600 px-8 py-4 rounded-xl font-semibold text-lg hover:bg-gray-100 transition-all hover-lift">
+                        Explore My Kitchen
+                    </a>
+                    <a href="{{ url_for('dashboard.add_recipe') }}"
+                        class="bg-gradient-to-r from-yellow-400 to-orange-400 text-gray-800 px-8 py-4 rounded-xl font-semibold text-lg hover:from-yellow-300 hover:to-orange-300 transition-all hover-lift">
+                        Share Family Recipe
+                    </a>
+                    {% else %}
+                    <a href="{{ url_for('auth.register') }}" id="start-cooking-btn"
+                        class="bg-white text-indigo-600 px-8 py-4 rounded-xl font-semibold text-lg hover:bg-gray-100 transition-all hover-lift pulse-animation">
+                        Start Your Culinary Journey
+                    </a>
+                    <a href="{{ url_for('auth.login') }}"
+                        class="border-2 border-white text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-white hover:text-indigo-600 transition-all hover-lift">
+                        I'm Already a Chef
+                    </a>
+                    {% endif %}
+                </div>
+
+                <!-- Enhanced Stats -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-white">
+                    <div class="text-center p-4 bg-white/10 rounded-2xl backdrop-blur-sm border border-white/20">
+                        <div class="text-4xl font-bold mb-1 text-white">50+</div>
+                        <div class="text-white text-sm font-semibold">Countries</div>
+                        <div class="text-gray-100 text-xs mt-1">Represented</div>
+                    </div>
+                    <div class="text-center p-4 bg-white/10 rounded-2xl backdrop-blur-sm border border-white/20">
+                        <div class="text-4xl font-bold mb-1 text-white">10K+</div>
+                        <div class="text-white text-sm font-semibold">Recipes</div>
+                        <div class="text-gray-100 text-xs mt-1">& Growing Daily</div>
+                    </div>
+                    <div class="text-center p-4 bg-white/10 rounded-2xl backdrop-blur-sm border border-white/20">
+                        <div class="text-4xl font-bold mb-1 text-white">150+</div>
+                        <div class="text-white text-sm font-semibold">Cuisines</div>
+                        <div class="text-gray-100 text-xs mt-1">Traditional & Modern</div>
+                    </div>
+                    <div class="text-center p-4 bg-white/10 rounded-2xl backdrop-blur-sm border border-white/20">
+                        <div class="text-4xl font-bold mb-1 text-white">25K+</div>
+                        <div class="text-white text-sm font-semibold">Home Chefs</div>
+                        <div class="text-gray-100 text-xs mt-1">Worldwide</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+                    Why Choose <span class="text-indigo-600">ODiGO</span>?
+                </h2>
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                    Your gateway to authentic global cuisine with features designed for food lovers worldwide
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Feature 1 -->
+                <div class="bg-gradient-to-br from-blue-50 to-indigo-50 p-8 rounded-2xl hover-lift">
+                    <div class="feature-icon w-16 h-16 rounded-xl flex items-center justify-center mb-6">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-4">Global Discovery</h3>
+                    <p class="text-gray-600">Explore authentic recipes from every continent. From Italian pasta to Thai
+                        curry, Japanese sushi to Mexican tacos.</p>
+                </div>
+
+                <!-- Feature 2 -->
+                <div class="bg-gradient-to-br from-green-50 to-emerald-50 p-8 rounded-2xl hover-lift">
+                    <div class="feature-icon w-16 h-16 rounded-xl flex items-center justify-center mb-6">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253">
+                            </path>
+                        </svg>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-4">Rich Content</h3>
+                    <p class="text-gray-600">Detailed recipes with step-by-step photos, video guides, and cultural
+                        stories behind each dish.</p>
+                </div>
+
+                <!-- Feature 3 -->
+                <div class="bg-gradient-to-br from-purple-50 to-pink-50 p-8 rounded-2xl hover-lift">
+                    <div class="feature-icon w-16 h-16 rounded-xl flex items-center justify-center mb-6">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z">
+                            </path>
+                        </svg>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-4">Community Driven</h3>
+                    <p class="text-gray-600">Connect with home cooks and professional chefs worldwide. Share your
+                        heritage recipes and learn from others.</p>
+                </div>
+
+                <!-- Feature 4 -->
+                <div class="bg-gradient-to-br from-orange-50 to-red-50 p-8 rounded-2xl hover-lift">
+                    <div class="feature-icon w-16 h-16 rounded-xl flex items-center justify-center mb-6">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-4">Authentic Verified</h3>
+                    <p class="text-gray-600">All recipes are verified by native cooks and food experts to ensure
+                        authenticity and quality.</p>
+                </div>
+
+                <!-- Feature 5 -->
+                <div class="bg-gradient-to-br from-yellow-50 to-orange-50 p-8 rounded-2xl hover-lift">
+                    <div class="feature-icon w-16 h-16 rounded-xl flex items-center justify-center mb-6">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-4">Smart Features</h3>
+                    <p class="text-gray-600">Ingredient substitutions, dietary filters, cooking timers, and personalized
+                        recommendations.</p>
+                </div>
+
+                <!-- Feature 6 -->
+                <div class="bg-gradient-to-br from-indigo-50 to-purple-50 p-8 rounded-2xl hover-lift">
+                    <div class="feature-icon w-16 h-16 rounded-xl flex items-center justify-center mb-6">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z">
+                            </path>
+                        </svg>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-4">Personal Collections</h3>
+                    <p class="text-gray-600">Save your favorite recipes, create meal plans, and organize your culinary
+                        journey.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Global Cuisines Section -->
+    <section id="cuisines" class="py-20 bg-gradient-to-br from-indigo-50 to-purple-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+                    Explore <span class="text-indigo-600">World Cuisines</span>
+                </h2>
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                    Discover the rich culinary traditions from around the globe
+                </p>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                <!-- Cuisine Cards -->
+                <div class="cuisine-card p-6 rounded-2xl text-center hover-lift">
+                    <div class="text-4xl mb-3">🍝</div>
+                    <h3 class="font-bold text-gray-800">Italian</h3>
+                    <p class="text-sm text-gray-600">Pasta, Pizza & More</p>
+                </div>
+
+                <div class="cuisine-card p-6 rounded-2xl text-center hover-lift">
+                    <div class="text-4xl mb-3">🍜</div>
+                    <h3 class="font-bold text-gray-800">Asian</h3>
+                    <p class="text-sm text-gray-600">Noodles, Curry & Stir-fry</p>
+                </div>
+
+                <div class="cuisine-card p-6 rounded-2xl text-center hover-lift">
+                    <div class="text-4xl mb-3">🌮</div>
+                    <h3 class="font-bold text-gray-800">Mexican</h3>
+                    <p class="text-sm text-gray-600">Tacos, Burritos & Salsa</p>
+                </div>
+
+                <div class="cuisine-card p-6 rounded-2xl text-center hover-lift">
+                    <div class="text-4xl mb-3">🥖</div>
+                    <h3 class="font-bold text-gray-800">French</h3>
+                    <p class="text-sm text-gray-600">Pastries, Soups & Classics</p>
+                </div>
+
+                <div class="cuisine-card p-6 rounded-2xl text-center hover-lift">
+                    <div class="text-4xl mb-3">🍛</div>
+                    <h3 class="font-bold text-gray-800">Indian</h3>
+                    <p class="text-sm text-gray-600">Spices, Curry & Rice</p>
+                </div>
+
+                <div class="cuisine-card p-6 rounded-2xl text-center hover-lift">
+                    <div class="text-4xl mb-3">🍱</div>
+                    <h3 class="font-bold text-gray-800">Japanese</h3>
+                    <p class="text-sm text-gray-600">Sushi, Ramen & Bento</p>
+                </div>
+
+                <div class="cuisine-card p-6 rounded-2xl text-center hover-lift">
+                    <div class="text-4xl mb-3">🥘</div>
+                    <h3 class="font-bold text-gray-800">Middle Eastern</h3>
+                    <p class="text-sm text-gray-600">Kebabs, Hummus & Tagine</p>
+                </div>
+
+                <div class="cuisine-card p-6 rounded-2xl text-center hover-lift">
+                    <div class="text-4xl mb-3">🍲</div>
+                    <h3 class="font-bold text-gray-800">African</h3>
+                    <p class="text-sm text-gray-600">Stews, Grains & Spices</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-20 bg-gradient-to-r from-indigo-600 to-purple-600">
+        <div class="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
+            <h2 class="text-4xl md:text-5xl font-bold text-white mb-6">
+                Ready to Start Your Culinary Journey?
+            </h2>
+            <p class="text-xl text-indigo-100 mb-8">
+                Join thousands of food lovers sharing recipes from around the world
+            </p>
+            {% if not current_user.is_authenticated %}
+            <a href="{{ url_for('auth.register') }}"
+                class="bg-white text-indigo-600 px-8 py-4 rounded-xl font-semibold text-lg hover:bg-gray-100 transition-all hover-lift inline-block">
+                Get Started for Free
+            </a>
+            {% else %}
+            <a href="{{ url_for('dashboard.add_recipe') }}"
+                class="bg-yellow-400 text-gray-800 px-8 py-4 rounded-xl font-semibold text-lg hover:bg-yellow-300 transition-all hover-lift inline-block">
+                Share Your First Recipe
+            </a>
+            {% endif %}
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div class="col-span-1 md:col-span-2">
+                    <div class="flex items-center space-x-3 mb-4">
+                        <div class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full p-2">
+                            <img width="32px" height="32px" src="{{ url_for('static', filename='brand/logo.png') }}"
+                                alt="ODiGO">
+                        </div>
+                        <span class="text-2xl font-bold">ODiGO</span>
+                    </div>
+                    <p class="text-gray-300 mb-4 max-w-md">
+                        Connecting cultures through cuisine. Discover, share, and celebrate the world's flavors with our
+                        global community of food lovers.
+                    </p>
+                </div>
+
+                <div>
+                    <h3 class="font-bold text-lg mb-4">Quick Links</h3>
+                    <ul class="space-y-2 text-gray-300">
+                        <li><a href="#features" class="hover:text-white transition-colors">Features</a></li>
+                        <li><a href="#cuisines" class="hover:text-white transition-colors">Cuisines</a></li>
+                        <li><a href="#about" class="hover:text-white transition-colors">About</a></li>
+                        {% if not current_user.is_authenticated %}
+                        <li><a href="{{ url_for('auth.register') }}" class="hover:text-white transition-colors">Sign
+                                Up</a></li>
+                        {% endif %}
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="font-bold text-lg mb-4">Connect</h3>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-gray-300 hover:text-white transition-colors">
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                <path
+                                    d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z" />
+                            </svg>
+                        </a>
+                        <a href="#" class="text-gray-300 hover:text-white transition-colors">
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                <path
+                                    d="M22.46 6c-.77.35-1.6.58-2.46.69.88-.53 1.56-1.37 1.88-2.38-.83.5-1.75.85-2.72 1.05C18.37 4.5 17.26 4 16 4c-2.35 0-4.27 1.92-4.27 4.29 0 .34.04.67.11.98C8.28 9.09 5.11 7.38 3 4.79c-.37.63-.58 1.37-.58 2.15 0 1.49.75 2.81 1.91 3.56-.71 0-1.37-.2-1.95-.5v.03c0 2.08 1.48 3.82 3.44 4.21a4.22 4.22 0 0 1-1.93.07 4.28 4.28 0 0 0 4 2.98 8.521 8.521 0 0 1-5.33 1.84c-.34 0-.68-.02-1.02-.06C3.44 20.29 5.7 21 8.12 21 16 21 20.33 14.46 20.33 8.79c0-.19 0-.37-.01-.56.84-.6 1.56-1.36 2.14-2.23z" />
+                            </svg>
+                        </a>
+                        <a href="#" class="text-gray-300 hover:text-white transition-colors">
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                <path
+                                    d="M12.017 0C5.396 0 .029 5.367.029 11.987c0 5.079 3.158 9.417 7.618 11.174-.105-.949-.199-2.403.041-3.439.219-.937 1.406-5.957 1.406-5.957s-.359-.72-.359-1.781c0-1.663.967-2.911 2.168-2.911 1.024 0 1.518.769 1.518 1.688 0 1.029-.653 2.567-.992 3.992-.285 1.193.6 2.165 1.775 2.165 2.128 0 3.768-2.245 3.768-5.487 0-2.861-2.063-4.869-5.008-4.869-3.41 0-5.409 2.562-5.409 5.199 0 1.033.394 2.143.889 2.741.099.12.112.225.085.345-.09.375-.293 1.199-.334 1.363-.053.225-.172.271-.402.165-1.495-.69-2.433-2.878-2.433-4.646 0-3.776 2.748-7.252 7.92-7.252 4.158 0 7.392 2.967 7.392 6.923 0 4.135-2.607 7.462-6.233 7.462-1.214 0-2.357-.629-2.75-1.378l-.748 2.853c-.271 1.043-1.002 2.35-1.492 3.146C9.57 23.812 10.763 24.009 12.017 24.009c6.624 0 11.99-5.367 11.99-11.988C24.007 5.367 18.641.001.012.001z" />
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="border-t border-gray-700 mt-8 pt-8 text-center text-gray-300">
+                <p>&copy; 2024 ODiGO. All rights reserved. Made with ❤️ for food lovers worldwide.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Mobile menu toggle
+        document.getElementById('mobile-menu-btn').addEventListener('click', function () {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        });
+
+        // Cuisine selection functionality
+        let selectedCuisines = [];
+        const cuisineCards = document.querySelectorAll('.cuisine-check-card');
+        const selectionCounter = document.getElementById('selection-counter');
+        const selectedCount = document.getElementById('selected-count');
+        const startCookingBtn = document.getElementById('start-cooking-btn');
+
+        cuisineCards.forEach(card => {
+            card.addEventListener('click', function () {
+                const cuisine = this.dataset.cuisine;
+
+                if (this.classList.contains('selected')) {
+                    // Deselect
+                    this.classList.remove('selected');
+                    selectedCuisines = selectedCuisines.filter(c => c !== cuisine);
+                } else {
+                    // Select
+                    this.classList.add('selected');
+                    selectedCuisines.push(cuisine);
+                }
+
+                updateSelectionCounter();
+            });
+        });
+
+        function updateSelectionCounter() {
+            if (selectedCuisines.length > 0) {
+                selectionCounter.classList.remove('hidden');
+                selectedCount.textContent = selectedCuisines.length;
+
+                // Update button text based on selections
+                if (startCookingBtn) {
+                    if (selectedCuisines.length === 1) {
+                        startCookingBtn.textContent = `Explore ${selectedCuisines[0].charAt(0).toUpperCase() + selectedCuisines[0].slice(1)} Cuisine`;
+                    } else if (selectedCuisines.length <= 3) {
+                        startCookingBtn.textContent = `Explore ${selectedCuisines.length} Cuisines`;
+                    } else {
+                        startCookingBtn.textContent = `Start Global Journey`;
+                    }
+                }
+            } else {
+                selectionCounter.classList.add('hidden');
+                if (startCookingBtn) {
+                    startCookingBtn.textContent = 'Start Your Culinary Journey';
+                }
+            }
+        }
+
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Add some interactive effects
+        document.addEventListener('DOMContentLoaded', function () {
+            // Animate stats on scroll
+            const stats = document.querySelectorAll('.text-4xl');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.animation = 'bounce 0.6s ease-in-out';
+                    }
+                });
+            });
+
+            stats.forEach(stat => observer.observe(stat));
+        });
+    </script>
+</body>
+
+</html>

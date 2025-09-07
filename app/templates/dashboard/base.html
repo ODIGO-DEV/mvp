@@ -4,7 +4,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Dashboard - ODiGO{% endblock %}</title>
+    <title>{% block title %}Dashboard - <!-- Sidebar -->
+        <div id="sidebar"
+            class="fixed lg:static w-64 bg-gradient-to-b from-gray-50 to-white border-r border-gray-200 z-30 sidebar-transition sidebar-hidden lg:sidebar-visible inset-y-0 left-0"
+            style="height: 100vh; min-height: 100vh;">{O{% endblock %}
+    </title>
 
     <!-- Compiled Tailwind CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
@@ -133,6 +137,17 @@
                 /* Same as sidebar width */
             }
         }
+
+        /* Feature card style from landing page */
+        .feature-card {
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-8px) scale(1.05);
+        }
     </style>
 </head>
 
@@ -161,7 +176,7 @@
         {% for category, message in messages %}
         <div class="rounded-xl p-4 text-sm font-medium text-white
                         {% if category == 'success' %}bg-green-600{% elif category == 'error' %}bg-red-600{% elif category == 'warning' %}bg-yellow-500{% else %}bg-indigo-600{% endif %}
-                        shadow-lg transform transition-all duration-300 ease-out">
+                        transform transition-all duration-300 ease-out">
             {{ message }}
         </div>
         {% endfor %}
@@ -172,7 +187,7 @@
     <div class="flex min-h-screen">
         <!-- Sidebar -->
         <div id="sidebar"
-            class="fixed lg:static w-64 bg-white shadow-xl border-r border-gray-200 z-30 sidebar-transition sidebar-hidden lg:sidebar-visible inset-y-0 left-0"
+            class="fixed lg:static w-64 bg-gradient-to-b from-gray-50 to-white border-r border-gray-200 z-30 sidebar-transition sidebar-hidden lg:sidebar-visible inset-y-0 left-0"
             style="height: 100vh; min-height: 100vh;">
             <div class="h-full flex flex-col p-6">
                 <!-- Logo -->
@@ -302,7 +317,7 @@
         <!-- Main Content -->
         <div class="flex-1 lg:ml-0">
             <!-- Top Bar -->
-            <div class="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
+            <div class="bg-white border-b border-gray-200 px-6 py-4">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center">
                         <!-- Mobile menu button -->
@@ -385,7 +400,7 @@
             else if (type === 'warning') bgColor = 'bg-yellow-500';
             else if (type === 'info') bgColor = 'bg-indigo-600';
 
-            messageDiv.className = `rounded-xl p-4 text-sm font-medium text-white ${bgColor} shadow-lg transform transition-all duration-300 ease-out opacity-0 translate-y-[-20px]`;
+            messageDiv.className = `rounded-xl p-4 text-sm font-medium text-white ${bgColor} transform transition-all duration-300 ease-out opacity-0 translate-y-[-20px]`;
             messageDiv.textContent = message;
 
             container.appendChild(messageDiv);
