@@ -35,10 +35,10 @@ class User(db.Model, UserMixin):
     )
 
     # relationships
-    recipes = db.relationship("recipe", backref="author", lazy=True)
-    collections = db.relationship("collection", backref="owner", lazy=True)
-    reviews = db.relationship("review", backref="reviewer", lazy=True)
-    stats = db.relationship("stat", backref="user", lazy=True)
+    recipes = db.relationship("Recipe", backref="author", lazy=True)
+    collections = db.relationship("Collection", backref="owner", lazy=True)
+    reviews = db.relationship("Review", backref="reviewer", lazy=True)
+    stats = db.relationship("Stat", backref="user", lazy=True)
 
     # helpers
     def set_password(self, password):

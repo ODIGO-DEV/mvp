@@ -1,0 +1,36 @@
+# French translations for PROJECT.
+# Copyright (C) 2025 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2025-09-03 10:19+0100\n"
+"PO-Revision-Date: 2025-09-03 10:19+0100\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: fr\n"
+"Language-Team: fr <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+#: app/__init__.py:29
+msgid "Please log in to access this page."
+msgstr "Veuillez vous connecter pour accéder à cette page."
+
+#: app/templates/base.html:6
+msgid "ODiGO - Discover World Recipes"
+msgstr "ODiGO - Découvrez les Recettes du Monde"
+
+#: app/templates/base.html:43
+msgid "ODiGO - Bringing World Recipes Together"
+msgstr "ODiGO - Rassembler les recettes du monde."
+
+#: app/templates/base.html:120
+msgid "Ready to explore world cuisines? 🌍"
+msgstr "Prêt à explorer les cuisines du monde ? 🌍"
+

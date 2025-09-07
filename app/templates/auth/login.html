@@ -30,6 +30,8 @@
                 <p class="text-center text-gray-600 mb-8">Ready to explore new flavors?</p>
                 
                 <form id="loginForm" class="space-y-6" method="POST" action="{{ url_for('auth.login') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
                     <!-- Email -->
                     <div>
                         <label for="email" class="block text-sm font-medium text-gray-600 mb-2">Email Address</label>

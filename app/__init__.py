@@ -3,7 +3,7 @@ from flask_login import LoginManager
 
 from app.extensions import db, migrate, csrf
 from app.blueprints import register_blueprints
-from app.models.user import User
+from app.models import User
 
 
 def create_app(config_object="app.core.config"):
@@ -24,6 +24,11 @@ def create_app(config_object="app.core.config"):
     @login_manager.user_loader
     def load_user(user_id):
         return User.query.get(int(user_id))
+
+    with app.app_context():
+        from app import models
+
+        db.create_all()
 
     # Register blueprints
     register_blueprints(app)
