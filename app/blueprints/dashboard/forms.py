@@ -1,24 +1,21 @@
 from flask_wtf import FlaskForm
-from flask_wtf.file import FileField, FileAllowed
-from wtforms import StringField, TextAreaField, BooleanField, SelectField, SubmitField
+from wtforms import StringField, TextAreaField, BooleanField, SelectField, FileField, SubmitField
 from wtforms.validators import DataRequired, Length, Optional
-from app.models.category import Category
-from app.models.origin import Origin
 
 
 class AddRecipeForm(FlaskForm):
-    name = StringField('Recipe Name', validators=[DataRequired(), Length(min=2, max=255)])
-    description = TextAreaField('Description', validators=[Optional()])
-    category_id = SelectField('Category', coerce=int, validators=[Optional()])
-    origin_id = SelectField('Origin', coerce=int, validators=[Optional()])
-    public = BooleanField('Make this recipe public', default=True)
+    name = StringField("Recipe Name", validators=[DataRequired(), Length(min=3, max=150)])
+    description = TextAreaField("Description", validators=[Optional(), Length(max=2000)])
+    public = BooleanField("Public", default=True)
+    category_id = SelectField("Category", coerce=int, validators=[Optional()])
+    origin_id = SelectField("Origin", coerce=int, validators=[Optional()])
+    recipe_image = FileField("Recipe Image", validators=[Optional()])
+    submit = SubmitField("Create Recipe")
 
-    # Image upload
-    recipe_image = FileField('Recipe Image', validators=[
-        FileAllowed(['jpg', 'png', 'jpeg', 'gif'], 'Images only!')
-    ])
-
-    submit = SubmitField('Create Recipe')
+class SettingsForm(FlaskForm):
+    name = StringField("Name", validators=[DataRequired(), Length(min=3, max=150)])
+    email = StringField("Email", validators=[DataRequired(), Length(min=3, max=150)])
+    submit = SubmitField("Save Changes")
 
     def __init__(self, *args, **kwargs):
         super(AddRecipeForm, self).__init__(*args, **kwargs)

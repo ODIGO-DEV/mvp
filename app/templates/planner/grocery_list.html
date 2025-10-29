@@ -1,0 +1,19 @@
+{% extends "dashboard/base.html" %}
+{% block title %}Grocery List - ODiGO{% endblock %}
+{% block dashboard_content %}
+<div class="bg-white rounded-xl p-6 border border-gray-200 card">
+  <h1 class="text-2xl font-bold mb-4">Grocery List for {{ selected_date.strftime('%Y-%m-%d') }}</h1>
+  {% if items %}
+  <ul class="list-disc ml-6 space-y-1">
+    {% for item in items %}
+      <li>{{ '%.2f' % item.quantity if item.quantity else '' }} {{ item.unit }} {{ item.name }}</li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p>No items. Add meals to your planner first.</p>
+  {% endif %}
+  <div class="mt-4">
+    <a href="{{ url_for('planner.index', date=selected_date.isoformat()) }}" class="px-4 py-2 bg-gray-200 rounded">Back to Planner</a>
+  </div>
+</div>
+{% endblock %}

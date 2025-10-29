@@ -8,6 +8,8 @@
 
     <!-- Compiled Tailwind CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/print.css') }}" media="print">
 
     <!-- Custom Styles -->
     <style>
@@ -71,13 +73,20 @@
         /* Ensure sidebar takes full height */
         #sidebar {
             height: 100vh;
-            position: static;
+            position: fixed;
             top: 0;
             left: 0;
             width: 16rem;
             /* 64 * 0.25rem = 16rem */
             overflow-y: auto;
             z-index: 30;
+        }
+
+        @media (min-width: 1024px) {
+            #sidebar {
+                position: fixed;
+                transform: translateX(0) !important;
+            }
         }
 
         @media (max-width: 1023px) {
@@ -128,7 +137,13 @@
             border-left: 3px solid #ffffff;
         }
 
-
+        /* Main content adjustment */
+        .main-content {
+            margin-left: 16rem;
+            height: 100vh;
+            overflow-y: auto;
+            /* Same as sidebar width */
+        }
 
         @media (max-width: 1023px) {
             .main-content {
@@ -149,7 +164,7 @@
     </style>
 </head>
 
-<body class="min-h-screen bg-gray-50 text-gray-800">
+<body class="min-h-screen bg-gray-50 text-gray-800 h-screen overflow-hidden">
     <!-- Animated background elements -->
     <div class="fixed inset-0 overflow-hidden pointer-events-none">
         <div
@@ -182,10 +197,10 @@
         {% endwith %}
     </div>
 
-    <div class="flex min-h-screen">
+    <div class="flex min-h-screen ">
         <!-- Sidebar -->
         <div id="sidebar"
-            class="static lg:static w-64 bg-gradient-to-b from-indigo-600 to-indigo-800 border-r border-indigo-500 z-30 sidebar-transition sidebar-visible inset-y-0 left-0"
+            class="fixed lg:fixed w-64 bg-gradient-to-b from-indigo-600 to-indigo-800 border-r border-indigo-500 z-30 sidebar-transition sidebar-visible inset-y-0 left-0"
             style="height: 100vh; min-height: 100vh;">
             <div class="h-full flex flex-col p-6">
                 <!-- Logo -->
@@ -261,24 +276,24 @@
                     </div>
 
                     <div style="margin-bottom: 0.5rem;">
-                        <a href="#" class="nav-link">
+                        <a href="{{ url_for('planner.index') }}" class="nav-link {% if request.endpoint.startswith('planner.') %}active{% endif %}">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z">
                                 </path>
                             </svg>
-                            Favorites
+                            Meal Planner
                         </a>
                     </div>
 
                     <div style="margin-bottom: 0.5rem;">
-                        <a href="#" class="nav-link">
+                        <a href="{{ url_for('community.feed') }}" class="nav-link {% if request.endpoint.startswith('community.') %}active{% endif %}">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10">
                                 </path>
                             </svg>
-                            Collections
+                            Community Feed
                         </a>
                     </div>
                 </nav>

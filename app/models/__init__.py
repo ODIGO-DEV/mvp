@@ -15,6 +15,7 @@ from .stat import Stat
 from .step import Step
 from .task import Task
 from .video import Video
+from .meal import MealPlan, MealEntry
 
 __all__ = [
     "User",
@@ -34,4 +35,6 @@ __all__ = [
     "Step",
     "Task",
     "Video",
+    "MealPlan",
+    "MealEntry",
 ]

@@ -1,7 +1,8 @@
 class UploadService:
+    def upload_file(self, file_storage):
+        """Upload a Werkzeug FileStorage and return (success, public_url)."""
+        raise NotImplementedError
 
-    def upload(file: str, folder: str):
-        """takes a file and returns a full url to the file"""
-
-    def delete_file(url):
-        """delete the file base on the url"""
+    def delete_file(self, url: str) -> bool:
+        """Delete a file by its public URL. Return True on success."""
+        raise NotImplementedError

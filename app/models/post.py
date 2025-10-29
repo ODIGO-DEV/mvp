@@ -6,6 +6,8 @@ class Post(db.Model):
     __tablename__ = "posts"
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    title = db.Column(db.String(150))
+    content = db.Column(db.Text, nullable=False)
     status = db.Column(db.String(50), default="draft")
 
     user_id = db.Column(db.String(36), db.ForeignKey("users.id"))

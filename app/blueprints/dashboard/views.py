@@ -4,11 +4,16 @@ from app.models.recipe import Recipe
 from app.models.category import Category
 from app.models.origin import Origin
 from app.models.user import User
+from app.models.post import Post
+from app.models.comment import Comment
 from app.extensions import db
 from sqlalchemy import or_, desc
 from app.blueprints.dashboard.forms import AddRecipeForm
 from app.models.step import Step
 from app.models.ingredients import Ingredient
+from app.models.image import Image
+from app.services.upload import upload_service
+from datetime import datetime
 
 dashboard_bp = Blueprint("dashboard", __name__, url_prefix="/dashboard")
 
@@ -29,25 +34,68 @@ def index():
     total_recipes = Recipe.query.filter_by(user_id=current_user.id).count()
     total_public_recipes = Recipe.query.filter_by(public=True).count()
 
+    # Get current hour for greeting
+    current_hour = datetime.now().hour
+
+    # Get recent community activity
+    recent_posts = Post.query.order_by(desc(Post.created_at)).limit(5).all()
+    recent_comments = Comment.query.order_by(desc(Comment.created_at)).limit(5).all()
+
+    # Recommended recipes (simple version)
+    recommended_recipes = Recipe.query.filter(Recipe.public == True).order_by(db.func.random()).limit(4).all()
+
     return render_template("dashboard/index.html",
                          user_recipes=user_recipes,
                          recent_recipes=recent_recipes,
                          categories=categories,
                          origins=origins,
                          total_recipes=total_recipes,
-                         total_public_recipes=total_public_recipes)
+                         total_public_recipes=total_public_recipes,
+                         current_hour=current_hour,
+                         recent_posts=recent_posts,
+                         recent_comments=recent_comments,
+                         recommended_recipes=recommended_recipes)
 
 @dashboard_bp.route("/my-recipes")
 @login_required
 def my_recipes():
     page = request.args.get('page', 1, type=int)
     per_page = 9
+    category_id = request.args.get('category', type=int)
+    visibility = request.args.get('visibility', 'all')
+    sort_by = request.args.get('sort_by', 'date_desc')
 
-    recipes = Recipe.query.filter_by(user_id=current_user.id).order_by(desc(Recipe.created_at)).paginate(
+    query = Recipe.query.filter_by(user_id=current_user.id)
+
+    if category_id:
+        query = query.filter_by(category_id=category_id)
+
+    if visibility == 'public':
+        query = query.filter_by(public=True)
+    elif visibility == 'private':
+        query = query.filter_by(public=False)
+
+    if sort_by == 'date_asc':
+        query = query.order_by(Recipe.created_at.asc())
+    elif sort_by == 'name_asc':
+        query = query.order_by(Recipe.name.asc())
+    elif sort_by == 'name_desc':
+        query = query.order_by(Recipe.name.desc())
+    else:
+        query = query.order_by(desc(Recipe.created_at))
+
+    recipes = query.paginate(
         page=page, per_page=per_page, error_out=False
     )
 
-    return render_template("dashboard/my_recipes.html", recipes=recipes)
+    categories = Category.query.all()
+
+    return render_template("dashboard/my_recipes.html", 
+                         recipes=recipes, 
+                         categories=categories,
+                         current_category=category_id,
+                         current_visibility=visibility,
+                         current_sort_by=sort_by)
 
 @dashboard_bp.route("/explore")
 @login_required
@@ -119,6 +167,12 @@ def add_recipe():
             db.session.add(recipe)
             db.session.flush()  # Get the recipe ID
 
+            # Handle main recipe image (optional)
+            if form.recipe_image.data:
+                ok, url = upload_service.upload_file(form.recipe_image.data)
+                if ok and url:
+                    db.session.add(Image(url=url, recipe_id=recipe.id))
+
             # Parse ingredients from request
             ingredient_names = request.form.getlist('ingredient_names[]')
             ingredient_quantities = request.form.getlist('ingredient_quantities[]')
@@ -156,6 +210,14 @@ def add_recipe():
                     )
                     db.session.add(step)
 
+            # Handle step images if any (store as additional recipe images)
+            step_images = request.files.getlist('step_images[]')
+            for file_storage in step_images:
+                if getattr(file_storage, 'filename', ''):
+                    ok, url = upload_service.upload_file(file_storage)
+                    if ok and url:
+                        db.session.add(Image(url=url, recipe_id=recipe.id))
+
             db.session.commit()
             flash("Recipe created successfully!", "success")
             return redirect(url_for("dashboard.my_recipes"))
@@ -165,3 +227,15 @@ def add_recipe():
             flash("An error occurred while creating the recipe. Please try again.", "error")
 
     return render_template("dashboard/add_recipe.html", form=form)
+
+@dashboard_bp.route("/settings", methods=["GET", "POST"])
+@login_required
+def settings():
+    form = SettingsForm(obj=current_user)
+    if form.validate_on_submit():
+        current_user.name = form.name.data
+        current_user.email = form.email.data
+        db.session.commit()
+        flash("Settings updated successfully!", "success")
+        return redirect(url_for('dashboard.settings'))
+    return render_template("dashboard/settings.html", form=form)

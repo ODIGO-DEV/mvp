@@ -1,0 +1,27 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Settings - ODiGO{% endblock %}
+
+{% block dashboard_content %}
+<div class="bg-white rounded-xl p-6 border border-gray-200">
+  <h1 class="text-2xl font-bold mb-6">Settings</h1>
+
+  <form method="POST" action="{{ url_for('dashboard.settings') }}">
+    {{ form.hidden_tag() }}
+
+    <div class="mb-4">
+      {{ form.name.label(class="block text-sm font-medium text-gray-700") }}
+      {{ form.name(class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm") }}
+    </div>
+
+    <div class="mb-4">
+      {{ form.email.label(class="block text-sm font-medium text-gray-700") }}
+      {{ form.email(class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm") }}
+    </div>
+
+    <div>
+      {{ form.submit(class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500") }}
+    </div>
+  </form>
+</div>
+{% endblock %}

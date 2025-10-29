@@ -7,6 +7,7 @@
     
     <!-- Compiled Tailwind CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block styles %}{% endblock %}
 </head>
 <body class="min-h-screen bg-gray-50 text-gray-800">
     <!-- Animated background elements -->
@@ -44,83 +45,6 @@
         </div>
     </footer>
 
-    <script>
-        // Sample recipe data for demo
-        const featuredRecipes = [
-            "🍝 Authentic Italian Carbonara",
-            "🍲 Thai Green Curry",
-            "🥘 Moroccan Tagine",
-            "🍜 Japanese Ramen",
-            "🌮 Mexican Street Tacos",
-            "🍛 Indian Biryani"
-        ];
-        
-        let currentRecipeIndex = 0;
-
-        // Flash message system
-        function showFlashMessage(message, type) {
-            const container = document.getElementById('flash-messages');
-            const messageDiv = document.createElement('div');
-            
-            let bgColor = 'bg-gray-700';
-            if (type === 'success') bgColor = 'bg-green-600';
-            else if (type === 'error') bgColor = 'bg-red-600';
-            else if (type === 'warning') bgColor = 'bg-yellow-500';
-            else if (type === 'info') bgColor = 'bg-indigo-600';
-            
-            messageDiv.className = `rounded-xl p-4 text-sm font-medium text-white ${bgColor} shadow-lg transform transition-all duration-300 ease-out opacity-0 translate-y-[-20px]`;
-            messageDiv.textContent = message;
-            
-            container.appendChild(messageDiv);
-            
-            // Animate in
-            setTimeout(() => {
-                messageDiv.classList.remove('opacity-0', 'translate-y-[-20px]');
-            }, 100);
-            
-            // Remove after 5 seconds
-            setTimeout(() => {
-                messageDiv.classList.add('opacity-0', 'translate-y-[-20px]');
-                setTimeout(() => {
-                    if (messageDiv.parentNode) {
-                        messageDiv.parentNode.removeChild(messageDiv);
-                    }
-                }, 300);
-            }, 5000);
-        }
-
-        // Add cooking-themed hover effects
-        document.querySelectorAll('button, a').forEach(element => {
-            element.addEventListener('mouseenter', function() {
-                this.style.transform = 'translateY(-2px)';
-            });
-            
-            element.addEventListener('mouseleave', function() {
-                this.style.transform = 'translateY(0)';
-            });
-        });
-
-        // Input focus effects with recipe theme
-        document.querySelectorAll('input').forEach(input => {
-            input.addEventListener('focus', function() {
-                this.parentElement.classList.add('transform', 'scale-105');
-            });
-            
-            input.addEventListener('blur', function() {
-                this.parentElement.classList.remove('transform', 'scale-105');
-            });
-        });
-
-        // Add some interactive elements
-        document.querySelector('h1').addEventListener('click', function() {
-            showFlashMessage('Ready to explore world cuisines? 🌍', 'info');
-        });
-
-        // Rotate featured recipe hint
-        setInterval(() => {
-            const recipeHint = featuredRecipes[currentRecipeIndex];
-            currentRecipeIndex = (currentRecipeIndex + 1) % featuredRecipes.length;
-        }, 4000);
-    </script>
+    {% block scripts %}{% endblock %}
 </body>
 </html>

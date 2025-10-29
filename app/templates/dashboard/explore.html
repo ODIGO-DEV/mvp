@@ -157,8 +157,9 @@
         <div class="p-5">
             <h3 class="font-bold text-gray-800 mb-2 group-hover:text-indigo-600 transition-colors line-clamp-1">{{
                 recipe.name }}</h3>
-            <p class="text-gray-600 text-sm mb-4 line-clamp-2">{{ recipe.description or "A delicious recipe from around
-                the world" }}</p>
+                <p class="text-gray-600 text-sm mb-4 line-clamp-2">
+                    {{ (recipe.description|striptags if recipe.description else 'A delicious recipe from around the world') | truncate(140) }}
+                </p>
 
             <div class="flex items-center justify-between text-xs text-gray-500 mb-3">
                 <div class="flex items-center">

@@ -1,12 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "base.html" %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ODiGO - Discover Global Flavors</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+{% block title %}ODiGO - Discover Global Flavors{% endblock %}
 
+{% block styles %}
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
@@ -157,9 +153,9 @@
             }
         }
     </style>
-</head>
+{% endblock %}
 
-<body class="bg-gray-50">
+{% block content %}
     <!-- Navigation -->
     <nav class="bg-white/90 backdrop-blur-md fixed w-full z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -642,7 +638,9 @@
             </div>
         </div>
     </footer>
+{% endblock %}
 
+{% block scripts %}
     <script>
         // Mobile menu toggle
         document.getElementById('mobile-menu-btn').addEventListener('click', function () {
@@ -726,7 +724,82 @@
 
             stats.forEach(stat => observer.observe(stat));
         });
-    </script>
-</body>
 
-</html>
+        // Sample recipe data for demo
+        const featuredRecipes = [
+            "🍝 Authentic Italian Carbonara",
+            "🍲 Thai Green Curry",
+            "🥘 Moroccan Tagine",
+            "🍜 Japanese Ramen",
+            "🌮 Mexican Street Tacos",
+            "🍛 Indian Biryani"
+        ];
+        
+        let currentRecipeIndex = 0;
+
+        // Flash message system
+        function showFlashMessage(message, type) {
+            const container = document.getElementById('flash-messages');
+            const messageDiv = document.createElement('div');
+            
+            let bgColor = 'bg-gray-700';
+            if (type === 'success') bgColor = 'bg-green-600';
+            else if (type === 'error') bgColor = 'bg-red-600';
+            else if (type === 'warning') bgColor = 'bg-yellow-500';
+            else if (type === 'info') bgColor = 'bg-indigo-600';
+            
+            messageDiv.className = `rounded-xl p-4 text-sm font-medium text-white ${bgColor} shadow-lg transform transition-all duration-300 ease-out opacity-0 translate-y-[-20px]`;
+            messageDiv.textContent = message;
+            
+            container.appendChild(messageDiv);
+            
+            // Animate in
+            setTimeout(() => {
+                messageDiv.classList.remove('opacity-0', 'translate-y-[-20px]');
+            }, 100);
+            
+            // Remove after 5 seconds
+            setTimeout(() => {
+                messageDiv.classList.add('opacity-0', 'translate-y-[-20px]');
+                setTimeout(() => {
+                    if (messageDiv.parentNode) {
+                        messageDiv.parentNode.removeChild(messageDiv);
+                    }
+                }, 300);
+            }, 5000);
+        }
+
+        // Add cooking-themed hover effects
+        document.querySelectorAll('button, a').forEach(element => {
+            element.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-2px)';
+            });
+            
+            element.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+            });
+        });
+
+        // Input focus effects with recipe theme
+        document.querySelectorAll('input').forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentElement.classList.add('transform', 'scale-105');
+            });
+            
+            input.addEventListener('blur', function() {
+                this.parentElement.classList.remove('transform', 'scale-105');
+            });
+        });
+
+        // Add some interactive elements
+        document.querySelector('h1').addEventListener('click', function() {
+            showFlashMessage('Ready to explore world cuisines? 🌍', 'info');
+        });
+
+        // Rotate featured recipe hint
+        setInterval(() => {
+            const recipeHint = featuredRecipes[currentRecipeIndex];
+            currentRecipeIndex = (currentRecipeIndex + 1) % featuredRecipes.length;
+        }, 4000);
+    </script>
+{% endblock %}

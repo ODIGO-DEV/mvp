@@ -1,0 +1,30 @@
+/* Minimal rich text typography (no plugin) */
+.prose {
+  color: #1f2937;
+  line-height: 1.7;
+}
+.prose h1, .prose h2, .prose h3, .prose h4 {
+  font-weight: 700;
+  color: #111827;
+  margin-top: 1.25em;
+  margin-bottom: 0.5em;
+}
+.prose p { margin: 0.75em 0; }
+.prose ul, .prose ol { margin: 0.75em 1.25em; padding-left: 1.25em; }
+.prose li { margin: 0.25em 0; }
+.prose a { color: #4f46e5; text-decoration: underline; }
+.prose blockquote { border-left: 4px solid #e5e7eb; margin: 1em 0; padding-left: 1em; color: #4b5563; }
+.prose img { max-width: 100%; border-radius: 0.5rem; }
+.prose code { background: #f3f4f6; padding: 0.2em 0.4em; border-radius: 0.25rem; }
+.prose pre { background: #111827; color: #e5e7eb; padding: 1rem; border-radius: 0.5rem; overflow: auto; }
+
+/* Subtle card hover */
+.card { transition: box-shadow .2s ease, transform .2s ease; }
+.card:hover { box-shadow: 0 10px 20px rgba(0,0,0,0.08); transform: translateY(-2px); }
+
+/* Badge styles */
+.badge { display:inline-block; padding: .25rem .5rem; border-radius: 9999px; font-size: .75rem; }
+.badge-info { background:#eef2ff; color:#4338ca; }
+.badge-success { background:#ecfdf5; color:#065f46; }
+.badge-warning { background:#fffbeb; color:#92400e; }
+
