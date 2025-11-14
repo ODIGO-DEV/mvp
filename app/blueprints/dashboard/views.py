@@ -8,7 +8,7 @@ from app.models.post import Post
 from app.models.comment import Comment
 from app.extensions import db
 from sqlalchemy import or_, desc
-from app.blueprints.dashboard.forms import AddRecipeForm
+from app.blueprints.dashboard.forms import RecipeForm, CommentForm
 from app.models.step import Step
 from app.models.ingredients import Ingredient
 from app.models.image import Image
@@ -140,17 +140,18 @@ def explore():
 @login_required
 def view_recipe(recipe_id):
     recipe = Recipe.query.get_or_404(recipe_id)
+    form = CommentForm(obj=None)
 
     # Check if user can view this recipe
     if not recipe.public and recipe.user_id != current_user.id:
         return render_template("dashboard/error.html", message="Recipe not found or not accessible"), 404
 
-    return render_template("dashboard/recipe_detail.html", recipe=recipe)
+    return render_template("dashboard/recipe_detail.html", recipe=recipe, form=form)
 
 @dashboard_bp.route("/add-recipe", methods=["GET", "POST"])
 @login_required
 def add_recipe():
-    form = AddRecipeForm()
+    form = RecipeForm(request.form) if request.method == 'POST' else RecipeForm()
 
     if form.validate_on_submit():
         try:
@@ -167,10 +168,84 @@ def add_recipe():
             db.session.add(recipe)
             db.session.flush()  # Get the recipe ID
 
+            # Handle recipe images
+            for file_storage in form.recipe_images.data:
+                if getattr(file_storage, 'filename', ''):
+                    ok, url = upload_service.upload_file(file_storage)
+                    if ok and url:
+                        db.session.add(Image(url=url, recipe_id=recipe.id))
+
+            # Handle ingredients
+            for ingredient_form in form.ingredients:
+                if ingredient_form.name.data:
+                    ingredient = Ingredient(
+                        name=ingredient_form.name.data,
+                        quantity=ingredient_form.quantity.data,
+                        unit=ingredient_form.unit.data,
+                        recipe_id=recipe.id,
+                        user_id=current_user.id
+                    )
+                    db.session.add(ingredient)
+
+            # Handle steps
+            for step_form in form.steps:
+                if step_form.instruction.data:
+                    step = Step(
+                        step_number=step_form.step_number.data,
+                        instruction=step_form.instruction.data,
+                        recipe_id=recipe.id
+                    )
+                    db.session.add(step)
+
+            db.session.commit()
+            flash("Recipe created successfully!", "success")
+            return redirect(url_for("dashboard.my_recipes"))
+
+        except Exception as e:
+            db.session.rollback()
+            flash(f"An error occurred while creating the recipe. {e}", "error")
+
+    return render_template("dashboard/add_recipe.html", form=form)
+
+@dashboard_bp.route("/settings", methods=["GET", "POST"])
+@login_required
+def settings():
+    form = SettingsForm(obj=current_user)
+    if form.validate_on_submit():
+        current_user.name = form.name.data
+        current_user.email = form.email.data
+        db.session.commit()
+        flash("Settings updated successfully!", "success")
+        return redirect(url_for('dashboard.settings'))
+    return render_template("dashboard/settings.html", form=form)
+
+@dashboard_bp.route("/recipe/<int:recipe_id>/edit", methods=["GET", "POST"])
+@login_required
+def edit_recipe(recipe_id):
+    recipe = Recipe.query.get_or_404(recipe_id)
+    if recipe.user_id != current_user.id:
+        return render_template("dashboard/error.html", message="You are not authorized to edit this recipe."), 403
+
+    form = RecipeForm(obj=recipe)
+
+    if form.validate_on_submit():
+        try:
+            recipe.name = form.name.data
+            recipe.description = form.description.data
+            recipe.public = form.public.data
+            recipe.category_id = form.category_id.data if form.category_id.data != 0 else None
+            recipe.origin_id = form.origin_id.data if form.origin_id.data != 0 else None
+
+            # Clear existing ingredients and steps
+            Ingredient.query.filter_by(recipe_id=recipe.id).delete()
+            Step.query.filter_by(recipe_id=recipe.id).delete()
+
             # Handle main recipe image (optional)
             if form.recipe_image.data:
                 ok, url = upload_service.upload_file(form.recipe_image.data)
                 if ok and url:
+                    # Remove old image if it exists
+                    Image.query.filter_by(recipe_id=recipe.id).delete()
                     db.session.add(Image(url=url, recipe_id=recipe.id))
 
             # Parse ingredients from request
@@ -210,32 +285,37 @@ def add_recipe():
                     )
                     db.session.add(step)
 
-            # Handle step images if any (store as additional recipe images)
-            step_images = request.files.getlist('step_images[]')
-            for file_storage in step_images:
-                if getattr(file_storage, 'filename', ''):
-                    ok, url = upload_service.upload_file(file_storage)
-                    if ok and url:
-                        db.session.add(Image(url=url, recipe_id=recipe.id))
-
             db.session.commit()
-            flash("Recipe created successfully!", "success")
+            flash("Recipe updated successfully!", "success")
             return redirect(url_for("dashboard.my_recipes"))
 
         except Exception as e:
             db.session.rollback()
-            flash("An error occurred while creating the recipe. Please try again.", "error")
+            flash("An error occurred while updating the recipe. Please try again.", "error")
 
-    return render_template("dashboard/add_recipe.html", form=form)
+    return render_template("dashboard/edit_recipe.html", form=form, recipe=recipe)
 
-@dashboard_bp.route("/settings", methods=["GET", "POST"])
+@dashboard_bp.route("/recipe/<int:recipe_id>/delete", methods=["GET", "POST"])
 @login_required
-def settings():
-    form = SettingsForm(obj=current_user)
+def delete_recipe(recipe_id):
+    recipe = Recipe.query.get_or_404(recipe_id)
+    if recipe.user_id != current_user.id:
+        return render_template("dashboard/error.html", message="You are not authorized to delete this recipe."), 403
+
+    db.session.delete(recipe)
+    db.session.commit()
+    flash("Recipe deleted successfully!", "success")
+    return redirect(url_for("dashboard.my_recipes"))
+
+@dashboard_bp.route("/recipe/<int:recipe_id>/comment", methods=["POST"])
+@login_required
+def add_comment(recipe_id):
+    form = CommentForm()
     if form.validate_on_submit():
-        current_user.name = form.name.data
-        current_user.email = form.email.data
+        comment = Comment(comment_text=form.comment_text.data, recipe_id=recipe_id, user_id=current_user.id)
+        db.session.add(comment)
         db.session.commit()
-        flash("Settings updated successfully!", "success")
-        return redirect(url_for('dashboard.settings'))
-    return render_template("dashboard/settings.html", form=form)
+        flash("Comment posted!", "success")
+    else:
+        flash("Error posting comment.", "error")
+    return redirect(url_for('dashboard.view_recipe', recipe_id=recipe_id))

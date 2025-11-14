@@ -21,7 +21,7 @@
   </form>
 
   <form method="post" class="space-y-4">
-    {{ csrf_token() }}
+    {{ form.hidden_tag() }}
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
       {% set meal_types = ['breakfast','lunch','dinner'] %}
       {% for mt in meal_types %}
@@ -38,7 +38,7 @@
       {% endfor %}
     </div>
     <div class="text-right">
-      <button class="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded">Save Plan</button>
+      {{ form.submit(class="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded") }}
     </div>
   </form>
 

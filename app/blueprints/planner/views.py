@@ -6,6 +6,7 @@ from app.models.meal import MealPlan, MealEntry
 from app.models.recipe import Recipe
 from app.models.ingredients import Ingredient
 from app.services.nutrition import estimate_recipe_macros, score_recipe_for_goal
+from app.blueprints.planner.forms import MealPlannerForm
 
 
 planner_bp = Blueprint("planner", __name__, url_prefix="/planner")
@@ -30,7 +31,8 @@ def index():
     except ValueError:
         selected_date = date.today()
 
-    if request.method == "POST":
+    form = MealPlannerForm()
+    if form.validate_on_submit():
         plan = _get_or_create_plan(current_user.id, selected_date)
         # Clear existing entries for simplicity
         MealEntry.query.filter_by(meal_plan_id=plan.id).delete()
@@ -75,6 +77,7 @@ def index():
         recipes=recipes,
         totals=totals,
         selected_recipes=selected_recipes,
+        form=form,
     )
 
 

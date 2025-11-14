@@ -1,78 +1,48 @@
 {% extends "dashboard/base.html" %}
-
 {% block title %}{{ recipe.name }} - ODiGO{% endblock %}
-
 {% block dashboard_content %}
-<!-- Recipe Header -->
-<div class="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 mb-8">
-    <div class="relative">
+<div class="recipe-detail-container">
+    <!-- Header with Background Image -->
+    <div class="relative bg-gray-800 rounded-3xl overflow-hidden mb-8 shadow-lg">
         {% if recipe.images %}
-        <img src="{{ recipe.images[0].url }}" alt="{{ recipe.name }}" class="w-full h-64 md:h-80 object-cover">
-        {% else %}
-        <div
-            class="w-full h-64 md:h-80 bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center">
-            <svg class="w-24 h-24 text-white opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z">
-                </path>
-            </svg>
-        </div>
+        <img src="{{ recipe.images[0].url }}" alt="{{ recipe.name }}" class="absolute inset-0 w-full h-full object-cover opacity-40">
         {% endif %}
-
-        <!-- Back Button -->
-        <div class="absolute top-4 left-4">
-            <a href="javascript:history.back()"
-                class="bg-white/20 backdrop-blur-sm text-white p-2 rounded-full hover:bg-white/30 transition-colors">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-                </svg>
-            </a>
-        </div>
-
-        <!-- Action Buttons -->
-        <div class="absolute top-4 right-4 flex space-x-2">
-            <button onclick="window.print()"
-                class="bg-white/20 backdrop-blur-sm text-white p-2 rounded-full hover:bg-white/30 transition-colors">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm7-14a2 2 0 11-4 0 2 2 0 014 0z">
-                    </path>
-                </svg>
-            </button>
+        <div class="relative p-8 md:p-12 text-white">
+            <a href="javascript:history.back()" class="absolute top-6 left-6 text-white hover:text-gray-200 transition-colors"><i class="fa-solid fa-arrow-left"></i> Back</a>
+            <h1 class="text-4xl md:text-6xl font-bold leading-tight mb-4">{{ recipe.name }}</h1>
+            <div class="flex items-center space-x-4 text-lg mb-6">
+                <span>By {{ recipe.author.name or 'Anonymous' }}</span>
+                <span>&bull;</span>
+                <span>{{ recipe.created_at.strftime('%b %d, %Y') }}</span>
+            </div>
+            <div class="flex space-x-4">
+                <a href="{{ url_for('planner.index', add_recipe_id=recipe.id) }}" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg transition-colors">Add to Meal Plan</a>
             <button
                 class="bg-white/20 backdrop-blur-sm text-white p-2 rounded-full hover:bg-white/30 transition-colors">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z">
-                    </path>
-                </svg>
+                <i class="fa-solid fa-share-nodes w-5 h-5"></i>
             </button>
-            {% if recipe.user_id == current_user.id %}
-            <button
-                class="bg-white/20 backdrop-blur-sm text-white p-2 rounded-full hover:bg-white/30 transition-colors">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
-                    </path>
-                </svg>
-            </button>
-            {% endif %}
+            </div>
         </div>
     </div>
 
-    <div class="p-6 md:p-8">
-        <div class="flex flex-col md:flex-row md:items-start md:justify-between mb-6">
-            <div class="flex-1 mb-4 md:mb-0 md:mr-8">
-                <h1 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4">{{ recipe.name }}</h1>
-                {% if recipe.description %}
-                <div class="prose max-w-none">{{ recipe.description|safe }}</div>
-                {% endif %}
+    <!-- Main Content -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Left Column (Ingredients and Meta) -->
+        <div class="lg:col-span-1 space-y-8">
+            <div class="bg-white p-6 rounded-2xl shadow-md">
+                <h2 class="text-2xl font-bold mb-4">Ingredients</h2>
+                <ul class="space-y-3">
+                    {% for ingredient in recipe.ingredients %}
+                    <li class="flex items-center">
+                        <input type="checkbox" class="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mr-3">
+                        <span class="text-gray-700">{{ ingredient.quantity }} {{ ingredient.unit }} {{ ingredient.name }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
             </div>
-
-            <!-- Recipe Meta -->
-            <div class="bg-gray-50 rounded-xl p-6 md:w-64 flex-shrink-0">
-                <div class="space-y-4">
+            <div class="bg-white p-6 rounded-2xl shadow-md">
+                <h2 class="text-2xl font-bold mb-4">Details</h2>
+                 <div class="space-y-4">
                     <!-- Author -->
                     <div class="flex items-center">
                         <div
@@ -123,10 +93,6 @@
                         <div class="text-sm text-gray-800">{{ recipe.created_at.strftime('%B %d, %Y') }}</div>
                     </div>
 
-                    <div class="mt-4">
-                        <a href="{{ url_for('planner.index', add_recipe_id=recipe.id) }}" class="w-full text-center bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors">Add to Meal Plan</a>
-                    </div>
-
                     <div class="mt-4 pt-4 border-t border-gray-200">
                         <div class="text-sm text-gray-500 mb-2">Share this recipe</div>
                         <div class="flex space-x-2">
@@ -138,62 +104,12 @@
                 </div>
             </div>
         </div>
-    </div>
-</div>
 
-<!-- Recipe Content -->
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-8 printable">
-    <!-- Main Content -->
-    <div class="lg:col-span-2 space-y-8">
-        <!-- Ingredients -->
-        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-                <svg class="w-6 h-6 mr-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M9 5H7a2 2 0 00-2 2v1a2 2 0 00-2 2v2a2 2 0 002 2v1a2 2 0 002 2h2a2 2 0 002-2v-1a2 2 0 002-2V9a2 2 0 00-2-2V7a2 2 0 00-2-2z">
-                    </path>
-                </svg>
-                Ingredients
-            </h2>
-
-            {% if recipe.ingredients %}
-            <div class="space-y-3">
-                {% for ingredient in recipe.ingredients %}
-                <div class="flex items-center">
-                    <input type="checkbox" class="mr-3 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
-                    <span class="text-gray-700">{{ ingredient.quantity }} {{ ingredient.unit }} {{ ingredient.name
-                        }}</span>
-                    {% if ingredient.notes %}
-                    <span class="text-gray-500 text-sm ml-2">({{ ingredient.notes }})</span>
-                    {% endif %}
-                </div>
-                {% endfor %}
-            </div>
-            {% else %}
-            <div class="text-center py-8 text-gray-500">
-                <svg class="w-12 h-12 mx-auto mb-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M9 5H7a2 2 0 00-2 2v1a2 2 0 00-2 2v2a2 2 0 002 2v1a2 2 0 002 2h2a2 2 0 002-2v-1a2 2 0 002-2V9a2 2 0 00-2-2V7a2 2 0 00-2-2z">
-                    </path>
-                </svg>
-                <p>No ingredients listed yet</p>
-            </div>
-            {% endif %}
-        </div>
-
-        <!-- Instructions -->
-        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-                <svg class="w-6 h-6 mr-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
-                    </path>
-                </svg>
-                Instructions
-            </h2>
-
-            {% if recipe.steps %}
-            <div class="space-y-6">
+        <!-- Right Column (Instructions and Comments) -->
+        <div class="lg:col-span-2 space-y-8">
+            <div class="bg-white p-6 rounded-2xl shadow-md">
+                <h2 class="text-2xl font-bold mb-4">Instructions</h2>
+                 <div class="space-y-6">
                 {% for step in recipe.steps %}
                 <div class="flex">
                     <div
@@ -215,52 +131,10 @@
                 </div>
                 {% endfor %}
             </div>
-            {% else %}
-            <div class="text-center py-8 text-gray-500">
-                <svg class="w-12 h-12 mx-auto mb-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
-                    </path>
-                </svg>
-                <p>No cooking instructions provided yet</p>
             </div>
-            {% endif %}
-        </div>
-    </div>
-
-    <!-- Sidebar -->
-    <div class="space-y-6">
-        <!-- Recipe Images -->
-        {% if recipe.images and recipe.images|length > 1 %}
-        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-            <h3 class="text-lg font-semibold text-gray-800 mb-4">More Photos</h3>
-            <div class="grid grid-cols-2 gap-3">
-                {% for image in recipe.images[1:] %}
-                <img src="{{ image.url }}" alt="{{ recipe.name }}"
-                    class="w-full h-24 object-cover rounded-lg cursor-pointer hover:opacity-75 transition-opacity">
-                {% endfor %}
-            </div>
-        </div>
-        {% endif %}
-
-        <!-- Recipe Videos -->
-        {% if recipe.videos %}
-        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-            <h3 class="text-lg font-semibold text-gray-800 mb-4">Video Guide</h3>
-            {% for video in recipe.videos %}
-            <div
-                class="relative bg-gray-100 rounded-lg aspect-video mb-3 cursor-pointer hover:bg-gray-200 transition-colors">
-                <div class="absolute inset-0 flex items-center justify-center">
-                    <svg class="w-12 h-12 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M8 5v14l11-7z" />
-                    </svg>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-        {% endif %}
-
-        <!-- Comments Preview -->
+            <div class="bg-white p-6 rounded-2xl shadow-md">
+                <h2 class="text-2xl font-bold mb-4">Comments</h2>
+                <!-- Comments Preview -->
         <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
             <h3 class="text-lg font-semibold text-gray-800 mb-4">Comments</h3>
 
@@ -292,25 +166,18 @@
 
             <!-- Add Comment -->
             <div class="border-t border-gray-100 pt-4">
-                <textarea placeholder="Add a comment..."
-                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none"
-                    rows="3"></textarea>
-                <button
-                    class="mt-2 bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-indigo-700 transition-colors">
-                    Post Comment
-                </button>
+                <form method="POST" action="{{ url_for('dashboard.add_comment', recipe_id=recipe.id) }}">
+                    {{ form.hidden_tag() }}
+                    <div class="mb-4">
+                        {{ form.comment_text.label(class="block text-sm font-medium text-gray-700") }}
+                        {{ form.comment_text(class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm", rows=4) }}
+                    </div>
+                    <div>
+                        {{ form.submit(class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500") }}
+                    </div>
+                </form>
             </div>
         </div>
-
-        <!-- Related Recipes -->
-        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-            <h3 class="text-lg font-semibold text-gray-800 mb-4">Similar Recipes</h3>
-            <div class="space-y-3">
-                <!-- This would be populated with related recipes -->
-                <div class="text-center py-4 text-gray-500 text-sm">
-                    No similar recipes found yet
-                </div>
-            </div>
         </div>
     </div>
 </div>

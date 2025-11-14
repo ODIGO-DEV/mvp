@@ -1,232 +1,315 @@
 {% extends "dashboard/base.html" %}
 
 {% block title %}My Recipes - ODiGO{% endblock %}
-
 {% block dashboard_content %}
-<!-- Header -->
-<div class="flex items-center justify-between mb-8">
-    <div>
-        <h1 class="text-3xl font-bold text-gray-800 mb-2">My Recipes 👨‍🍳</h1>
-        <p class="text-gray-600">Manage and organize your culinary creations</p>
-    </div>
-    <a href="#"
-        class="bg-indigo-600 text-white px-6 py-3 rounded-xl hover:bg-indigo-700 transition-colors flex items-center">
-        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-        </svg>
-        Add New Recipe
+<!-- Page Header -->
+<div class="flex items-start justify-between gap-4 mb-6">
+  <div>
+    <h1 class="text-2xl sm:text-3xl font-bold text-gray-800">My Recipes 👨‍🍳</h1>
+    <p class="text-sm text-gray-600 mt-1">Manage and organize your culinary creations</p>
+  </div>
+
+  <!-- Desktop Add Button -->
+  <div class="hidden sm:flex items-center gap-3">
+    <a href="{{ url_for('dashboard.add_recipe') }}"
+      class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg shadow-sm transition">
+      <i class="fa-solid fa-plus w-4 h-4"></i>
+      Add New Recipe
     </a>
+  </div>
 </div>
 
-<!-- Stats Bar -->
-<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-    <div class="bg-white rounded-xl p-4 border border-gray-100">
-        <div class="text-2xl font-bold text-gray-800">{{ recipes.total }}</div>
-        <div class="text-sm text-gray-600">Total Recipes</div>
+<!-- Stats -->
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+  <div class="bg-white border border-gray-100 rounded-xl p-3">
+    <div class="text-lg font-semibold text-gray-800">{{ recipes.total }}</div>
+    <div class="text-xs text-gray-500 mt-1">Total</div>
+  </div>
+  <div class="bg-white border border-gray-100 rounded-xl p-3">
+    <div class="text-lg font-semibold text-indigo-600">
+      {{ recipes.items|selectattr('public')|list|length }}
     </div>
-    <div class="bg-white rounded-xl p-4 border border-gray-100">
-        <div class="text-2xl font-bold text-green-600">{{ recipes.items|selectattr('public')|list|length }}</div>
-        <div class="text-sm text-gray-600">Public</div>
+    <div class="text-xs text-gray-500 mt-1">Public</div>
+  </div>
+  <div class="bg-white border border-gray-100 rounded-xl p-3">
+    <div class="text-lg font-semibold text-orange-600">
+      {{ recipes.items|rejectattr('public')|list|length }}
     </div>
-    <div class="bg-white rounded-xl p-4 border border-gray-100">
-        <div class="text-2xl font-bold text-orange-600">{{ recipes.items|rejectattr('public')|list|length }}</div>
-        <div class="text-sm text-gray-600">Private</div>
-    </div>
-    <div class="bg-white rounded-xl p-4 border border-gray-100">
-        <div class="text-2xl font-bold text-purple-600">0</div>
-        <div class="text-sm text-gray-600">Favorites</div>
-    </div>
+    <div class="text-xs text-gray-500 mt-1">Private</div>
+  </div>
+  <div class="bg-white border border-gray-100 rounded-xl p-3">
+    <div class="text-lg font-semibold text-indigo-600">0</div>
+    <div class="text-xs text-gray-500 mt-1">Favorites</div>
+  </div>
 </div>
 
-<!-- Filter and Sort -->
-<div class="bg-white rounded-xl p-4 border border-gray-100 mb-8">
-    <form method="GET" action="{{ url_for('dashboard.my_recipes') }}">
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div class="flex flex-col sm:flex-row gap-4">
-                <select name="category" class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500">
-                    <option value="">All Categories</option>
-                    {% for category in categories %}
-                    <option value="{{ category.id }}" {% if category.id == current_category %}selected{% endif %}>{{ category.name }}</option>
-                    {% endfor %}
-                </select>
+<!-- Filter & Sort -->
+<form method="GET" action="{{ url_for('dashboard.my_recipes') }}" class="bg-white border border-gray-100 rounded-xl p-3 mb-6">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <div class="flex items-center gap-2 flex-wrap">
+      <!-- Category select -->
+      <label class="sr-only" for="category">Category</label>
+      <div class="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-2 py-1">
+        <i class="fa-solid fa-layer-group w-4 h-4 text-indigo-500"></i>
+        <select id="category" name="category" class="bg-transparent text-sm focus:outline-none">
+          <option value="">All categories</option>
+          {% for category in categories %}
+          <option value="{{ category.id }}" {% if category.id == current_category %}selected{% endif %}>{{ category.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
 
-                <select name="visibility" class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500">
-                    <option value="all" {% if current_visibility == 'all' %}selected{% endif %}>All Visibility</option>
-                    <option value="public" {% if current_visibility == 'public' %}selected{% endif %}>Public</option>
-                    <option value="private" {% if current_visibility == 'private' %}selected{% endif %}>Private</option>
-                </select>
-            </div>
+      <!-- Visibility select -->
+      <div class="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-2 py-1">
+        <i class="fa-solid fa-eye w-4 h-4 text-indigo-500"></i>
+        <select name="visibility" class="bg-transparent text-sm focus:outline-none">
+          <option value="all" {% if current_visibility == 'all' %}selected{% endif %}>All</option>
+          <option value="public" {% if current_visibility == 'public' %}selected{% endif %}>Public</option>
+          <option value="private" {% if current_visibility == 'private' %}selected{% endif %}>Private</option>
+        </select>
+      </div>
+    </div>
 
-            <div class="flex items-center gap-4">
-                <select name="sort_by" class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500">
-                    <option value="date_desc" {% if current_sort_by == 'date_desc' %}selected{% endif %}>Sort by Date (Newest)</option>
-                    <option value="date_asc" {% if current_sort_by == 'date_asc' %}selected{% endif %}>Sort by Date (Oldest)</option>
-                    <option value="name_asc" {% if current_sort_by == 'name_asc' %}selected{% endif %}>Sort by Name (A-Z)</option>
-                    <option value="name_desc" {% if current_sort_by == 'name_desc' %}selected{% endif %}>Sort by Name (Z-A)</option>
-                </select>
+    <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-2 py-1">
+        <i class="fa-solid fa-sort w-4 h-4 text-indigo-500"></i>
+        <select name="sort_by" class="bg-transparent text-sm focus:outline-none">
+          <option value="date_desc" {% if current_sort_by == 'date_desc' %}selected{% endif %}>Newest</option>
+          <option value="date_asc" {% if current_sort_by == 'date_asc' %}selected{% endif %}>Oldest</option>
+          <option value="name_asc" {% if current_sort_by == 'name_asc' %}selected{% endif %}>Name A–Z</option>
+          <option value="name_desc" {% if current_sort_by == 'name_desc' %}selected{% endif %}>Name Z–A</option>
+        </select>
+      </div>
 
-                <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">Filter</button>
-            </div>
-        </div>
-    </form>
-</div>
+      <button type="submit" class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-lg text-sm transition">
+        <i class="fa-solid fa-filter w-4 h-4"></i>
+        Filter
+      </button>
+    </div>
+  </div>
+</form>
 
 <!-- Recipes Grid -->
 {% if recipes.items %}
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-    {% for recipe in recipes.items %}
-    <div
-        class="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300 group">
-        <div class="relative">
-            {% if recipe.images %}
-            <img src="{{ recipe.images[0].url }}" alt="{{ recipe.name }}" class="w-full h-48 object-cover">
-            {% else %}
-            <div class="w-full h-48 bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center">
-                <svg class="w-16 h-16 text-white opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z">
-                    </path>
-                </svg>
-            </div>
-            {% endif %}
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-6">
+  {% for recipe in recipes.items %}
+  <article class="group bg-white border border-gray-100 rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition relative">
+    <!-- image -->
+    <div class="relative">
+      {% if recipe.images %}
+      <img src="{{ recipe.images[0].url }}" alt="{{ recipe.name }}" class="w-full h-40 object-cover">
+      {% else %}
+      <div class="w-full h-40 bg-gradient-to-r from-indigo-500 to-indigo-600 flex items-center justify-center">
+        <i class="fa-solid fa-image w-12 h-12 text-white opacity-60"></i>
+      </div>
+      {% endif %}
 
-            <!-- Status Badge -->
-            <div class="absolute top-3 left-3">
-                <span class="bg-white/20 backdrop-blur-sm text-white px-2 py-1 rounded-full text-xs">
-                    {{ "🌍 Public" if recipe.public else "🔒 Private" }}
-                </span>
-            </div>
+      <!-- status & actions -->
+      <div class="absolute top-3 left-3">
+        <span class="inline-flex items-center gap-1 bg-white/20 text-white text-xs px-2 py-1 rounded-full backdrop-blur-sm">
+          {% if recipe.public %}🌍 Public{% else %}🔒 Private{% endif %}
+        </span>
+      </div>
 
-            <!-- Actions -->
-            <div class="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                <div class="flex space-x-2">
-                    <button
-                        class="bg-white/20 backdrop-blur-sm text-white p-2 rounded-full hover:bg-white/30 transition-colors">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
-                            </path>
-                        </svg>
-                    </button>
-                    <button
-                        class="bg-white/20 backdrop-blur-sm text-white p-2 rounded-full hover:bg-white/30 transition-colors">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
-                            </path>
-                        </svg>
-                    </button>
-                </div>
-            </div>
-        </div>
+      <!-- actions (shows on hover) -->
+      <div class="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2" aria-hidden="true">
+        <!-- view -->
+<button class="bg-white/20 text-white p-1.5 rounded-full backdrop-blur-sm hover:bg-white/30" title="Quick View" 
+                    onclick="openPreview({{ recipe.id|tojson }})">
+              <i class="fa-solid fa-eye w-4 h-4"></i>
+            </button>
 
-        <div class="p-6">
-            <h3 class="font-semibold text-gray-800 mb-2 group-hover:text-indigo-600 transition-colors">{{ recipe.name }}
-            </h3>
-            {% if recipe.description %}
-            <p class="text-gray-600 text-sm mb-3 line-clamp-2">{{ recipe.description|striptags|truncate(140) }}</p>
-            {% endif %}
+        <!-- edit -->
+        <a href="{{ url_for('dashboard.edit_recipe', recipe_id=recipe.id) }}"
+          class="bg-white/20 text-white p-1.5 rounded-full backdrop-blur-sm hover:bg-white/30" title="Edit">
+          <i class="fa-solid fa-pen-to-square w-4 h-4"></i>
+        </a>
 
-            <div class="flex items-center justify-between text-sm text-gray-500 mb-4">
-                <span>{{ recipe.created_at.strftime('%b %d, %Y') }}</span>
-                {% if recipe.category %}
-                <span class="bg-gray-100 px-2 py-1 rounded-full">{{ recipe.category.name }}</span>
-                {% endif %}
-            </div>
-
-            <div class="flex items-center justify-between">
-                <div class="flex items-center text-sm text-gray-500">
-                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z">
-                        </path>
-                    </svg>
-                    {{ "0" }} views
-                </div>
-
-                <a href="{{ url_for('dashboard.view_recipe', recipe_id=recipe.id) }}"
-                    class="text-indigo-600 hover:text-indigo-700 font-medium text-sm">
-                    View Recipe →
-                </a>
-            </div>
-        </div>
+        <!-- delete -->
+        <button class="bg-white/20 text-white p-1.5 rounded-full backdrop-blur-sm hover:bg-white/30" title="Delete"
+          onclick="confirmDelete('{{ url_for('dashboard.delete_recipe', recipe_id=recipe.id) }}')">
+          <i class="fa-solid fa-trash w-4 h-4"></i>
+        </button>
+      </div>
     </div>
-    {% endfor %}
+
+    <!-- content -->
+    <div class="p-4">
+      <h3 class="font-semibold text-gray-800 mb-1 truncate">{{ recipe.name }}</h3>
+
+      {% if recipe.description %}
+      <p class="text-sm text-gray-600 line-clamp-2 mb-3">{{ recipe.description|striptags|truncate(120) }}</p>
+      {% endif %}
+
+      <div class="flex items-center justify-between text-xs text-gray-500">
+        <div>
+          <span>{{ recipe.created_at.strftime('%b %d, %Y') }}</span>
+        </div>
+        <div>
+          {% if recipe.category %}
+          <span class="bg-gray-100 px-2 py-0.5 rounded-full text-xs">{{ recipe.category.name }}</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="mt-3 flex items-center justify-between">
+<div class="text-xs text-gray-500 flex items-center gap-2">
+          <i class="fa-solid fa-eye w-4 h-4"></i>
+          0 views
+        </div>
+        <a href="{{ url_for('dashboard.view_recipe', recipe_id=recipe.id) }}" class="text-indigo-600 text-sm font-medium hover:underline">
+          View Recipe →
+        </a>
+      </div>
+    </div>
+  </article>
+  {% endfor %}
 </div>
 
 <!-- Pagination -->
 {% if recipes.pages > 1 %}
-<div class="flex justify-center">
-    <nav class="flex items-center space-x-2">
-        {% if recipes.has_prev %}
-        <a href="{{ url_for('dashboard.my_recipes', page=recipes.prev_num) }}"
-            class="px-3 py-2 text-gray-500 hover:text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50">
-            Previous
-        </a>
-        {% endif %}
+<div class="flex justify-center mb-6">
+  <nav class="inline-flex items-center gap-2" aria-label="Pagination">
+    {% if recipes.has_prev %}
+    <a href="{{ url_for('dashboard.my_recipes', page=recipes.prev_num) }}" class="px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">Previous</a>
+    {% endif %}
 
-        {% for page_num in recipes.iter_pages() %}
-        {% if page_num %}
+    {% for page_num in recipes.iter_pages() %}
+      {% if page_num %}
         {% if page_num != recipes.page %}
-        <a href="{{ url_for('dashboard.my_recipes', page=page_num) }}"
-            class="px-3 py-2 text-gray-500 hover:text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50">
-            {{ page_num }}
-        </a>
+        <a href="{{ url_for('dashboard.my_recipes', page=page_num) }}" class="px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">{{ page_num }}</a>
         {% else %}
-        <span class="px-3 py-2 bg-indigo-600 text-white border border-indigo-600 rounded-lg">
-            {{ page_num }}
-        </span>
+        <span class="px-3 py-2 rounded-lg bg-indigo-600 text-white text-sm">{{ page_num }}</span>
         {% endif %}
-        {% else %}
-        <span class="px-3 py-2 text-gray-400">…</span>
-        {% endif %}
-        {% endfor %}
+      {% else %}
+        <span class="px-2 text-gray-400">…</span>
+      {% endif %}
+    {% endfor %}
 
-        {% if recipes.has_next %}
-        <a href="{{ url_for('dashboard.my_recipes', page=recipes.next_num) }}"
-            class="px-3 py-2 text-gray-500 hover:text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50">
-            Next
-        </a>
-        {% endif %}
-    </nav>
+    {% if recipes.has_next %}
+    <a href="{{ url_for('dashboard.my_recipes', page=recipes.next_num) }}" class="px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">Next</a>
+    {% endif %}
+  </nav>
 </div>
 {% endif %}
 
+<!-- Empty state -->
 {% else %}
-<!-- Empty State -->
 <div class="text-center py-16">
-    <div
-        class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-6">
-        <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253">
-            </path>
-        </svg>
-    </div>
-    <h3 class="text-2xl font-bold text-gray-800 mb-4">No recipes yet! 🍽️</h3>
-    <p class="text-gray-600 mb-8 max-w-md mx-auto">Start your culinary journey by creating your first recipe. Share your
-        favorite dishes with the world!</p>
-    <div class="space-y-4">
-        <a href="#"
-            class="inline-flex items-center px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors">
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6">
-                </path>
-            </svg>
-            Create Your First Recipe
-        </a>
-        <div class="text-gray-500">or</div>
-        <a href="{{ url_for('dashboard.explore') }}"
-            class="inline-flex items-center px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors">
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9"></path>
-            </svg>
-            Explore Global Recipes
-        </a>
-    </div>
+  <div class="mx-auto mb-5 w-24 h-24 rounded-full bg-gradient-to-br from-indigo-600 to-indigo-700 flex items-center justify-center">
+    <i class="fa-solid fa-utensils w-10 h-10 text-white"></i>
+  </div>
+  <h3 class="text-lg font-semibold text-gray-800 mb-2">No recipes yet! 🍽️</h3>
+  <p class="text-sm text-gray-600 mb-6 max-w-lg mx-auto">Start your culinary journey by creating your first recipe. Share your favorite dishes with the world!</p>
+
+  <div class="flex flex-col sm:flex-row gap-3 justify-center">
+    <a href="{{ url_for('dashboard.add_recipe') }}" class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg">
+      <i class="fa-solid fa-plus w-4 h-4"></i>
+      Create your first recipe
+    </a>
+<a href="{{ url_for('dashboard.explore') }}" class="inline-flex items-center gap-2 border border-gray-200 px-4 py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-50">
+      <i class="fa-solid fa-compass w-4 h-4"></i>
+      Explore global recipes
+    </a>
+  </div>
 </div>
 {% endif %}
+
+<!-- Mobile FAB -->
+<a href="{{ url_for('dashboard.add_recipe') }}"
+  id="fab-add"
+  class="fixed bottom-5 right-5 sm:hidden inline-flex items-center justify-center w-14 h-14 rounded-full shadow-lg bg-indigo-600 text-white z-40"
+  aria-label="Add new recipe" title="Add new recipe">
+  <i class="fa-solid fa-plus w-6 h-6"></i>
+</a>
+
+<!-- Preview Modal (hidden by default) -->
+<div id="recipe-preview" class="fixed inset-0 z-50 hidden items-center justify-center px-4 py-6">
+  <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closePreview()" aria-hidden="true"></div>
+  <div class="relative bg-white rounded-xl max-w-2xl w-full overflow-hidden shadow-2xl">
+    <div class="flex items-center justify-between p-4 border-b border-gray-100">
+      <h3 id="preview-title" class="text-lg font-semibold text-gray-800">Recipe Title</h3>
+      <div class="flex items-center gap-2">
+        <button class="text-sm text-indigo-600 hover:underline" id="preview-edit">Edit</button>
+        <button class="text-sm text-gray-500" onclick="closePreview()">Close</button>
+      </div>
+    </div>
+
+    <div class="p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="md:col-span-1">
+        <img id="preview-image" src="" alt="" class="w-full h-40 object-cover rounded-md bg-gray-100">
+      </div>
+      <div class="md:col-span-2">
+        <div class="text-xs text-gray-500 mb-2" id="preview-meta">Category • Date • Visibility</div>
+        <p id="preview-desc" class="text-sm text-gray-700 leading-relaxed"></p>
+        <div class="mt-4 flex items-center gap-3">
+          <a id="preview-open" href="#" class="inline-flex items-center gap-2 text-indigo-600 font-medium text-sm">Open full recipe →</a>
+          <button id="preview-delete" class="text-sm text-red-500">Delete</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- JS: modal, preview, delete confirm -->
+<script>
+  // hold a simple mapping of recipe data: populate from server into a JS object
+  const RECIPES = {
+    {% for r in recipes.items %}
+    "{{ r.id }}": {
+      id: "{{ r.id }}",
+      name: {{ r.name|tojson }},
+      description: {{ (r.description|striptags if r.description else '')|tojson }},
+      image: {{ (r.images[0].url if r.images) | default('') | tojson }},
+      category: {{ (r.category.name if r.category else '')|tojson }},
+      date: "{{ r.created_at.strftime('%b %d, %Y') }}",
+      public: {{ 'true' if r.public else 'false' }},
+      url_view: "{{ url_for('dashboard.view_recipe', recipe_id=r.id) }}",
+      url_edit: "{{ url_for('dashboard.edit_recipe', recipe_id=r.id) }}",
+      url_delete: "{{ url_for('dashboard.delete_recipe', recipe_id=r.id) }}"
+    }{% if not loop.last %},{% endif %}
+    {% endfor %}
+  };
+
+  // open preview by id
+  function openPreview(id) {
+    const recipe = RECIPES[String(id)];
+    if (!recipe) return;
+    document.getElementById('preview-title').textContent = recipe.name;
+    document.getElementById('preview-desc').textContent = recipe.description || 'No description provided.';
+    document.getElementById('preview-image').src = recipe.image || '';
+    document.getElementById('preview-image').alt = recipe.name;
+    document.getElementById('preview-meta').textContent = (recipe.category ? recipe.category + ' • ' : '') + recipe.date + ' • ' + (recipe.public === true || recipe.public === 'true' ? 'Public' : 'Private');
+    document.getElementById('preview-open').href = recipe.url_view;
+    document.getElementById('preview-edit').onclick = function() { window.location = recipe.url_edit; };
+    document.getElementById('preview-delete').onclick = function() { confirmDelete(recipe.url_delete); };
+    document.getElementById('recipe-preview').classList.remove('hidden');
+    document.getElementById('recipe-preview').classList.add('flex');
+    document.body.style.overflow = 'hidden';
+    // focus for accessibility
+    document.getElementById('preview-title').focus();
+  }
+
+  function closePreview() {
+    document.getElementById('recipe-preview').classList.add('hidden');
+    document.getElementById('recipe-preview').classList.remove('flex');
+    document.body.style.overflow = '';
+  }
+
+  // close with Esc
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') closePreview();
+  });
+
+  // confirm delete (simple)
+  function confirmDelete(deleteUrl) {
+    const ok = confirm('Are you sure you want to delete this recipe? This action cannot be undone.');
+    if (ok) {
+      // navigate to delete endpoint (GET/POST depends on your view)
+      // Prefer to submit a form/POST in production. This uses GET for simplicity; adapt as required.
+      window.location = deleteUrl;
+    }
+  }
+</script>
 {% endblock %}
+
