@@ -9,16 +9,10 @@ class IngredientForm(FlaskForm):
     name = StringField("Name", validators=[DataRequired()])
     quantity = FloatField("Quantity", validators=[Optional()])
     unit = StringField("Unit")
-    notes = StringField("Notes", validators=[Optional()])
-    images = MultipleFileField("Ingredient Images", validators=[Optional()])
 
 class StepForm(FlaskForm):
     step_number = IntegerField("Step Number", validators=[DataRequired()])
     instruction = TextAreaField("Instruction", validators=[DataRequired()])
-    duration = IntegerField("Duration (minutes)", validators=[Optional()])
-    name = StringField("Step Name", validators=[Optional()])
-    description = TextAreaField("Additional Description", validators=[Optional()])
-    images = MultipleFileField("Step Images", validators=[Optional()])
 
 class RecipeForm(FlaskForm):
     name = StringField("Recipe Name", validators=[DataRequired(), Length(min=3, max=150)])

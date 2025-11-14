@@ -1,0 +1,1281 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Add Recipe{% endblock %}
+
+{% block extra_head %}
+<style>
+    .ingredient-suggestions {
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e5e7eb;
+        margin-top: 2px;
+    }
+
+    .ingredient-suggestions div:hover {
+        background-color: #f0fdf4 !important;
+        transition: background-color 0.15s ease;
+    }
+
+    .recipe-step {
+        scroll-margin-top: 2rem;
+    }
+
+    .progress-connector {
+        background: linear-gradient(to right, #e5e7eb 0%, #e5e7eb 50%, #e5e7eb 100%);
+        height: 2px;
+        position: relative;
+    }
+
+    .progress-connector.active {
+        background: linear-gradient(to right, #4f46e5 0%, #4f46e5 50%, #e5e7eb 100%);
+    }
+
+    .progress-connector.complete {
+        background: linear-gradient(to right, #10b981 0%, #10b981 50%, #10b981 100%);
+    }
+
+    @keyframes slideInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .slide-in-up {
+        animation: slideInUp 0.3s ease-out;
+    }
+
+    .drag-over {
+        border-color: #4f46e5 !important;
+        background-color: #eef2ff !important;
+        transform: scale(1.02);
+        transition: all 0.2s ease;
+    }
+</style>
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-indigo-50">
+    <div class="container mx-auto px-4 py-4">
+        <!-- Compact Header -->
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <h1 class="text-xl font-bold text-gray-900">Create Recipe</h1>
+                <p class="text-xs text-gray-600">Fill in the details below</p>
+            </div>
+            <div class="flex items-center space-x-2 text-xs text-gray-500">
+                <span class="flex items-center">
+                    <div
+                        class="w-4 h-4 bg-indigo-600 text-white rounded-full flex items-center justify-center text-xs mr-1">
+                        1</div>
+                    Details
+                </span>
+                <span class="text-gray-300">→</span>
+                <span class="flex items-center">
+                    <div
+                        class="w-4 h-4 bg-gray-300 text-gray-600 rounded-full flex items-center justify-center text-xs mr-1">
+                        2</div>
+                    Ingredients
+                </span>
+                <span class="text-gray-300">→</span>
+                <span class="flex items-center">
+                    <div
+                        class="w-4 h-4 bg-gray-300 text-gray-600 rounded-full flex items-center justify-center text-xs mr-1">
+                        3</div>
+                    Steps
+                </span>
+            </div>
+        </div>
+
+        <!-- Form Container - Full Width Layout -->
+        <div class="max-w-7xl mx-auto">
+            <!-- Three Column Layout -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                <!-- Left Column: Basic Information -->
+                <div class="lg:col-span-1">
+                    <div class="bg-white rounded-xl shadow-lg p-6 h-fit sticky top-4">
+                        <div class="flex items-center mb-4">
+                            <div
+                                class="w-6 h-6 bg-indigo-600 text-white rounded-full flex items-center justify-center text-xs font-semibold mr-2">
+                                1</div>
+                            <h2 class="text-lg font-bold text-gray-900">Basic Information</h2>
+                        </div>
+
+                        <form method="POST" action="{{ url_for('dashboard.add_recipe') }}" enctype="multipart/form-data"
+                            id="recipe-form">
+                            {{ form.hidden_tag() }}
+
+                            <div class="space-y-4">
+                                <div class="md:col-span-2">
+                                    {{ form.name.label(class="block text-sm font-medium text-gray-700 mb-1") }}
+                                    {{ form.name(class="w-full rounded-lg border-gray-300 shadow-sm
+                                    focus:border-indigo-500
+                                    focus:ring-indigo-500 py-2 px-3 bg-gray-50 focus:bg-white transition-colors",
+                                    placeholder="Recipe name...") }}
+                                </div>
+
+                                <div class="md:col-span-2">
+                                    {{ form.description.label(class="block text-sm font-medium text-gray-700 mb-1") }}
+                                    {{ form.description(class="w-full rounded-lg border-gray-300 shadow-sm
+                                    focus:border-indigo-500 focus:ring-indigo-500 bg-gray-50 focus:bg-white
+                                    transition-colors
+                                    resize-none", rows=2, placeholder="Brief description...") }}
+                                </div>
+
+                                <div>
+                                    {{ form.category_id.label(class="block text-sm font-medium text-gray-700 mb-1") }}
+                                    {{ form.category_id(class="w-full rounded-lg border-gray-300 shadow-sm
+                                    focus:border-indigo-500 focus:ring-indigo-500 bg-gray-50 focus:bg-white
+                                    transition-colors")
+                                    }}
+                                </div>
+
+                                <div>
+                                    {{ form.origin_id.label(class="block text-sm font-medium text-gray-700 mb-1") }}
+                                    {{ form.origin_id(class="w-full rounded-lg border-gray-300 shadow-sm
+                                    focus:border-indigo-500
+                                    focus:ring-indigo-500 bg-gray-50 focus:bg-white transition-colors") }}
+                                </div>
+
+                                <div class="md:col-span-2">
+                                    <div
+                                        class="flex items-center space-x-2 p-3 bg-indigo-50 rounded-lg border border-indigo-100">
+                                        {{ form.public(class="h-4 w-4 rounded border-gray-300 text-indigo-600
+                                        focus:ring-indigo-500") }}
+                                        <div>
+                                            {{ form.public.label(class="text-sm font-medium text-gray-900") }}
+                                            <p class="text-xs text-gray-600">Make visible to other users</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="mt-6 bg-white rounded-xl shadow-lg p-6">
+                    <div class="flex items-center justify-center space-x-4">
+                        <a href="{{ url_for('dashboard.my_recipes') }}"
+                            class="inline-flex items-center px-6 py-3 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors">
+                            <i class="fas fa-arrow-left mr-2"></i>
+                            Cancel
+                        </a>
+                        {{ form.submit(class="inline-flex items-center px-8 py-3 border border-transparent text-sm
+                        font-medium rounded-lg text-white bg-gradient-to-r from-indigo-600 to-purple-600
+                        hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-indigo-500
+                        focus:ring-offset-2 shadow-lg hover:shadow-xl transition-all transform hover:scale-105") }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Middle Column: Images -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <div class="flex items-center mb-4">
+                        <div
+                            class="w-6 h-6 bg-purple-600 text-white rounded-full flex items-center justify-center text-xs font-semibold mr-2">
+                            <i class="fas fa-image text-xs"></i>
+                        </div>
+                        <h2 class="text-lg font-bold text-gray-900">Recipe Images</h2>
+                    </div>
+
+                    <div>
+                        {{ form.recipe_images.label(class="block text-sm font-medium text-gray-700 mb-1") }}
+
+                        <!-- Compact Drag and Drop Zone -->
+                        <div id="drop-zone"
+                            class="mt-1 relative border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-indigo-400 transition-colors bg-gray-50 hover:bg-gray-100">
+                            <div class="space-y-1">
+                                <svg class="mx-auto h-8 w-8 text-gray-400" stroke="currentColor" fill="none"
+                                    viewBox="0 0 48 48">
+                                    <path
+                                        d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                                <div>
+                                    <label for="recipe-images-input" class="cursor-pointer">
+                                        <span class="text-indigo-600 font-medium hover:text-indigo-500">Upload
+                                            images</span>
+                                        <span class="text-gray-500"> or drag here</span>
+                                    </label>
+                                    {{ form.recipe_images(class="hidden", multiple=True, accept="image/*",
+                                    id="recipe-images-input")
+                                    }}
+                                </div>
+                                <p class="text-xs text-gray-500">PNG, JPG, GIF, WEBP up to 16MB</p>
+                            </div>
+                        </div>
+
+                        <div id="image-preview" class="mt-3 grid grid-cols-3 md:grid-cols-5 gap-3">
+                            <!-- Image previews will appear here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Ingredients & Steps -->
+            <div class="lg:col-span-1">
+                <!-- Step 2: Ingredients -->
+                <div class="recipe-step" id="step-2">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center">
+                            <div
+                                class="w-6 h-6 bg-green-600 text-white rounded-full flex items-center justify-center text-xs font-semibold mr-2">
+                                2</div>
+                            <h2 class="text-lg font-bold text-gray-900">Ingredients</h2>
+                            <span id="ingredients-count" class="ml-2 text-sm text-gray-500">(0 ingredients)</span>
+                        </div>
+                        <button type="button" id="open-ingredients-modal"
+                            class="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors">
+                            <i class="fas fa-plus mr-2"></i>
+                            Manage Ingredients
+                        </button>
+                    </div>
+
+                    <!-- Ingredients Preview Cards -->
+                    <div id="ingredients-preview" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <!-- Ingredient preview cards will appear here -->
+                    </div>
+
+                    <div class="text-center py-8" id="ingredients-empty-state">
+                        <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-leaf text-green-600 text-xl"></i>
+                        </div>
+                        <h3 class="text-lg font-medium text-gray-900 mb-2">No ingredients added yet</h3>
+                        <p class="text-gray-600 mb-4">Add ingredients to bring your recipe to life</p>
+                        <button type="button" onclick="document.getElementById('open-ingredients-modal').click()"
+                            class="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors">
+                            <i class="fas fa-plus mr-2"></i>
+                            Add Your First Ingredient
+                        </button>
+                    </div>
+
+                    <!-- Hidden form fields for ingredients -->
+                    <div id="ingredients-container" data-index="0" style="display: none;">
+                        <!-- Dynamic ingredient fields will be inserted here -->
+                    </div>
+                </div>
+
+                <!-- Step 3: Cooking Steps -->
+                <div class="recipe-step" id="step-3">
+                    <div class="flex items-center justify-between mb-6">
+                        <div class="flex items-center">
+                            <div
+                                class="w-6 h-6 bg-orange-600 text-white rounded-full flex items-center justify-center text-xs font-semibold mr-2">
+                                3</div>
+                            <h2 class="text-lg font-bold text-gray-900">Cooking Steps</h2>
+                            <span id="steps-count" class="ml-2 text-sm text-gray-500">(0 steps)</span>
+                        </div>
+                        <button type="button" id="open-steps-modal"
+                            class="inline-flex items-center px-4 py-2 bg-orange-600 text-white text-sm font-medium rounded-lg hover:bg-orange-700 transition-colors">
+                            <i class="fas fa-list-ol mr-2"></i>
+                            Manage Steps
+                        </button>
+                    </div>
+
+                    <!-- Steps Preview Cards -->
+                    <div id="steps-preview" class="space-y-4">
+                        <!-- Step preview cards will appear here -->
+                    </div>
+
+                    <div class="text-center py-8" id="steps-empty-state">
+                        <div class="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-list-ol text-orange-600 text-xl"></i>
+                        </div>
+                        <h3 class="text-lg font-medium text-gray-900 mb-2">No cooking steps added yet</h3>
+                        <p class="text-gray-600 mb-4">Break down your recipe into easy-to-follow steps</p>
+                        <button type="button" onclick="document.getElementById('open-steps-modal').click()"
+                            class="inline-flex items-center px-4 py-2 bg-orange-600 text-white text-sm font-medium rounded-lg hover:bg-orange-700 transition-colors">
+                            <i class="fas fa-plus mr-2"></i>
+                            Add Your First Step
+                        </button>
+                    </div>
+
+                    <!-- Hidden form fields for steps -->
+                    <div id="steps-container" data-index="0" style="display: none;">
+                        <!-- Dynamic step fields will be inserted here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ingredients Modal -->
+            <div id="ingredients-modal" class="fixed inset-0 z-50 overflow-y-auto hidden">
+                <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+
+                    <div
+                        class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
+                        <div class="bg-gradient-to-r from-green-600 to-emerald-600 px-6 py-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <div
+                                        class="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center mr-3">
+                                        <i class="fas fa-leaf text-white"></i>
+                                    </div>
+                                    <h3 class="text-lg font-medium text-white">Manage Ingredients</h3>
+                                </div>
+                                <button type="button" id="close-ingredients-modal"
+                                    class="text-white hover:text-gray-200 transition-colors">
+                                    <i class="fas fa-times text-xl"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="bg-white px-6 py-4 max-h-96 overflow-y-auto">
+                            <div id="modal-ingredients-list" class="space-y-4">
+                                <!-- Dynamic ingredients will be added here -->
+                            </div>
+
+                            <button type="button" id="add-ingredient-modal"
+                                class="w-full mt-4 p-4 border-2 border-dashed border-green-300 rounded-lg text-green-600 hover:border-green-400 hover:bg-green-50 transition-colors">
+                                <i class="fas fa-plus mr-2"></i>
+                                Add New Ingredient
+                            </button>
+                        </div>
+
+                        <div class="bg-gray-50 px-6 py-4 flex justify-between">
+                            <button type="button" id="bulk-add-ingredients"
+                                class="inline-flex items-center px-4 py-2 bg-green-100 text-green-700 text-sm font-medium rounded-lg hover:bg-green-200 transition-colors">
+                                <i class="fas fa-paste mr-2"></i>
+                                Bulk Add
+                            </button>
+                            <button type="button" id="save-ingredients-modal"
+                                class="inline-flex items-center px-6 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors">
+                                <i class="fas fa-check mr-2"></i>
+                                Save Ingredients
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Steps Modal -->
+            <div id="steps-modal" class="fixed inset-0 z-50 overflow-y-auto hidden">
+                <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+
+                    <div
+                        class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-5xl sm:w-full">
+                        <div class="bg-gradient-to-r from-orange-600 to-yellow-600 px-6 py-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <div
+                                        class="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center mr-3">
+                                        <i class="fas fa-list-ol text-white"></i>
+                                    </div>
+                                    <h3 class="text-lg font-medium text-white">Manage Cooking Steps</h3>
+                                </div>
+                                <button type="button" id="close-steps-modal"
+                                    class="text-white hover:text-gray-200 transition-colors">
+                                    <i class="fas fa-times text-xl"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="bg-white px-6 py-4 max-h-96 overflow-y-auto">
+                            <div id="modal-steps-list" class="space-y-4">
+                                <!-- Dynamic steps will be added here -->
+                            </div>
+
+                            <button type="button" id="add-step-modal"
+                                class="w-full mt-4 p-4 border-2 border-dashed border-orange-300 rounded-lg text-orange-600 hover:border-orange-400 hover:bg-orange-50 transition-colors">
+                                <i class="fas fa-plus mr-2"></i>
+                                Add New Step
+                            </button>
+                        </div>
+
+                        <div class="bg-gray-50 px-6 py-4 flex justify-between">
+                            <div class="flex space-x-3">
+                                <button type="button" id="reorder-steps"
+                                    class="inline-flex items-center px-4 py-2 bg-orange-100 text-orange-700 text-sm font-medium rounded-lg hover:bg-orange-200 transition-colors">
+                                    <i class="fas fa-sort mr-2"></i>
+                                    Reorder
+                                </button>
+                                <button type="button" id="bulk-add-steps"
+                                    class="inline-flex items-center px-4 py-2 bg-orange-100 text-orange-700 text-sm font-medium rounded-lg hover:bg-orange-200 transition-colors">
+                                    <i class="fas fa-paste mr-2"></i>
+                                    Bulk Add
+                                </button>
+                            </div>
+                            <button type="button" id="save-steps-modal"
+                                class="inline-flex items-center px-6 py-2 bg-orange-600 text-white text-sm font-medium rounded-lg hover:bg-orange-700 transition-colors">
+                                <i class="fas fa-check mr-2"></i>
+                                Save Steps
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hidden Templates -->
+            <div id="ingredient-template" style="display: none;">
+                <div
+                    class="ingredient-form bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-all">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-green-800">New Ingredient</h3>
+                        <button type="button"
+                            class="remove-ingredient text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50"
+                            onclick="removeIngredientForm(this)">
+                            <i class="fas fa-trash text-sm"></i>
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                        <div class="col-span-2 relative">
+                            <input
+                                class="rounded-lg border-green-300 shadow-sm focus:border-green-500 focus:ring-green-500 bg-white"
+                                placeholder="Start typing ingredient name..." type="text"
+                                name="ingredients-__prefix__-name" value=""
+                                onkeyup="searchIngredients(this, '__prefix__')" autocomplete="off">
+                            <div class="ingredient-suggestions absolute z-10 w-full bg-white border border-gray-300 rounded-lg shadow-lg hidden max-h-48 overflow-y-auto"
+                                id="ingredient-suggestions-__prefix__">
+                                <!-- Ingredient suggestions will appear here -->
+                            </div>
+                        </div>
+                        <input
+                            class="rounded-lg border-green-300 shadow-sm focus:border-green-500 focus:ring-green-500 bg-white"
+                            placeholder="Quantity" type="text" name="ingredients-__prefix__-quantity" value="">
+                        <input
+                            class="rounded-lg border-green-300 shadow-sm focus:border-green-500 focus:ring-green-500 bg-white"
+                            placeholder="Unit" type="text" name="ingredients-__prefix__-unit" value="">
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-4">
+                        <input
+                            class="rounded-lg border-green-300 shadow-sm focus:border-green-500 focus:ring-green-500 bg-white"
+                            placeholder="Additional notes (optional)" type="text" name="ingredients-__prefix__-notes"
+                            value="">
+
+                        <div class="ingredient-images">
+                            <label class="block text-sm font-medium text-green-700 mb-2">
+                                <i class="fas fa-camera mr-1"></i>
+                                Ingredient Images
+                            </label>
+                            <input
+                                class="block w-full text-sm text-gray-900 border border-green-300 rounded-lg cursor-pointer bg-white focus:outline-none hover:bg-green-50 transition-colors file:mr-4 file:py-2 file:px-4 file:rounded-l-lg file:border-0 file:text-sm file:font-semibold file:bg-green-600 file:text-white hover:file:bg-green-700"
+                                multiple accept="image/*" type="file" name="ingredients-__prefix__-images"
+                                onchange="previewIngredientImages(this, '__prefix__')">
+                            <div class="ingredient-image-preview mt-3 grid grid-cols-3 gap-3"
+                                id="ingredient-preview-__prefix__"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="step-template" style="display: none;">
+                <div
+                    class="step-form bg-gradient-to-r from-orange-50 to-yellow-50 border border-orange-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-all">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-orange-800">New Step</h3>
+                        <button type="button"
+                            class="remove-step text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50"
+                            onclick="removeStepForm(this)">
+                            <i class="fas fa-trash text-sm"></i>
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <input
+                            class="rounded-lg border-orange-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 bg-white"
+                            placeholder="Step Number" type="text" name="steps-__prefix__-step_number" value="">
+                        <input
+                            class="rounded-lg border-orange-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 bg-white"
+                            placeholder="Step Name (optional)" type="text" name="steps-__prefix__-name" value="">
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-4 mb-4">
+                        <textarea
+                            class="rounded-lg border-orange-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 bg-white"
+                            placeholder="Describe what to do in this step..." rows="3"
+                            name="steps-__prefix__-instruction"></textarea>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <textarea
+                                class="rounded-lg border-orange-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 bg-white"
+                                placeholder="Additional tips or notes (optional)" rows="2"
+                                name="steps-__prefix__-description"></textarea>
+                            <input
+                                class="rounded-lg border-orange-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 bg-white"
+                                placeholder="Duration (minutes)" type="number" name="steps-__prefix__-duration"
+                                value="">
+                        </div>
+                    </div>
+
+                    <div class="step-images">
+                        <label class="block text-sm font-medium text-orange-700 mb-2">
+                            <i class="fas fa-camera mr-1"></i>
+                            Step Images
+                        </label>
+                        <input
+                            class="block w-full text-sm text-gray-900 border border-orange-300 rounded-lg cursor-pointer bg-white focus:outline-none hover:bg-orange-50 transition-colors file:mr-4 file:py-2 file:px-4 file:rounded-l-lg file:border-0 file:text-sm file:font-semibold file:bg-orange-600 file:text-white hover:file:bg-orange-700"
+                            multiple accept="image/*" type="file" name="steps-__prefix__-images"
+                            onchange="previewStepImages(this, '__prefix__')">
+                        <div class="step-image-preview mt-3 grid grid-cols-3 gap-3" id="step-preview-__prefix__">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Global array to store selected files
+        let selectedFiles = [];
+
+        // Initialize file input handler and drag-and-drop
+        document.addEventListener('DOMContentLoaded', function () {
+            const fileInput = document.getElementById('recipe-images-input');
+            const dropZone = document.getElementById('drop-zone');
+
+            if (fileInput) {
+                fileInput.addEventListener('change', handleFileSelection);
+            }
+
+            if (dropZone) {
+                // Drag and drop handlers
+                dropZone.addEventListener('dragover', handleDragOver);
+                dropZone.addEventListener('dragleave', handleDragLeave);
+                dropZone.addEventListener('drop', handleDrop);
+            }
+
+            // Initialize empty preview
+            renderImagePreviews();
+
+            // Add form submit validation
+            const form = document.querySelector('form');
+            if (form) {
+                form.addEventListener('submit', handleFormSubmit);
+            }
+        });
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.currentTarget.classList.add('border-indigo-500', 'bg-indigo-50');
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.currentTarget.classList.remove('border-indigo-500', 'bg-indigo-50');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.currentTarget.classList.remove('border-indigo-500', 'bg-indigo-50');
+
+            const files = Array.from(e.dataTransfer.files);
+            addFilesToSelection(files);
+        }
+
+        function handleFileSelection(event) {
+            const files = Array.from(event.target.files);
+            addFilesToSelection(files);
+        }
+
+        function addFilesToSelection(files) {
+            const validFiles = [];
+            const errors = [];
+
+            files.forEach(file => {
+                // Validate file type
+                if (!file.type.startsWith('image/')) {
+                    errors.push(`"${file.name}" is not an image file.`);
+                    return;
+                }
+
+                // Validate file size (16MB limit)
+                if (file.size > 16 * 1024 * 1024) {
+                    errors.push(`"${file.name}" is too large. Maximum size is 16MB.`);
+                    return;
+                }
+
+                // Check for duplicates
+                const isDuplicate = selectedFiles.some(existingFile =>
+                    existingFile.name === file.name && existingFile.size === file.size
+                );
+
+                if (isDuplicate) {
+                    errors.push(`"${file.name}" is already selected.`);
+                    return;
+                }
+
+                validFiles.push(file);
+            });
+
+            // Show errors if any
+            if (errors.length > 0) {
+                showNotification(errors.join(' '), 'error');
+            }
+
+            // Add valid files to selection
+            if (validFiles.length > 0) {
+                selectedFiles.push(...validFiles);
+                showNotification(`${validFiles.length} image(s) added successfully.`, 'success');
+                updateFileInput();
+                renderImagePreviews();
+            }
+        }
+
+        function showNotification(message, type = 'info') {
+            // Remove existing notifications
+            const existingNotifications = document.querySelectorAll('.notification');
+            existingNotifications.forEach(n => n.remove());
+
+            // Create notification
+            const notification = document.createElement('div');
+            notification.className = `notification fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 max-w-md ${type === 'error' ? 'bg-red-100 text-red-800 border border-red-300' :
+                type === 'warning' ? 'bg-yellow-100 text-yellow-800 border border-yellow-300' :
+                    type === 'success' ? 'bg-green-100 text-green-800 border border-green-300' :
+                        'bg-blue-100 text-blue-800 border border-blue-300'
+                }`;
+
+            notification.innerHTML = `
+            <div class="flex items-start justify-between">
+                <p class="text-sm font-medium">${message}</p>
+                <button onclick="this.parentElement.parentElement.remove()" class="ml-2 text-lg leading-none hover:opacity-70">×</button>
+            </div>
+        `;
+
+            document.body.appendChild(notification);
+
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.remove();
+                }
+            }, 5000);
+        }
+
+        function updateFileInput() {
+            // Create a new DataTransfer object to update the file input
+            const dataTransfer = new DataTransfer();
+            selectedFiles.forEach(file => {
+                dataTransfer.items.add(file);
+            });
+
+            const fileInput = document.getElementById('recipe-images-input');
+            fileInput.files = dataTransfer.files;
+        }
+
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            updateFileInput();
+            renderImagePreviews();
+            showNotification('Image removed.', 'info');
+        }
+
+        function renderImagePreviews() {
+            const previewContainer = document.getElementById('image-preview');
+            previewContainer.innerHTML = '';
+
+            if (selectedFiles.length === 0) {
+                return; // Don't show anything when no files are selected
+            }
+
+            // Add a header showing the count
+            const headerDiv = document.createElement('div');
+            headerDiv.className = 'col-span-full flex justify-between items-center mb-2';
+            headerDiv.innerHTML = `
+            <h4 class="text-sm font-medium text-gray-700">Selected Images (${selectedFiles.length})</h4>
+            <button type="button" onclick="clearAllFiles()" class="text-xs text-red-600 hover:text-red-800 underline">Remove All</button>
+        `;
+            previewContainer.appendChild(headerDiv);
+
+            selectedFiles.forEach((file, index) => {
+                const previewWrapper = document.createElement('div');
+                previewWrapper.className = 'relative group bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-all';
+
+                const img = document.createElement('img');
+                img.className = 'h-32 w-full object-cover';
+                img.alt = file.name;
+
+                const removeBtn = document.createElement('button');
+                removeBtn.type = 'button';
+                removeBtn.innerHTML = '✕';
+                removeBtn.className = 'absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold shadow-lg opacity-0 group-hover:opacity-100 transition-opacity';
+                removeBtn.onclick = () => removeFile(index);
+
+                // Image info overlay
+                const infoOverlay = document.createElement('div');
+                infoOverlay.className = 'absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/50 to-transparent p-2';
+
+                const fileName = document.createElement('p');
+                fileName.className = 'text-white text-xs font-medium truncate';
+                fileName.textContent = file.name;
+
+                const fileSize = document.createElement('p');
+                fileSize.className = 'text-white/80 text-xs';
+                fileSize.textContent = formatFileSize(file.size);
+
+                infoOverlay.appendChild(fileName);
+                infoOverlay.appendChild(fileSize);
+
+                // Primary badge for first image
+                if (index === 0) {
+                    const primaryBadge = document.createElement('span');
+                    primaryBadge.className = 'absolute top-2 left-2 bg-indigo-500 text-white text-xs px-2 py-1 rounded-full font-medium';
+                    primaryBadge.textContent = 'Primary';
+                    previewWrapper.appendChild(primaryBadge);
+                }
+
+                // Read file for preview
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+
+                previewWrapper.appendChild(img);
+                previewWrapper.appendChild(removeBtn);
+                previewWrapper.appendChild(infoOverlay);
+                previewContainer.appendChild(previewWrapper);
+            });
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function clearAllFiles() {
+            if (selectedFiles.length === 0) return;
+
+            if (confirm(`Are you sure you want to remove all ${selectedFiles.length} selected images?`)) {
+                selectedFiles = [];
+                updateFileInput();
+                renderImagePreviews();
+                showNotification('All images removed.', 'info');
+            }
+        }
+
+        function handleFormSubmit(e) {
+            // Validate form before submission
+            const nameField = document.querySelector('[name="name"]');
+            const ingredientsContainer = document.getElementById('ingredients-container');
+            const stepsContainer = document.getElementById('steps-container');
+
+            let errors = [];
+
+            // Check if recipe name is provided
+            if (!nameField || !nameField.value.trim()) {
+                errors.push('Recipe name is required.');
+            }
+
+            // Check if at least one ingredient is provided
+            const ingredientInputs = ingredientsContainer.querySelectorAll('input[placeholder*="ingredient name"]');
+            const hasIngredients = Array.from(ingredientInputs).some(input => input.value.trim());
+            if (!hasIngredients) {
+                errors.push('At least one ingredient is required.');
+            }
+
+            // Check if at least one step is provided
+            const stepInputs = stepsContainer.querySelectorAll('textarea[name*="instruction"]');
+            const hasSteps = Array.from(stepInputs).some(input => input.value.trim());
+            if (!hasSteps) {
+                errors.push('At least one cooking step is required.');
+            }
+
+            if (errors.length > 0) {
+                e.preventDefault();
+                showNotification(errors.join(' '), 'error');
+                return false;
+            }
+
+            // Show loading state
+            const submitBtn = document.querySelector('[type="submit"]');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Creating Recipe...';
+            }
+
+            return true;
+        }
+
+        // Enhanced add ingredient functionality
+        document.getElementById('add-ingredient-modal').addEventListener('click', function () {
+            const container = document.getElementById('ingredients-container');
+            let index = parseInt(container.getAttribute('data-index'));
+            const template = document.getElementById('ingredient-template').innerHTML;
+            const newField = template.replace(/__prefix__/g, index).replace(/New Ingredient/g, `Ingredient ${index + 1}`);
+
+            // Add with animation
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = newField;
+            const newElement = tempDiv.firstElementChild;
+            newElement.style.opacity = '0';
+            newElement.style.transform = 'translateY(20px)';
+
+            container.appendChild(newElement);
+
+            // Animate in
+            setTimeout(() => {
+                newElement.style.transition = 'all 0.3s ease';
+                newElement.style.opacity = '1';
+                newElement.style.transform = 'translateY(0)';
+            }, 10);
+
+            container.setAttribute('data-index', index + 1);
+            updateProgressSteps();
+
+            // Focus on the first input
+            const firstInput = newElement.querySelector('input[placeholder*="ingredient name"]');
+            if (firstInput) {
+                setTimeout(() => firstInput.focus(), 300);
+            }
+        });
+
+        // Enhanced add step functionality
+        document.getElementById('add-step-modal').addEventListener('click', function () {
+            const container = document.getElementById('steps-container');
+            let index = parseInt(container.getAttribute('data-index'));
+            const template = document.getElementById('step-template').innerHTML;
+            const newField = template.replace(/__prefix__/g, index)
+                .replace(/New Step/g, `Step ${index + 1}`)
+                .replace(/value=""/g, `value="${index + 1}"`);
+
+            // Add with animation
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = newField;
+            const newElement = tempDiv.firstElementChild;
+            newElement.style.opacity = '0';
+            newElement.style.transform = 'translateY(20px)';
+
+            container.appendChild(newElement);
+
+            // Animate in
+            setTimeout(() => {
+                newElement.style.transition = 'all 0.3s ease';
+                newElement.style.opacity = '1';
+                newElement.style.transform = 'translateY(0)';
+            }, 10);
+
+            // Set the step number
+            const stepNumberInput = newElement.querySelector(`[name="steps-${index}-step_number"]`);
+            if (stepNumberInput) {
+                stepNumberInput.value = index + 1;
+            }
+
+            container.setAttribute('data-index', index + 1);
+            updateProgressSteps();
+
+            // Focus on the instruction textarea
+            const instructionInput = newElement.querySelector('textarea[placeholder*="Describe what to do"]');
+            if (instructionInput) {
+                setTimeout(() => instructionInput.focus(), 300);
+            }
+        });
+
+        // Remove ingredient form
+        function removeIngredientForm(button) {
+            const form = button.closest('.ingredient-form');
+            if (form) {
+                // Animate out
+                form.style.transition = 'all 0.3s ease';
+                form.style.opacity = '0';
+                form.style.transform = 'translateX(-20px)';
+
+                setTimeout(() => {
+                    form.remove();
+                    updateIngredientNumbers();
+                    updateProgressSteps();
+                }, 300);
+            }
+        }
+
+        // Remove step form
+        function removeStepForm(button) {
+            const form = button.closest('.step-form');
+            if (form) {
+                // Animate out
+                form.style.transition = 'all 0.3s ease';
+                form.style.opacity = '0';
+                form.style.transform = 'translateX(-20px)';
+
+                setTimeout(() => {
+                    form.remove();
+                    updateStepNumbers();
+                    updateProgressSteps();
+                }, 300);
+            }
+        }
+
+        // Update ingredient numbers
+        function updateIngredientNumbers() {
+            const ingredients = document.querySelectorAll('.ingredient-form');
+            ingredients.forEach((ingredient, index) => {
+                const title = ingredient.querySelector('h3');
+                if (title) {
+                    title.textContent = `Ingredient ${index + 1}`;
+                }
+            });
+        }
+
+        // Update step numbers
+        function updateStepNumbers() {
+            const steps = document.querySelectorAll('.step-form');
+            steps.forEach((step, index) => {
+                const title = step.querySelector('h3');
+                if (title) {
+                    title.textContent = `Step ${index + 1}`;
+                }
+
+                // Update step number input
+                const stepNumberInput = step.querySelector('input[name*="step_number"]');
+                if (stepNumberInput) {
+                    stepNumberInput.value = index + 1;
+                }
+            });
+        }
+
+        // Update progress steps visual indicator
+        function updateProgressSteps() {
+            const ingredientCount = document.querySelectorAll('.ingredient-form').length;
+            const stepCount = document.querySelectorAll('.step-form').length;
+
+            // Update ingredient step indicator
+            const ingredientStep = document.querySelector('.flex.items-center:nth-child(3) .w-8.h-8');
+            if (ingredientStep) {
+                if (ingredientCount > 0) {
+                    ingredientStep.className = ingredientStep.className.replace('bg-gray-300 text-gray-600', 'bg-green-600 text-white');
+                    ingredientStep.nextElementSibling.className = ingredientStep.nextElementSibling.className.replace('text-gray-500', 'text-green-600');
+                }
+            }
+
+            // Update steps step indicator
+            const stepsStep = document.querySelector('.flex.items-center:nth-child(5) .w-8.h-8');
+            if (stepsStep) {
+                if (stepCount > 0) {
+                    stepsStep.className = stepsStep.className.replace('bg-gray-300 text-gray-600', 'bg-orange-600 text-white');
+                    stepsStep.nextElementSibling.className = stepsStep.nextElementSibling.className.replace('text-gray-500', 'text-orange-600');
+                }
+            }
+        }
+
+        // Auto-save draft functionality (localStorage)
+        function saveDraft() {
+            const formData = new FormData(document.querySelector('form'));
+            const draftData = {};
+
+            for (let [key, value] of formData.entries()) {
+                if (!key.includes('csrf_token') && !key.includes('images') && !key.includes('__prefix__')) {
+                    draftData[key] = value;
+                }
+            }
+
+            localStorage.setItem('recipe_draft', JSON.stringify(draftData));
+        }
+
+        // Load draft functionality
+        function loadDraft() {
+            const draft = localStorage.getItem('recipe_draft');
+            if (draft) {
+                try {
+                    const draftData = JSON.parse(draft);
+                    Object.keys(draftData).forEach(key => {
+                        const input = document.querySelector(`[name="${key}"]`);
+                        if (input && draftData[key]) {
+                            input.value = draftData[key];
+                        }
+                    });
+                } catch (e) {
+                    console.log('Error loading draft:', e);
+                }
+            }
+        }
+
+        // Save draft on input changes
+        document.addEventListener('input', debounce(saveDraft, 1000));
+
+        // Debounce function
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // Clear draft on successful submission
+        function clearDraft() {
+            localStorage.removeItem('recipe_draft');
+        }
+
+        // Load draft on page load
+        document.addEventListener('DOMContentLoaded', function () {
+            loadDraft();
+        });
+
+        // Functions for ingredient image previews
+        function previewIngredientImages(input, ingredientIndex) {
+            const previewContainer = document.getElementById(`ingredient-preview-${ingredientIndex}`);
+            previewContainer.innerHTML = '';
+
+            if (input.files && input.files.length > 0) {
+                Array.from(input.files).forEach((file, index) => {
+                    if (file.type.startsWith('image/')) {
+                        const reader = new FileReader();
+                        reader.onload = function (e) {
+                            const previewWrapper = document.createElement('div');
+                            previewWrapper.className = 'relative group';
+
+                            const img = document.createElement('img');
+                            img.src = e.target.result;
+                            img.className = 'h-20 w-full object-cover rounded border';
+                            img.alt = file.name;
+
+                            const removeBtn = document.createElement('button');
+                            removeBtn.type = 'button';
+                            removeBtn.innerHTML = '×';
+                            removeBtn.className = 'absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 text-xs opacity-0 group-hover:opacity-100 transition-opacity';
+                            removeBtn.onclick = () => removeIngredientImage(input, index, ingredientIndex);
+
+                            previewWrapper.appendChild(img);
+                            previewWrapper.appendChild(removeBtn);
+                            previewContainer.appendChild(previewWrapper);
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+            }
+        }
+
+        // Functions for step image previews
+        function previewStepImages(input, stepIndex) {
+            const previewContainer = document.getElementById(`step-preview-${stepIndex}`);
+            previewContainer.innerHTML = '';
+
+            if (input.files && input.files.length > 0) {
+                Array.from(input.files).forEach((file, index) => {
+                    if (file.type.startsWith('image/')) {
+                        const reader = new FileReader();
+                        reader.onload = function (e) {
+                            const previewWrapper = document.createElement('div');
+                            previewWrapper.className = 'relative group';
+
+                            const img = document.createElement('img');
+                            img.src = e.target.result;
+                            img.className = 'h-20 w-full object-cover rounded border';
+                            img.alt = file.name;
+
+                            const removeBtn = document.createElement('button');
+                            removeBtn.type = 'button';
+                            removeBtn.innerHTML = '×';
+                            removeBtn.className = 'absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 text-xs opacity-0 group-hover:opacity-100 transition-opacity';
+                            removeBtn.onclick = () => removeStepImage(input, index, stepIndex);
+
+                            previewWrapper.appendChild(img);
+                            previewWrapper.appendChild(removeBtn);
+                            previewContainer.appendChild(previewWrapper);
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+            }
+        }
+
+        function removeIngredientImage(input, fileIndex, ingredientIndex) {
+            // Create new DataTransfer to manage files
+            const dt = new DataTransfer();
+            const files = Array.from(input.files);
+
+            // Add all files except the one to remove
+            files.forEach((file, index) => {
+                if (index !== fileIndex) {
+                    dt.items.add(file);
+                }
+            });
+
+            // Update input files
+            input.files = dt.files;
+
+            // Refresh preview
+            previewIngredientImages(input, ingredientIndex);
+        }
+
+        function removeStepImage(input, fileIndex, stepIndex) {
+            // Create new DataTransfer to manage files
+            const dt = new DataTransfer();
+            const files = Array.from(input.files);
+
+            // Add all files except the one to remove
+            files.forEach((file, index) => {
+                if (index !== fileIndex) {
+                    dt.items.add(file);
+                }
+            });
+
+            // Update input files
+            input.files = dt.files;
+
+            // Refresh preview
+            previewStepImages(input, stepIndex);
+        }
+
+        // Ingredient search functionality
+        let searchTimeout;
+        let currentSuggestionIndex = -1;
+
+        function searchIngredients(input, ingredientIndex) {
+            const query = input.value.trim();
+            const suggestionsContainer = document.getElementById(`ingredient-suggestions-${ingredientIndex}`);
+
+            // Clear previous timeout
+            if (searchTimeout) {
+                clearTimeout(searchTimeout);
+            }
+
+            if (query.length < 2) {
+                suggestionsContainer.classList.add('hidden');
+                return;
+            }
+
+            // Debounce the search
+            searchTimeout = setTimeout(() => {
+                fetch(`{{ url_for('dashboard.search_ingredients') }}?q=${encodeURIComponent(query)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        displayIngredientSuggestions(data, suggestionsContainer, input, ingredientIndex);
+                    })
+                    .catch(error => {
+                        console.error('Error searching ingredients:', error);
+                    });
+            }, 300);
+        }
+
+        function displayIngredientSuggestions(suggestions, container, input, ingredientIndex) {
+            container.innerHTML = '';
+            currentSuggestionIndex = -1;
+
+            if (suggestions.length === 0) {
+                container.classList.add('hidden');
+                return;
+            }
+
+            suggestions.forEach((suggestion, index) => {
+                const suggestionDiv = document.createElement('div');
+                suggestionDiv.className = 'px-4 py-2 hover:bg-green-50 cursor-pointer border-b border-gray-100 last:border-b-0 flex justify-between items-center';
+
+                const nameSpan = document.createElement('span');
+                nameSpan.className = 'font-medium text-gray-800';
+                nameSpan.textContent = suggestion.name;
+
+                const metaSpan = document.createElement('span');
+                metaSpan.className = 'text-xs text-gray-500';
+                const usageText = suggestion.usage_count > 1 ? `Used ${suggestion.usage_count} times` : 'Used once';
+                metaSpan.textContent = suggestion.unit ? `${suggestion.unit} • ${usageText}` : usageText;
+
+                const contentDiv = document.createElement('div');
+                contentDiv.appendChild(nameSpan);
+                if (suggestion.unit) {
+                    const unitSpan = document.createElement('span');
+                    unitSpan.className = 'text-sm text-gray-600 ml-2';
+                    unitSpan.textContent = `(${suggestion.unit})`;
+                    contentDiv.appendChild(unitSpan);
+                }
+
+                suggestionDiv.appendChild(contentDiv);
+                suggestionDiv.appendChild(metaSpan);
+
+                suggestionDiv.addEventListener('click', () => {
+                    selectIngredient(suggestion, input, ingredientIndex);
+                });
+
+                container.appendChild(suggestionDiv);
+            });
+
+            container.classList.remove('hidden');
+        }
+
+        function selectIngredient(suggestion, nameInput, ingredientIndex) {
+            // Fill in the ingredient name
+            nameInput.value = suggestion.name;
+
+            // Fill in the unit if available
+            const unitInput = nameInput.closest('.ingredient-form').querySelector('input[name*="unit"]');
+            if (unitInput && suggestion.unit) {
+                unitInput.value = suggestion.unit;
+            }
+
+            // Hide suggestions
+            const suggestionsContainer = document.getElementById(`ingredient-suggestions-${ingredientIndex}`);
+            suggestionsContainer.classList.add('hidden');
+
+            // Focus on quantity field
+            const quantityInput = nameInput.closest('.ingredient-form').querySelector('input[name*="quantity"]');
+            if (quantityInput) {
+                quantityInput.focus();
+            }
+
+            // Show success notification
+            showNotification(`Added "${suggestion.name}" to your ingredient list`, 'success');
+        }
+
+        // Handle keyboard navigation for ingredient suggestions
+        document.addEventListener('keydown', function (e) {
+            const activeInput = document.activeElement;
+            if (!activeInput || !activeInput.name || !activeInput.name.includes('name')) {
+                return;
+            }
+
+            const ingredientIndex = activeInput.name.match(/ingredients-(\d+|__prefix__)-name/);
+            if (!ingredientIndex) return;
+
+            const suggestionsContainer = document.getElementById(`ingredient-suggestions-${ingredientIndex[1]}`);
+            if (!suggestionsContainer || suggestionsContainer.classList.contains('hidden')) {
+                return;
+            }
+
+            const suggestions = suggestionsContainer.querySelectorAll('div[class*="hover:bg-green-50"]');
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                currentSuggestionIndex = Math.min(currentSuggestionIndex + 1, suggestions.length - 1);
+                updateSuggestionHighlight(suggestions);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                currentSuggestionIndex = Math.max(currentSuggestionIndex - 1, -1);
+                updateSuggestionHighlight(suggestions);
+            } else if (e.key === 'Enter' && currentSuggestionIndex >= 0) {
+                e.preventDefault();
+                suggestions[currentSuggestionIndex].click();
+            } else if (e.key === 'Escape') {
+                suggestionsContainer.classList.add('hidden');
+                currentSuggestionIndex = -1;
+            }
+        });
+
+        function updateSuggestionHighlight(suggestions) {
+            suggestions.forEach((suggestion, index) => {
+                if (index === currentSuggestionIndex) {
+                    suggestion.classList.add('bg-green-50');
+                } else {
+                    suggestion.classList.remove('bg-green-50');
+                }
+            });
+        }
+
+        // Hide suggestions when clicking outside
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest('.ingredient-suggestions') && !e.target.name?.includes('name')) {
+                document.querySelectorAll('.ingredient-suggestions').forEach(container => {
+                    container.classList.add('hidden');
+                });
+            }
+        });
+    </script>
+    {% endblock dashboard_content %}

@@ -23,5 +23,8 @@ class Ingredient(db.Model):
         db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
     )
 
+    # Relationships
+    images = db.relationship("Image", backref="ingredient", lazy=True, foreign_keys="Image.ingredient_id")
+
     def __repr__(self):
         return f"<Ingredient {self.quantity} {self.unit} {self.name}>"

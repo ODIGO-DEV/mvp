@@ -20,7 +20,9 @@ class Step(db.Model):
         db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
     )
 
+    # Relationships
     tasks = db.relationship("Task", backref="step", lazy=True)
+    images = db.relationship("Image", backref="step", lazy=True, foreign_keys="Image.step_id")
 
     def __repr__(self):
         return f"<Step {self.step_number}: {self.instruction[:50]}>"

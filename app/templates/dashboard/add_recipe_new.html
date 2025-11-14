@@ -1,0 +1,272 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Add Recipe{% endblock %}
+
+{% block dashboard_content %}
+<div class="container mx-auto px-4 py-6 max-w-4xl">
+
+    <form method="POST" action="{{ url_for('dashboard.add_recipe') }}" enctype="multipart/form-data" class="space-y-8">
+        {{ form.hidden_tag() }}
+
+        <!-- Basic Information -->
+        <div class="bg-white rounded-lg shadow-sm border p-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">Basic Information</h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="md:col-span-2">
+                    {{ form.name.label(class="block text-sm font-medium text-gray-700 mb-2") }}
+                    {{ form.name(class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none
+                    focus:ring-indigo-500 focus:border-indigo-500") }}
+                </div>
+
+                <div class="md:col-span-2">
+                    {{ form.description.label(class="block text-sm font-medium text-gray-700 mb-2") }}
+                    {{ form.description(class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm
+                    focus:outline-none focus:ring-indigo-500 focus:border-indigo-500", rows=3) }}
+                </div>
+
+                <div>
+                    {{ form.category_id.label(class="block text-sm font-medium text-gray-700 mb-2") }}
+                    {{ form.category_id(class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm
+                    focus:outline-none focus:ring-indigo-500 focus:border-indigo-500") }}
+                </div>
+
+                <div>
+                    {{ form.origin_id.label(class="block text-sm font-medium text-gray-700 mb-2") }}
+                    {{ form.origin_id(class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm
+                    focus:outline-none focus:ring-indigo-500 focus:border-indigo-500") }}
+                </div>
+
+                <div class="md:col-span-2">
+                    <div class="flex items-center">
+                        {{ form.public(class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded") }}
+                        {{ form.public.label(class="ml-2 block text-sm text-gray-900") }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recipe Images -->
+        <div class="bg-white rounded-lg shadow-sm border p-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">Recipe Images</h2>
+
+            <div>
+                {{ form.recipe_images.label(class="block text-sm font-medium text-gray-700 mb-2") }}
+                {{ form.recipe_images(class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm
+                focus:outline-none focus:ring-indigo-500 focus:border-indigo-500", multiple=True, accept="image/*") }}
+                <p class="text-sm text-gray-500 mt-1">Select multiple images for your recipe</p>
+            </div>
+        </div>
+
+        <!-- Ingredients -->
+        <div class="bg-white rounded-lg shadow-sm border p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold text-gray-900">Ingredients</h2>
+                <button type="button" id="add-ingredient"
+                    class="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition-colors">
+                    <i class="fas fa-plus mr-2"></i>Add Ingredient
+                </button>
+            </div>
+
+            <div id="ingredients-container" class="space-y-4">
+                <!-- Ingredients will be added here -->
+            </div>
+        </div>
+
+        <!-- Cooking Steps -->
+        <div class="bg-white rounded-lg shadow-sm border p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold text-gray-900">Cooking Steps</h2>
+                <button type="button" id="add-step"
+                    class="bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600 transition-colors">
+                    <i class="fas fa-plus mr-2"></i>Add Step
+                </button>
+            </div>
+
+            <div id="steps-container" class="space-y-4">
+                <!-- Steps will be added here -->
+            </div>
+        </div>
+
+        <!-- Submit Section -->
+        <div class="flex justify-between items-center">
+            <a href="{{ url_for('dashboard.my_recipes') }}" class="text-gray-600 hover:text-gray-800">
+                <i class="fas fa-arrow-left mr-2"></i>Back to My Recipes
+            </a>
+
+            {{ form.submit(class="bg-indigo-600 text-white px-8 py-3 rounded-md font-medium hover:bg-indigo-700
+            transition-colors") }}
+        </div>
+    </form>
+</div>
+
+<!-- Hidden Templates -->
+<div id="ingredient-template" style="display: none;">
+    <div class="ingredient-item border border-gray-200 rounded-md p-4 bg-gray-50">
+        <div class="flex justify-between items-start mb-3">
+            <h4 class="font-medium text-gray-900">Ingredient</h4>
+            <button type="button" class="text-red-500 hover:text-red-700" onclick="removeIngredient(this)">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div class="md:col-span-2">
+                <input type="text" name="ingredients-__INDEX__-name" placeholder="Ingredient name"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500">
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+                <input type="text" name="ingredients-__INDEX__-quantity" placeholder="Amount"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500">
+                <input type="text" name="ingredients-__INDEX__-unit" placeholder="Unit"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500">
+            </div>
+        </div>
+
+        <div class="mt-3">
+            <input type="text" name="ingredients-__INDEX__-notes" placeholder="Additional notes (optional)"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500">
+        </div>
+
+        <div class="mt-3">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Ingredient Images</label>
+            <input type="file" name="ingredients-__INDEX__-images" multiple accept="image/*"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500">
+        </div>
+    </div>
+</div>
+
+<div id="step-template" style="display: none;">
+    <div class="step-item border border-gray-200 rounded-md p-4 bg-gray-50">
+        <div class="flex justify-between items-start mb-3">
+            <h4 class="font-medium text-gray-900">Step <span class="step-number">1</span></h4>
+            <button type="button" class="text-red-500 hover:text-red-700" onclick="removeStep(this)">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+            <input type="hidden" name="steps-__INDEX__-step_number" value="1" class="step-number-input">
+            <input type="text" name="steps-__INDEX__-name" placeholder="Step name (optional)"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500">
+            <input type="number" name="steps-__INDEX__-duration" placeholder="Duration (minutes)"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500">
+        </div>
+
+        <div class="mb-3">
+            <textarea name="steps-__INDEX__-instruction" placeholder="Describe what to do in this step..." rows="3"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500 resize-none"></textarea>
+        </div>
+
+        <div class="mb-3">
+            <textarea name="steps-__INDEX__-description" placeholder="Additional tips or notes (optional)" rows="2"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500 resize-none"></textarea>
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Step Images</label>
+            <input type="file" name="steps-__INDEX__-images" multiple accept="image/*"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500">
+        </div>
+    </div>
+</div>
+
+<script>
+    let ingredientCount = 0;
+    let stepCount = 0;
+
+    // Add ingredient functionality
+    document.getElementById('add-ingredient').addEventListener('click', function () {
+        const container = document.getElementById('ingredients-container');
+        const template = document.getElementById('ingredient-template').innerHTML;
+        const newIngredient = template.replace(/__INDEX__/g, ingredientCount);
+
+        const div = document.createElement('div');
+        div.innerHTML = newIngredient;
+        container.appendChild(div.firstElementChild);
+
+        ingredientCount++;
+    });
+
+    // Add step functionality
+    document.getElementById('add-step').addEventListener('click', function () {
+        const container = document.getElementById('steps-container');
+        const template = document.getElementById('step-template').innerHTML;
+        const newStep = template.replace(/__INDEX__/g, stepCount);
+
+        const div = document.createElement('div');
+        div.innerHTML = newStep;
+        const stepElement = div.firstElementChild;
+
+        // Update step number
+        stepElement.querySelector('.step-number').textContent = stepCount + 1;
+        stepElement.querySelector('.step-number-input').value = stepCount + 1;
+
+        container.appendChild(stepElement);
+        stepCount++;
+
+        updateStepNumbers();
+    });
+
+    // Remove ingredient
+    function removeIngredient(button) {
+        const ingredientItem = button.closest('.ingredient-item');
+        ingredientItem.remove();
+    }
+
+    // Remove step
+    function removeStep(button) {
+        const stepItem = button.closest('.step-item');
+        stepItem.remove();
+        updateStepNumbers();
+    }
+
+    // Update step numbers after removal
+    function updateStepNumbers() {
+        const steps = document.querySelectorAll('.step-item');
+        steps.forEach((step, index) => {
+            step.querySelector('.step-number').textContent = index + 1;
+            step.querySelector('.step-number-input').value = index + 1;
+        });
+    }
+
+    // Form validation
+    document.querySelector('form').addEventListener('submit', function (e) {
+        const nameField = document.querySelector('[name="name"]');
+        const ingredients = document.querySelectorAll('.ingredient-item input[name*="name"]');
+        const steps = document.querySelectorAll('.step-item textarea[name*="instruction"]');
+
+        let errors = [];
+
+        // Check recipe name
+        if (!nameField.value.trim()) {
+            errors.push('Recipe name is required.');
+        }
+
+        // Check ingredients
+        const hasIngredients = Array.from(ingredients).some(input => input.value.trim());
+        if (!hasIngredients) {
+            errors.push('At least one ingredient is required.');
+        }
+
+        // Check steps
+        const hasSteps = Array.from(steps).some(textarea => textarea.value.trim());
+        if (!hasSteps) {
+            errors.push('At least one cooking step is required.');
+        }
+
+        if (errors.length > 0) {
+            e.preventDefault();
+            alert(errors.join('\n'));
+            return false;
+        }
+    });
+
+    // Add initial ingredient and step
+    document.addEventListener('DOMContentLoaded', function () {
+        document.getElementById('add-ingredient').click();
+        document.getElementById('add-step').click();
+    });
+</script>
+
+{% endblock %}

@@ -4,312 +4,396 @@
 {% block dashboard_content %}
 <!-- Page Header -->
 <div class="flex items-start justify-between gap-4 mb-6">
-  <div>
-    <h1 class="text-2xl sm:text-3xl font-bold text-gray-800">My Recipes 👨‍🍳</h1>
-    <p class="text-sm text-gray-600 mt-1">Manage and organize your culinary creations</p>
-  </div>
+    <div>
+        <h1 class="text-2xl sm:text-3xl font-bold text-gray-800">My Recipes</h1>
+        <p class="text-sm text-gray-600 mt-1">Manage and organize your culinary creations</p>
+    </div>
 
-  <!-- Desktop Add Button -->
-  <div class="hidden sm:flex items-center gap-3">
-    <a href="{{ url_for('dashboard.add_recipe') }}"
-      class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg shadow-sm transition">
-      <i class="fa-solid fa-plus w-4 h-4"></i>
-      Add New Recipe
-    </a>
-  </div>
+    <!-- Desktop Add Button -->
+    <div class="hidden sm:flex items-center gap-3">
+        <a href="{{ url_for('dashboard.add_recipe') }}"
+            class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg shadow-sm transition">
+            <i class="fa-solid fa-plus w-4 h-4"></i>
+            Add New Recipe
+        </a>
+    </div>
 </div>
 
 <!-- Stats -->
 <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-  <div class="bg-white border border-gray-100 rounded-xl p-3">
-    <div class="text-lg font-semibold text-gray-800">{{ recipes.total }}</div>
-    <div class="text-xs text-gray-500 mt-1">Total</div>
-  </div>
-  <div class="bg-white border border-gray-100 rounded-xl p-3">
-    <div class="text-lg font-semibold text-indigo-600">
-      {{ recipes.items|selectattr('public')|list|length }}
+    <div class="bg-white border border-gray-100 rounded-xl p-3">
+        <div class="text-lg font-semibold text-gray-800">{{ recipes.total }}</div>
+        <div class="text-xs text-gray-500 mt-1">Total</div>
     </div>
-    <div class="text-xs text-gray-500 mt-1">Public</div>
-  </div>
-  <div class="bg-white border border-gray-100 rounded-xl p-3">
-    <div class="text-lg font-semibold text-orange-600">
-      {{ recipes.items|rejectattr('public')|list|length }}
+    <div class="bg-white border border-gray-100 rounded-xl p-3">
+        <div class="text-lg font-semibold text-indigo-600">
+            {{ recipes.items|selectattr('public')|list|length }}
+        </div>
+        <div class="text-xs text-gray-500 mt-1">Public</div>
     </div>
-    <div class="text-xs text-gray-500 mt-1">Private</div>
-  </div>
-  <div class="bg-white border border-gray-100 rounded-xl p-3">
-    <div class="text-lg font-semibold text-indigo-600">0</div>
-    <div class="text-xs text-gray-500 mt-1">Favorites</div>
-  </div>
+    <div class="bg-white border border-gray-100 rounded-xl p-3">
+        <div class="text-lg font-semibold text-orange-600">
+            {{ recipes.items|rejectattr('public')|list|length }}
+        </div>
+        <div class="text-xs text-gray-500 mt-1">Private</div>
+    </div>
+    <div class="bg-white border border-gray-100 rounded-xl p-3">
+        <div class="text-lg font-semibold text-indigo-600">0</div>
+        <div class="text-xs text-gray-500 mt-1">Favorites</div>
+    </div>
 </div>
 
+<!-- Quick Category Filter -->
+{% if categories %}
+<div class="bg-white border border-gray-100 rounded-xl p-4 mb-4">
+    <div class="flex items-center justify-between mb-3">
+        <h3 class="text-sm font-semibold text-gray-800">Filter by Category</h3>
+        {% if current_category %}
+        <a href="{{ url_for('dashboard.my_recipes') }}" class="text-xs text-indigo-600 hover:underline">Clear filter</a>
+        {% endif %}
+    </div>
+    <div class="flex flex-wrap gap-2">
+        <a href="{{ url_for('dashboard.my_recipes') }}"
+            class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-full border transition-all shadow-sm
+              {% if not current_category %}bg-indigo-50 text-indigo-700 border-indigo-200{% else %}bg-white text-gray-700 border-gray-200 hover:bg-gray-50{% endif %}">
+            All Categories
+            <span class="ml-2 px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full">
+                {{ recipes.total }}
+            </span>
+        </a>
+        {% for category in categories[:6] %}
+        <a href="{{ url_for('dashboard.my_recipes', category=category.id) }}"
+            class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-full border transition-all shadow-sm
+              {% if category.id == current_category %}bg-indigo-50 text-indigo-700 border-indigo-200{% else %}bg-white text-gray-700 border-gray-200 hover:bg-gray-50{% endif %}">
+            {{ category.name }}
+            <span class="ml-2 px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full">
+                {{ category.recipes|length if category.recipes else 0 }}
+            </span>
+        </a>
+        {% endfor %}
+        {% if categories|length > 6 %}
+        <button onclick="toggleAllCategories()"
+            class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-full border bg-white text-gray-700 border-gray-200 hover:bg-gray-50 transition-all shadow-sm"
+            id="show-more-btn">
+            +{{ categories|length - 6 }} more
+        </button>
+        <div id="additional-categories" class="hidden flex flex-wrap gap-2 w-full">
+            {% for category in categories[6:] %}
+            <a href="{{ url_for('dashboard.my_recipes', category=category.id) }}"
+                class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-full border transition-all shadow-sm
+                {% if category.id == current_category %}bg-indigo-50 text-indigo-700 border-indigo-200{% else %}bg-white text-gray-700 border-gray-200 hover:bg-gray-50{% endif %}">
+                {{ category.name }}
+                <span class="ml-2 px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full">
+                    {{ category.recipes|length if category.recipes else 0 }}
+                </span>
+            </a>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
 <!-- Filter & Sort -->
-<form method="GET" action="{{ url_for('dashboard.my_recipes') }}" class="bg-white border border-gray-100 rounded-xl p-3 mb-6">
-  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-    <div class="flex items-center gap-2 flex-wrap">
-      <!-- Category select -->
-      <label class="sr-only" for="category">Category</label>
-      <div class="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-2 py-1">
-        <i class="fa-solid fa-layer-group w-4 h-4 text-indigo-500"></i>
-        <select id="category" name="category" class="bg-transparent text-sm focus:outline-none">
-          <option value="">All categories</option>
-          {% for category in categories %}
-          <option value="{{ category.id }}" {% if category.id == current_category %}selected{% endif %}>{{ category.name }}</option>
-          {% endfor %}
-        </select>
-      </div>
+<form method="GET" action="{{ url_for('dashboard.my_recipes') }}"
+    class="bg-white border border-gray-100 rounded-xl p-3 mb-6">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div class="flex items-center gap-2 flex-wrap">
+            <!-- Category select -->
+            <label class="sr-only" for="category">Category</label>
+            <div class="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-2 py-1">
+                <i class="fa-solid fa-layer-group w-4 h-4 text-indigo-500"></i>
+                <select id="category" name="category" class="bg-transparent text-sm focus:outline-none">
+                    <option value="">All categories</option>
+                    {% for category in categories %}
+                    <option value="{{ category.id }}" {% if category.id==current_category %}selected{% endif %}>{{
+                        category.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
 
-      <!-- Visibility select -->
-      <div class="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-2 py-1">
-        <i class="fa-solid fa-eye w-4 h-4 text-indigo-500"></i>
-        <select name="visibility" class="bg-transparent text-sm focus:outline-none">
-          <option value="all" {% if current_visibility == 'all' %}selected{% endif %}>All</option>
-          <option value="public" {% if current_visibility == 'public' %}selected{% endif %}>Public</option>
-          <option value="private" {% if current_visibility == 'private' %}selected{% endif %}>Private</option>
-        </select>
-      </div>
+            <!-- Visibility select -->
+            <div class="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-2 py-1">
+                <i class="fa-solid fa-eye w-4 h-4 text-indigo-500"></i>
+                <select name="visibility" class="bg-transparent text-sm focus:outline-none">
+                    <option value="all" {% if current_visibility=='all' %}selected{% endif %}>All</option>
+                    <option value="public" {% if current_visibility=='public' %}selected{% endif %}>Public</option>
+                    <option value="private" {% if current_visibility=='private' %}selected{% endif %}>Private</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-2 py-1">
+                <i class="fa-solid fa-sort w-4 h-4 text-indigo-500"></i>
+                <select name="sort_by" class="bg-transparent text-sm focus:outline-none">
+                    <option value="date_desc" {% if current_sort_by=='date_desc' %}selected{% endif %}>Newest</option>
+                    <option value="date_asc" {% if current_sort_by=='date_asc' %}selected{% endif %}>Oldest</option>
+                    <option value="name_asc" {% if current_sort_by=='name_asc' %}selected{% endif %}>Name A–Z</option>
+                    <option value="name_desc" {% if current_sort_by=='name_desc' %}selected{% endif %}>Name Z–A</option>
+                </select>
+            </div>
+
+            <button type="submit"
+                class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-lg text-sm transition">
+                <i class="fa-solid fa-filter w-4 h-4"></i>
+                Filter
+            </button>
+        </div>
     </div>
-
-    <div class="flex items-center gap-2">
-      <div class="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-2 py-1">
-        <i class="fa-solid fa-sort w-4 h-4 text-indigo-500"></i>
-        <select name="sort_by" class="bg-transparent text-sm focus:outline-none">
-          <option value="date_desc" {% if current_sort_by == 'date_desc' %}selected{% endif %}>Newest</option>
-          <option value="date_asc" {% if current_sort_by == 'date_asc' %}selected{% endif %}>Oldest</option>
-          <option value="name_asc" {% if current_sort_by == 'name_asc' %}selected{% endif %}>Name A–Z</option>
-          <option value="name_desc" {% if current_sort_by == 'name_desc' %}selected{% endif %}>Name Z–A</option>
-        </select>
-      </div>
-
-      <button type="submit" class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-lg text-sm transition">
-        <i class="fa-solid fa-filter w-4 h-4"></i>
-        Filter
-      </button>
-    </div>
-  </div>
 </form>
 
 <!-- Recipes Grid -->
 {% if recipes.items %}
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-6">
-  {% for recipe in recipes.items %}
-  <article class="group bg-white border border-gray-100 rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition relative">
-    <!-- image -->
-    <div class="relative">
-      {% if recipe.images %}
-      <img src="{{ recipe.images[0].url }}" alt="{{ recipe.name }}" class="w-full h-40 object-cover">
-      {% else %}
-      <div class="w-full h-40 bg-gradient-to-r from-indigo-500 to-indigo-600 flex items-center justify-center">
-        <i class="fa-solid fa-image w-12 h-12 text-white opacity-60"></i>
-      </div>
-      {% endif %}
+    {% for recipe in recipes.items %}
+    <article
+        class="group bg-white border border-gray-100 rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition relative">
+        <!-- image -->
+        <div class="relative">
+            {% if recipe.images %}
+            <img src="{{ recipe.images[0].url }}" alt="{{ recipe.name }}" class="w-full h-40 object-cover">
+            {% else %}
+            <div class="w-full h-40 bg-gradient-to-r from-indigo-500 to-indigo-600 flex items-center justify-center">
+                <i class="fa-solid fa-image w-12 h-12 text-white opacity-60"></i>
+            </div>
+            {% endif %}
 
-      <!-- status & actions -->
-      <div class="absolute top-3 left-3">
-        <span class="inline-flex items-center gap-1 bg-white/20 text-white text-xs px-2 py-1 rounded-full backdrop-blur-sm">
-          {% if recipe.public %}🌍 Public{% else %}🔒 Private{% endif %}
-        </span>
-      </div>
+            <!-- status & actions -->
+            <div class="absolute top-3 left-3">
+                <span
+                    class="inline-flex items-center gap-1 bg-white/20 text-white text-xs px-2 py-1 rounded-full backdrop-blur-sm">
+                    {% if recipe.public %}🌍 Public{% else %}🔒 Private{% endif %}
+                </span>
+            </div>
 
-      <!-- actions (shows on hover) -->
-      <div class="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2" aria-hidden="true">
-        <!-- view -->
-<button class="bg-white/20 text-white p-1.5 rounded-full backdrop-blur-sm hover:bg-white/30" title="Quick View" 
-                    onclick="openPreview({{ recipe.id|tojson }})">
-              <i class="fa-solid fa-eye w-4 h-4"></i>
-            </button>
+            <!-- actions (shows on hover) -->
+            <div class="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2"
+                aria-hidden="true">
+                <!-- view -->
+                <button class="bg-white/20 text-white p-1.5 rounded-full backdrop-blur-sm hover:bg-white/30"
+                    title="Quick View" onclick="openPreview({{ recipe.id|tojson }})">
+                    <i class="fa-solid fa-eye w-4 h-4"></i>
+                </button>
 
-        <!-- edit -->
-        <a href="{{ url_for('dashboard.edit_recipe', recipe_id=recipe.id) }}"
-          class="bg-white/20 text-white p-1.5 rounded-full backdrop-blur-sm hover:bg-white/30" title="Edit">
-          <i class="fa-solid fa-pen-to-square w-4 h-4"></i>
-        </a>
+                <!-- edit -->
+                <a href="{{ url_for('dashboard.edit_recipe', recipe_id=recipe.id) }}"
+                    class="bg-white/20 text-white p-1.5 rounded-full backdrop-blur-sm hover:bg-white/30" title="Edit">
+                    <i class="fa-solid fa-pen-to-square w-4 h-4"></i>
+                </a>
 
-        <!-- delete -->
-        <button class="bg-white/20 text-white p-1.5 rounded-full backdrop-blur-sm hover:bg-white/30" title="Delete"
-          onclick="confirmDelete('{{ url_for('dashboard.delete_recipe', recipe_id=recipe.id) }}')">
-          <i class="fa-solid fa-trash w-4 h-4"></i>
-        </button>
-      </div>
-    </div>
-
-    <!-- content -->
-    <div class="p-4">
-      <h3 class="font-semibold text-gray-800 mb-1 truncate">{{ recipe.name }}</h3>
-
-      {% if recipe.description %}
-      <p class="text-sm text-gray-600 line-clamp-2 mb-3">{{ recipe.description|striptags|truncate(120) }}</p>
-      {% endif %}
-
-      <div class="flex items-center justify-between text-xs text-gray-500">
-        <div>
-          <span>{{ recipe.created_at.strftime('%b %d, %Y') }}</span>
+                <!-- delete -->
+                <button class="bg-white/20 text-white p-1.5 rounded-full backdrop-blur-sm hover:bg-white/30"
+                    title="Delete"
+                    onclick="confirmDelete('{{ url_for('dashboard.delete_recipe', recipe_id=recipe.id) }}')">
+                    <i class="fa-solid fa-trash w-4 h-4"></i>
+                </button>
+            </div>
         </div>
-        <div>
-          {% if recipe.category %}
-          <span class="bg-gray-100 px-2 py-0.5 rounded-full text-xs">{{ recipe.category.name }}</span>
-          {% endif %}
-        </div>
-      </div>
 
-      <div class="mt-3 flex items-center justify-between">
-<div class="text-xs text-gray-500 flex items-center gap-2">
-          <i class="fa-solid fa-eye w-4 h-4"></i>
-          0 views
+        <!-- content -->
+        <div class="p-4">
+            <h3 class="font-semibold text-gray-800 mb-1 truncate">{{ recipe.name }}</h3>
+
+            {% if recipe.description %}
+            <p class="text-sm text-gray-600 line-clamp-2 mb-3">{{ recipe.description|striptags|truncate(120) }}</p>
+            {% endif %}
+
+            <div class="flex items-center justify-between text-xs text-gray-500">
+                <div>
+                    <span>{{ recipe.created_at.strftime('%b %d, %Y') }}</span>
+                </div>
+                <div>
+                    {% if recipe.category %}
+                    <span class="bg-gray-100 px-2 py-0.5 rounded-full text-xs">{{ recipe.category.name }}</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="mt-3 flex items-center justify-between">
+                <div class="text-xs text-gray-500 flex items-center gap-2">
+                    <i class="fa-solid fa-eye w-4 h-4"></i>
+                    0 views
+                </div>
+                <a href="{{ url_for('dashboard.view_recipe', recipe_id=recipe.id) }}"
+                    class="text-indigo-600 text-sm font-medium hover:underline">
+                    View Recipe →
+                </a>
+            </div>
         </div>
-        <a href="{{ url_for('dashboard.view_recipe', recipe_id=recipe.id) }}" class="text-indigo-600 text-sm font-medium hover:underline">
-          View Recipe →
-        </a>
-      </div>
-    </div>
-  </article>
-  {% endfor %}
+    </article>
+    {% endfor %}
 </div>
 
 <!-- Pagination -->
 {% if recipes.pages > 1 %}
 <div class="flex justify-center mb-6">
-  <nav class="inline-flex items-center gap-2" aria-label="Pagination">
-    {% if recipes.has_prev %}
-    <a href="{{ url_for('dashboard.my_recipes', page=recipes.prev_num) }}" class="px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">Previous</a>
-    {% endif %}
+    <nav class="inline-flex items-center gap-2" aria-label="Pagination">
+        {% if recipes.has_prev %}
+        <a href="{{ url_for('dashboard.my_recipes', page=recipes.prev_num) }}"
+            class="px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">Previous</a>
+        {% endif %}
 
-    {% for page_num in recipes.iter_pages() %}
-      {% if page_num %}
+        {% for page_num in recipes.iter_pages() %}
+        {% if page_num %}
         {% if page_num != recipes.page %}
-        <a href="{{ url_for('dashboard.my_recipes', page=page_num) }}" class="px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">{{ page_num }}</a>
+        <a href="{{ url_for('dashboard.my_recipes', page=page_num) }}"
+            class="px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">{{ page_num
+            }}</a>
         {% else %}
         <span class="px-3 py-2 rounded-lg bg-indigo-600 text-white text-sm">{{ page_num }}</span>
         {% endif %}
-      {% else %}
+        {% else %}
         <span class="px-2 text-gray-400">…</span>
-      {% endif %}
-    {% endfor %}
+        {% endif %}
+        {% endfor %}
 
-    {% if recipes.has_next %}
-    <a href="{{ url_for('dashboard.my_recipes', page=recipes.next_num) }}" class="px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">Next</a>
-    {% endif %}
-  </nav>
+        {% if recipes.has_next %}
+        <a href="{{ url_for('dashboard.my_recipes', page=recipes.next_num) }}"
+            class="px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">Next</a>
+        {% endif %}
+    </nav>
 </div>
 {% endif %}
 
 <!-- Empty state -->
 {% else %}
 <div class="text-center py-16">
-  <div class="mx-auto mb-5 w-24 h-24 rounded-full bg-gradient-to-br from-indigo-600 to-indigo-700 flex items-center justify-center">
-    <i class="fa-solid fa-utensils w-10 h-10 text-white"></i>
-  </div>
-  <h3 class="text-lg font-semibold text-gray-800 mb-2">No recipes yet! 🍽️</h3>
-  <p class="text-sm text-gray-600 mb-6 max-w-lg mx-auto">Start your culinary journey by creating your first recipe. Share your favorite dishes with the world!</p>
+    <div
+        class="mx-auto mb-5 w-24 h-24 rounded-full bg-gradient-to-br from-indigo-600 to-indigo-700 flex items-center justify-center">
+        <i class="fa-solid fa-utensils w-10 h-10 text-white"></i>
+    </div>
+    <h3 class="text-lg font-semibold text-gray-800 mb-2">No recipes yet! 🍽️</h3>
+    <p class="text-sm text-gray-600 mb-6 max-w-lg mx-auto">Start your culinary journey by creating your first recipe.
+        Share your favorite dishes with the world!</p>
 
-  <div class="flex flex-col sm:flex-row gap-3 justify-center">
-    <a href="{{ url_for('dashboard.add_recipe') }}" class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg">
-      <i class="fa-solid fa-plus w-4 h-4"></i>
-      Create your first recipe
-    </a>
-<a href="{{ url_for('dashboard.explore') }}" class="inline-flex items-center gap-2 border border-gray-200 px-4 py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-50">
-      <i class="fa-solid fa-compass w-4 h-4"></i>
-      Explore global recipes
-    </a>
-  </div>
+    <div class="flex flex-col sm:flex-row gap-3 justify-center">
+        <a href="{{ url_for('dashboard.add_recipe') }}"
+            class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg">
+            <i class="fa-solid fa-plus w-4 h-4"></i>
+            Create your first recipe
+        </a>
+        <a href="{{ url_for('dashboard.explore') }}"
+            class="inline-flex items-center gap-2 border border-gray-200 px-4 py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-50">
+            <i class="fa-solid fa-compass w-4 h-4"></i>
+            Explore global recipes
+        </a>
+    </div>
 </div>
 {% endif %}
 
 <!-- Mobile FAB -->
-<a href="{{ url_for('dashboard.add_recipe') }}"
-  id="fab-add"
-  class="fixed bottom-5 right-5 sm:hidden inline-flex items-center justify-center w-14 h-14 rounded-full shadow-lg bg-indigo-600 text-white z-40"
-  aria-label="Add new recipe" title="Add new recipe">
-  <i class="fa-solid fa-plus w-6 h-6"></i>
+<a href="{{ url_for('dashboard.add_recipe') }}" id="fab-add"
+    class="fixed bottom-5 right-5 sm:hidden inline-flex items-center justify-center w-14 h-14 rounded-full shadow-lg bg-indigo-600 text-white z-40"
+    aria-label="Add new recipe" title="Add new recipe">
+    <i class="fa-solid fa-plus w-6 h-6"></i>
 </a>
 
 <!-- Preview Modal (hidden by default) -->
 <div id="recipe-preview" class="fixed inset-0 z-50 hidden items-center justify-center px-4 py-6">
-  <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closePreview()" aria-hidden="true"></div>
-  <div class="relative bg-white rounded-xl max-w-2xl w-full overflow-hidden shadow-2xl">
-    <div class="flex items-center justify-between p-4 border-b border-gray-100">
-      <h3 id="preview-title" class="text-lg font-semibold text-gray-800">Recipe Title</h3>
-      <div class="flex items-center gap-2">
-        <button class="text-sm text-indigo-600 hover:underline" id="preview-edit">Edit</button>
-        <button class="text-sm text-gray-500" onclick="closePreview()">Close</button>
-      </div>
-    </div>
-
-    <div class="p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-      <div class="md:col-span-1">
-        <img id="preview-image" src="" alt="" class="w-full h-40 object-cover rounded-md bg-gray-100">
-      </div>
-      <div class="md:col-span-2">
-        <div class="text-xs text-gray-500 mb-2" id="preview-meta">Category • Date • Visibility</div>
-        <p id="preview-desc" class="text-sm text-gray-700 leading-relaxed"></p>
-        <div class="mt-4 flex items-center gap-3">
-          <a id="preview-open" href="#" class="inline-flex items-center gap-2 text-indigo-600 font-medium text-sm">Open full recipe →</a>
-          <button id="preview-delete" class="text-sm text-red-500">Delete</button>
+    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closePreview()" aria-hidden="true"></div>
+    <div class="relative bg-white rounded-xl max-w-2xl w-full overflow-hidden shadow-2xl">
+        <div class="flex items-center justify-between p-4 border-b border-gray-100">
+            <h3 id="preview-title" class="text-lg font-semibold text-gray-800">Recipe Title</h3>
+            <div class="flex items-center gap-2">
+                <button class="text-sm text-indigo-600 hover:underline" id="preview-edit">Edit</button>
+                <button class="text-sm text-gray-500" onclick="closePreview()">Close</button>
+            </div>
         </div>
-      </div>
+
+        <div class="p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="md:col-span-1">
+                <img id="preview-image" src="" alt="" class="w-full h-40 object-cover rounded-md bg-gray-100">
+            </div>
+            <div class="md:col-span-2">
+                <div class="text-xs text-gray-500 mb-2" id="preview-meta">Category • Date • Visibility</div>
+                <p id="preview-desc" class="text-sm text-gray-700 leading-relaxed"></p>
+                <div class="mt-4 flex items-center gap-3">
+                    <a id="preview-open" href="#"
+                        class="inline-flex items-center gap-2 text-indigo-600 font-medium text-sm">Open full recipe
+                        →</a>
+                    <button id="preview-delete" class="text-sm text-red-500">Delete</button>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
 </div>
 
 <!-- JS: modal, preview, delete confirm -->
 <script>
-  // hold a simple mapping of recipe data: populate from server into a JS object
-  const RECIPES = {
+    // hold a simple mapping of recipe data: populate from server into a JS object
+    const RECIPES = {
     {% for r in recipes.items %}
     "{{ r.id }}": {
-      id: "{{ r.id }}",
-      name: {{ r.name|tojson }},
-      description: {{ (r.description|striptags if r.description else '')|tojson }},
-      image: {{ (r.images[0].url if r.images) | default('') | tojson }},
-      category: {{ (r.category.name if r.category else '')|tojson }},
-      date: "{{ r.created_at.strftime('%b %d, %Y') }}",
-      public: {{ 'true' if r.public else 'false' }},
-      url_view: "{{ url_for('dashboard.view_recipe', recipe_id=r.id) }}",
-      url_edit: "{{ url_for('dashboard.edit_recipe', recipe_id=r.id) }}",
-      url_delete: "{{ url_for('dashboard.delete_recipe', recipe_id=r.id) }}"
-    }{% if not loop.last %},{% endif %}
+        id: "{{ r.id }}",
+            name: { { r.name | tojson } },
+        description: { { (r.description | striptags if r.description else '')| tojson } },
+        image: { { (r.images[0].url if r.images) | default ('') | tojson } },
+        category: { { (r.category.name if r.category else '')| tojson } },
+        date: "{{ r.created_at.strftime('%b %d, %Y') }}",
+            public: { { 'true' if r.public else 'false' } },
+        url_view: "{{ url_for('dashboard.view_recipe', recipe_id=r.id) }}",
+            url_edit: "{{ url_for('dashboard.edit_recipe', recipe_id=r.id) }}",
+                url_delete: "{{ url_for('dashboard.delete_recipe', recipe_id=r.id) }}"
+    } {% if not loop.last %}, {% endif %}
     {% endfor %}
   };
 
-  // open preview by id
-  function openPreview(id) {
-    const recipe = RECIPES[String(id)];
-    if (!recipe) return;
-    document.getElementById('preview-title').textContent = recipe.name;
-    document.getElementById('preview-desc').textContent = recipe.description || 'No description provided.';
-    document.getElementById('preview-image').src = recipe.image || '';
-    document.getElementById('preview-image').alt = recipe.name;
-    document.getElementById('preview-meta').textContent = (recipe.category ? recipe.category + ' • ' : '') + recipe.date + ' • ' + (recipe.public === true || recipe.public === 'true' ? 'Public' : 'Private');
-    document.getElementById('preview-open').href = recipe.url_view;
-    document.getElementById('preview-edit').onclick = function() { window.location = recipe.url_edit; };
-    document.getElementById('preview-delete').onclick = function() { confirmDelete(recipe.url_delete); };
-    document.getElementById('recipe-preview').classList.remove('hidden');
-    document.getElementById('recipe-preview').classList.add('flex');
-    document.body.style.overflow = 'hidden';
-    // focus for accessibility
-    document.getElementById('preview-title').focus();
-  }
-
-  function closePreview() {
-    document.getElementById('recipe-preview').classList.add('hidden');
-    document.getElementById('recipe-preview').classList.remove('flex');
-    document.body.style.overflow = '';
-  }
-
-  // close with Esc
-  document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape') closePreview();
-  });
-
-  // confirm delete (simple)
-  function confirmDelete(deleteUrl) {
-    const ok = confirm('Are you sure you want to delete this recipe? This action cannot be undone.');
-    if (ok) {
-      // navigate to delete endpoint (GET/POST depends on your view)
-      // Prefer to submit a form/POST in production. This uses GET for simplicity; adapt as required.
-      window.location = deleteUrl;
+    // open preview by id
+    function openPreview(id) {
+        const recipe = RECIPES[String(id)];
+        if (!recipe) return;
+        document.getElementById('preview-title').textContent = recipe.name;
+        document.getElementById('preview-desc').textContent = recipe.description || 'No description provided.';
+        document.getElementById('preview-image').src = recipe.image || '';
+        document.getElementById('preview-image').alt = recipe.name;
+        document.getElementById('preview-meta').textContent = (recipe.category ? recipe.category + ' • ' : '') + recipe.date + ' • ' + (recipe.public === true || recipe.public === 'true' ? 'Public' : 'Private');
+        document.getElementById('preview-open').href = recipe.url_view;
+        document.getElementById('preview-edit').onclick = function () { window.location = recipe.url_edit; };
+        document.getElementById('preview-delete').onclick = function () { confirmDelete(recipe.url_delete); };
+        document.getElementById('recipe-preview').classList.remove('hidden');
+        document.getElementById('recipe-preview').classList.add('flex');
+        document.body.style.overflow = 'hidden';
+        // focus for accessibility
+        document.getElementById('preview-title').focus();
     }
-  }
+
+    function closePreview() {
+        document.getElementById('recipe-preview').classList.add('hidden');
+        document.getElementById('recipe-preview').classList.remove('flex');
+        document.body.style.overflow = '';
+    }
+
+    // close with Esc
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') closePreview();
+    });
+
+    // confirm delete (simple)
+    function confirmDelete(deleteUrl) {
+        const ok = confirm('Are you sure you want to delete this recipe? This action cannot be undone.');
+        if (ok) {
+            // navigate to delete endpoint (GET/POST depends on your view)
+            // Prefer to submit a form/POST in production. This uses GET for simplicity; adapt as required.
+            window.location = deleteUrl;
+        }
+    }
+
+    // Toggle additional categories
+    function toggleAllCategories() {
+        const additionalCategories = document.getElementById('additional-categories');
+        const showMoreBtn = document.getElementById('show-more-btn');
+
+        if (additionalCategories.classList.contains('hidden')) {
+            additionalCategories.classList.remove('hidden');
+            additionalCategories.classList.add('flex');
+            showMoreBtn.innerHTML = 'Show less';
+        } else {
+            additionalCategories.classList.add('hidden');
+            additionalCategories.classList.remove('flex');
+            const categoriesCount = parseInt(showMoreBtn.innerHTML.match(/\d+/)[0]);
+            showMoreBtn.innerHTML = `+${categoriesCount} more`;
+        }
+    }
 </script>
 {% endblock %}
-

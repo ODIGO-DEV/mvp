@@ -7,7 +7,7 @@ from app.models.user import User
 from app.models.post import Post
 from app.models.comment import Comment
 from app.extensions import db
-from sqlalchemy import or_, desc
+from sqlalchemy import or_, desc, func, case
 from app.blueprints.dashboard.forms import RecipeForm, CommentForm
 from app.models.step import Step
 from app.models.ingredients import Ingredient
@@ -90,8 +90,8 @@ def my_recipes():
 
     categories = Category.query.all()
 
-    return render_template("dashboard/my_recipes.html", 
-                         recipes=recipes, 
+    return render_template("dashboard/my_recipes.html",
+                         recipes=recipes,
                          categories=categories,
                          current_category=category_id,
                          current_visibility=visibility,
@@ -151,10 +151,17 @@ def view_recipe(recipe_id):
 @dashboard_bp.route("/add-recipe", methods=["GET", "POST"])
 @login_required
 def add_recipe():
-    form = RecipeForm(request.form) if request.method == 'POST' else RecipeForm()
+    form = RecipeForm(formdata=request.form, files=request.files) if request.method == 'POST' else RecipeForm()
+
+    if request.method == 'POST':
+        print(f"DEBUG: Form validation result: {form.validate()}")
+        print(f"DEBUG: Form errors: {form.errors}")
+        print(f"DEBUG: Request files keys: {list(request.files.keys())}")
+        print(f"DEBUG: Request form keys: {list(request.form.keys())}")
 
     if form.validate_on_submit():
         try:
+            print("DEBUG: Form validation passed, creating recipe...")
             # Create the recipe
             recipe = Recipe(
                 name=form.name.data,
@@ -168,34 +175,109 @@ def add_recipe():
             db.session.add(recipe)
             db.session.flush()  # Get the recipe ID
 
-            # Handle recipe images
-            for file_storage in form.recipe_images.data:
-                if getattr(file_storage, 'filename', ''):
-                    ok, url = upload_service.upload_file(file_storage)
-                    if ok and url:
-                        db.session.add(Image(url=url, recipe_id=recipe.id))
+            # Handle recipe images - process directly from request.files
+            uploaded_images = []
+            print(f"DEBUG: form.recipe_images.data = {form.recipe_images.data}")
+            print(f"DEBUG: request.files = {request.files}")
+
+            # Get recipe images from request.files instead of form
+            recipe_files = request.files.getlist('recipe_images')
+            print(f"DEBUG: Found {len(recipe_files)} recipe files to process")
+            if recipe_files:
+                for file_field in recipe_files:
+                    print(f"DEBUG: Processing file_field: {file_field}, type: {type(file_field)}")
+                    if file_field and hasattr(file_field, 'filename') and file_field.filename:
+                        print(f"DEBUG: Found valid file: {file_field.filename}")
+                        # Validate file type
+                        allowed_extensions = {'jpg', 'jpeg', 'png', 'gif', 'webp'}
+                        file_ext = file_field.filename.rsplit('.', 1)[1].lower() if '.' in file_field.filename else ''
+
+                        if file_ext not in allowed_extensions:
+                            flash(f"Invalid file type for {file_field.filename}. Allowed types: {', '.join(allowed_extensions)}", "error")
+                            continue
+
+                        # Validate file size (30MB max)
+                        file_field.seek(0, 2)  # Seek to end
+                        file_size = file_field.tell()
+                        file_field.seek(0)  # Reset to beginning
+
+                        if file_size > 30 * 1024 * 1024:  # 30MB
+                            flash(f"File {file_field.filename} is too large. Maximum size is 30MB.", "error")
+                            continue
+
+                        try:
+                            print(f"DEBUG: Attempting to upload {file_field.filename}")
+                            ok, url = upload_service.upload_file(file_field)
+                            print(f"DEBUG: Upload result - ok: {ok}, url: {url}")
+                            if ok and url:
+                                image = Image(url=url, recipe_id=recipe.id)
+                                db.session.add(image)
+                                uploaded_images.append(url)
+                                print(f"DEBUG: Added image to database: {url}")
+                            else:
+                                flash(f"Failed to upload image: {file_field.filename}", "error")
+                        except Exception as e:
+                            print(f"DEBUG: Exception during upload: {str(e)}")
+                            flash(f"Error uploading {file_field.filename}: {str(e)}", "error")
+
+            if not uploaded_images:
+                flash("No images were uploaded. You can add images later by editing your recipe.", "warning")
 
             # Handle ingredients
-            for ingredient_form in form.ingredients:
-                if ingredient_form.name.data:
+            for ingredient_field in form.ingredients:
+                if ingredient_field.form.name.data:
                     ingredient = Ingredient(
-                        name=ingredient_form.name.data,
-                        quantity=ingredient_form.quantity.data,
-                        unit=ingredient_form.unit.data,
+                        name=ingredient_field.form.name.data,
+                        quantity=ingredient_field.form.quantity.data,
+                        unit=ingredient_field.form.unit.data,
+                        notes=ingredient_field.form.notes.data,
                         recipe_id=recipe.id,
                         user_id=current_user.id
                     )
                     db.session.add(ingredient)
+                    db.session.flush()  # Get ingredient ID
+
+                    # Handle ingredient images - process directly from request.files
+                    ingredient_idx = len([i for i in form.ingredients if i.form.name.data]) - 1
+                    ingredient_files = request.files.getlist(f'ingredients-{ingredient_idx}-images')
+                    for file_field in ingredient_files:
+                        if file_field and file_field.filename:
+                            try:
+                                ok, url = upload_service.upload_file(file_field)
+                                if ok and url:
+                                    image = Image(url=url, ingredient_id=ingredient.id)
+                                    db.session.add(image)
+                                    print(f"DEBUG: Added ingredient image: {url}")
+                            except Exception as e:
+                                flash(f"Error uploading ingredient image: {str(e)}", "error")
 
             # Handle steps
-            for step_form in form.steps:
-                if step_form.instruction.data:
+            for step_field in form.steps:
+                if step_field.form.instruction.data:
                     step = Step(
-                        step_number=step_form.step_number.data,
-                        instruction=step_form.instruction.data,
+                        step_number=step_field.form.step_number.data,
+                        instruction=step_field.form.instruction.data,
+                        name=step_field.form.name.data if hasattr(step_field.form, 'name') else None,
+                        description=step_field.form.description.data if hasattr(step_field.form, 'description') else None,
+                        duration=step_field.form.duration.data if hasattr(step_field.form, 'duration') else None,
                         recipe_id=recipe.id
                     )
                     db.session.add(step)
+                    db.session.flush()  # Get step ID
+
+                    # Handle step images - process directly from request.files
+                    step_idx = len([s for s in form.steps if s.form.instruction.data]) - 1
+                    step_files = request.files.getlist(f'steps-{step_idx}-images')
+                    for file_field in step_files:
+                        if file_field and file_field.filename:
+                            try:
+                                ok, url = upload_service.upload_file(file_field)
+                                if ok and url:
+                                    image = Image(url=url, step_id=step.id)
+                                    db.session.add(image)
+                                    print(f"DEBUG: Added step image: {url}")
+                            except Exception as e:
+                                flash(f"Error uploading step image: {str(e)}", "error")
 
             db.session.commit()
             flash("Recipe created successfully!", "success")
@@ -203,7 +285,17 @@ def add_recipe():
 
         except Exception as e:
             db.session.rollback()
-            flash(f"An error occurred while creating the recipe. {e}", "error")
+            print(f"DEBUG: Exception in add_recipe: {str(e)}")
+            print(f"DEBUG: Exception type: {type(e)}")
+            import traceback
+            print(f"DEBUG: Traceback: {traceback.format_exc()}")
+            flash(f"An error occurred while creating the recipe: {str(e)}", "error")
+    else:
+        # Form validation failed
+        print(f"DEBUG: Form validation failed with errors: {form.errors}")
+        for field, errors in form.errors.items():
+            for error in errors:
+                flash(f"{field}: {error}", "error")
 
     return render_template("dashboard/add_recipe.html", form=form)
 
@@ -319,3 +411,44 @@ def add_comment(recipe_id):
     else:
         flash("Error posting comment.", "error")
     return redirect(url_for('dashboard.view_recipe', recipe_id=recipe_id))
+
+@dashboard_bp.route("/api/ingredients/search")
+@login_required
+def search_ingredients():
+    """API endpoint to search for existing ingredients"""
+    query = request.args.get('q', '').strip()
+
+    if not query:
+        return jsonify([])
+
+    # Search ingredients by name, prioritizing user's own ingredients
+    ingredients = db.session.query(
+        Ingredient.name,
+        Ingredient.unit,
+        func.count(Ingredient.id).label('usage_count'),
+        func.max(Ingredient.created_at).label('last_used')
+    ).filter(
+        or_(
+            Ingredient.user_id == current_user.id,
+            Ingredient.public == True
+        ),
+        Ingredient.name.ilike(f'%{query}%')
+    ).group_by(
+        Ingredient.name, Ingredient.unit
+    ).order_by(
+        # Prioritize user's own ingredients
+        func.max(case([(Ingredient.user_id == current_user.id, 1)], else_=0)).desc(),
+        func.count(Ingredient.id).desc(),  # Then by usage frequency
+        func.max(Ingredient.created_at).desc()  # Then by recency
+    ).limit(10).all()
+
+    result = []
+    for ingredient in ingredients:
+        result.append({
+            'name': ingredient.name,
+            'unit': ingredient.unit or '',
+            'usage_count': ingredient.usage_count,
+            'display_text': f"{ingredient.name}" + (f" ({ingredient.unit})" if ingredient.unit else "")
+        })
+
+    return jsonify(result)

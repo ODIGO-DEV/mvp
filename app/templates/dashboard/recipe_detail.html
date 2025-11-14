@@ -1,184 +1,721 @@
 {% extends "dashboard/base.html" %}
 {% block title %}{{ recipe.name }} - ODiGO{% endblock %}
+{% block extra_head %}
+<style>
+    .recipe-hero-gradient {
+        background: linear-gradient(135deg, rgba(79, 70, 229, 0.95) 0%, rgba(147, 51, 234, 0.95) 100%);
+    }
+
+    .ingredient-item:hover {
+        transform: translateX(4px);
+        transition: all 0.2s ease;
+    }
+
+    .step-card {
+        transition: all 0.3s ease;
+    }
+
+    .step-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 24px rgba(79, 70, 229, 0.08);
+    }
+
+    .step-card.completed {
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.03) 0%, rgba(21, 128, 61, 0.03) 100%);
+        border-color: #22c55e;
+    }
+
+    .step-number-circle.completed {
+        background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+    }
+
+    .image-gallery img {
+        transition: all 0.3s ease;
+    }
+
+    .image-gallery img:hover {
+        transform: scale(1.05);
+    }
+
+    .floating-action-btn {
+        position: fixed;
+        bottom: 1.5rem;
+        right: 1.5rem;
+        z-index: 50;
+    }
+
+    @media (max-width: 768px) {
+        .floating-action-btn {
+            bottom: 1rem;
+            right: 1rem;
+        }
+    }
+
+    .ingredient-item.checked {
+        opacity: 0.6;
+        background-color: #f9fafb;
+    }
+
+    .ingredient-item.checked label {
+        text-decoration: line-through;
+    }
+</style>
+{% endblock %}
 {% block dashboard_content %}
-<div class="recipe-detail-container">
-    <!-- Header with Background Image -->
-    <div class="relative bg-gray-800 rounded-3xl overflow-hidden mb-8 shadow-lg">
-        {% if recipe.images %}
-        <img src="{{ recipe.images[0].url }}" alt="{{ recipe.name }}" class="absolute inset-0 w-full h-full object-cover opacity-40">
-        {% endif %}
-        <div class="relative p-8 md:p-12 text-white">
-            <a href="javascript:history.back()" class="absolute top-6 left-6 text-white hover:text-gray-200 transition-colors"><i class="fa-solid fa-arrow-left"></i> Back</a>
-            <h1 class="text-4xl md:text-6xl font-bold leading-tight mb-4">{{ recipe.name }}</h1>
-            <div class="flex items-center space-x-4 text-lg mb-6">
-                <span>By {{ recipe.author.name or 'Anonymous' }}</span>
-                <span>&bull;</span>
-                <span>{{ recipe.created_at.strftime('%b %d, %Y') }}</span>
-            </div>
-            <div class="flex space-x-4">
-                <a href="{{ url_for('planner.index', add_recipe_id=recipe.id) }}" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg transition-colors">Add to Meal Plan</a>
-            <button
-                class="bg-white/20 backdrop-blur-sm text-white p-2 rounded-full hover:bg-white/30 transition-colors">
-                <i class="fa-solid fa-share-nodes w-5 h-5"></i>
-            </button>
+<div class="min-h-screen bg-gray-50 pb-20">
+    <!-- Compact Navigation -->
+    <div class="sticky top-0 z-40 bg-white/95 backdrop-blur-sm border-b border-gray-200">
+        <div class="container mx-auto px-4 py-3">
+            <div class="flex items-center justify-between">
+                <button onclick="history.back()"
+                    class="inline-flex items-center text-gray-600 hover:text-indigo-600 transition-colors text-sm font-medium">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Back
+                </button>
+                <div class="flex items-center space-x-2">
+                    <button class="p-2 text-gray-600 hover:text-red-500 transition-colors" title="Favorite">
+                        <i class="far fa-heart text-lg"></i>
+                    </button>
+                    <button class="p-2 text-gray-600 hover:text-indigo-600 transition-colors" title="Share">
+                        <i class="fas fa-share-alt text-lg"></i>
+                    </button>
+                    <button class="p-2 text-gray-600 hover:text-green-600 transition-colors" title="Print">
+                        <i class="fas fa-print text-lg"></i>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Main Content -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <!-- Left Column (Ingredients and Meta) -->
-        <div class="lg:col-span-1 space-y-8">
-            <div class="bg-white p-6 rounded-2xl shadow-md">
-                <h2 class="text-2xl font-bold mb-4">Ingredients</h2>
-                <ul class="space-y-3">
-                    {% for ingredient in recipe.ingredients %}
-                    <li class="flex items-center">
-                        <input type="checkbox" class="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mr-3">
-                        <span class="text-gray-700">{{ ingredient.quantity }} {{ ingredient.unit }} {{ ingredient.name }}</span>
-                    </li>
-                    {% endfor %}
-                </ul>
-            </div>
-            <div class="bg-white p-6 rounded-2xl shadow-md">
-                <h2 class="text-2xl font-bold mb-4">Details</h2>
-                 <div class="space-y-4">
-                    <!-- Author -->
-                    <div class="flex items-center">
-                        <div
-                            class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full w-10 h-10 flex items-center justify-center text-white font-semibold mr-3">
-                            {{ (recipe.author.name or 'U')[0].upper() }}
+    <div class="container mx-auto px-4 max-w-7xl">
+        <!-- Hero Section with Image Gallery -->
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden my-5">
+            {% if recipe.images %}
+            <div class="relative h-64 md:h-80">
+                <div class="image-gallery grid grid-cols-1 md:grid-cols-2 gap-1 h-full">
+                    <div class="relative overflow-hidden cursor-pointer"
+                        onclick="openImageModal('{{ recipe.images[0].url }}')">
+                        <img src="{{ recipe.images[0].url }}" alt="{{ recipe.name }}"
+                            class="w-full h-full object-cover">
+                        <div class="absolute inset-0 recipe-hero-gradient opacity-70"></div>
+                    </div>
+                    {% if recipe.images|length > 1 %}
+                    <div class="hidden md:grid grid-rows-2 gap-1">
+                        {% if recipe.images|length >= 2 %}
+                        <div class="relative overflow-hidden cursor-pointer"
+                            onclick="openImageModal('{{ recipe.images[1].url }}')">
+                            <img src="{{ recipe.images[1].url }}" alt="{{ recipe.name }}"
+                                class="w-full h-full object-cover">
                         </div>
-                        <div>
-                            <div class="font-medium text-gray-800">{{ recipe.author.name or 'Anonymous Chef' }}</div>
-                            <div class="text-sm text-gray-500">Recipe Author</div>
-                        </div>
-                    </div>
-
-                    <!-- Stats -->
-                    <div class="grid grid-cols-2 gap-4 text-center">
-                        <div>
-                            <div class="text-2xl font-bold text-gray-800">0</div>
-                            <div class="text-xs text-gray-500">Views</div>
-                        </div>
-                        <div>
-                            <div class="text-2xl font-bold text-red-500">0</div>
-                            <div class="text-xs text-gray-500">Likes</div>
-                        </div>
-                    </div>
-
-                    <!-- Category & Origin -->
-                    {% if recipe.category %}
-                    <div>
-                        <div class="text-sm text-gray-500 mb-1">Category</div>
-                        <span class="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm font-medium">
-                            {{ recipe.category.name }}
-                        </span>
-                    </div>
-                    {% endif %}
-
-                    {% if recipe.origin %}
-                    <div>
-                        <div class="text-sm text-gray-500 mb-1">Origin</div>
-                        <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
-                            🌍 {{ recipe.origin.country }}{% if recipe.origin.culture %} - {{ recipe.origin.culture }}{%
-                            endif %}
-                        </span>
-                    </div>
-                    {% endif %}
-
-                    <!-- Date -->
-                    <div>
-                        <div class="text-sm text-gray-500 mb-1">Created</div>
-                        <div class="text-sm text-gray-800">{{ recipe.created_at.strftime('%B %d, %Y') }}</div>
-                    </div>
-
-                    <div class="mt-4 pt-4 border-t border-gray-200">
-                        <div class="text-sm text-gray-500 mb-2">Share this recipe</div>
-                        <div class="flex space-x-2">
-                            <a href="#" class="bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M22.675 0h-21.35C.59 0 0 .59 0 1.325v21.35C0 23.41.59 24 1.325 24H12.82v-9.29H9.692v-3.622h3.128V8.413c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.795.142v3.24h-1.918c-1.504 0-1.795.715-1.795 1.763v2.313h3.587l-.467 3.622h-3.12V24h5.713c.735 0 1.325-.59 1.325-1.325V1.325C24 .59 23.41 0 22.675 0z"/></svg></a>
-                            <a href="#" class="bg-sky-500 text-white p-2 rounded-full hover:bg-sky-600"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.724c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.223.084 4.926 4.926 0 004.6 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/></svg></a>
-                            <a href="#" class="bg-red-600 text-white p-2 rounded-full hover:bg-red-700"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12.017 0C5.396 0 .029 5.367.029 11.987c0 5.079 3.158 9.417 7.618 11.174-.105-.949-.199-2.403.041-3.439.219-.937 1.406-5.957 1.406-5.957s-.359-.72-.359-1.781c0-1.663.967-2.911 2.168-2.911 1.024 0 1.518.769 1.518 1.688 0 1.029-.653 2.567-.992 3.992-.285 1.193.6 2.165 1.775 2.165 2.128 0 3.768-2.245 3.768-5.487 0-2.861-2.063-4.869-5.008-4.869-3.41 0-5.409 2.562-5.409 5.199 0 1.033.394 2.143.889 2.741.099.12.112.225.085.345-.09.375-.293 1.199-.334 1.363-.053.225-.172.271-.402.165-1.495-.69-2.433-2.878-2.433-4.646 0-3.776 2.748-7.252 7.92-7.252 4.158 0 7.392 2.967 7.392 6.923 0 4.135-2.607 7.462-6.233 7.462-1.214 0-2.357-.629-2.75-1.378l-.748 2.853c-.271 1.043-1.002 2.35-1.492 3.146C9.57 23.812 10.763 24 12.017 24c6.624 0 11.99-5.367 11.99-11.988C24.007 5.367 18.641 0 12.017 0z"/></svg></a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Right Column (Instructions and Comments) -->
-        <div class="lg:col-span-2 space-y-8">
-            <div class="bg-white p-6 rounded-2xl shadow-md">
-                <h2 class="text-2xl font-bold mb-4">Instructions</h2>
-                 <div class="space-y-6">
-                {% for step in recipe.steps %}
-                <div class="flex">
-                    <div
-                        class="bg-indigo-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-semibold mr-4 flex-shrink-0 mt-1">
-                        {{ step.step_number }}
-                    </div>
-                    <div class="flex-1">
-                        <p class="text-gray-700 leading-relaxed">{{ step.instruction }}</p>
-                        {% if step.duration %}
-                        <div class="mt-2 text-sm text-gray-500 flex items-center">
-                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            {{ step.duration }} minutes
+                        {% endif %}
+                        {% if recipe.images|length >= 3 %}
+                        <div class="relative overflow-hidden cursor-pointer"
+                            onclick="{% if recipe.images|length > 3 %}showImageGallery(){% else %}openImageModal('{{ recipe.images[2].url }}'){% endif %}">
+                            <img src="{{ recipe.images[2].url }}" alt="{{ recipe.name }}"
+                                class="w-full h-full object-cover">
+                            {% if recipe.images|length > 3 %}
+                            <div
+                                class="absolute inset-0 bg-black/60 flex items-center justify-center hover:bg-black/70 transition-colors">
+                                <span class="text-white text-lg font-semibold">
+                                    +{{ recipe.images|length - 3 }} more photos
+                                </span>
+                            </div>
+                            {% endif %}
                         </div>
                         {% endif %}
                     </div>
+                    {% endif %}
                 </div>
-                {% endfor %}
-            </div>
-            </div>
-            <div class="bg-white p-6 rounded-2xl shadow-md">
-                <h2 class="text-2xl font-bold mb-4">Comments</h2>
-                <!-- Comments Preview -->
-        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-            <h3 class="text-lg font-semibold text-gray-800 mb-4">Comments</h3>
-
-            {% if recipe.comments %}
-            <div class="space-y-4 mb-4">
-                {% for comment in recipe.comments[:3] %}
-                <div class="flex">
-                    <div
-                        class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full w-8 h-8 flex items-center justify-center text-white text-xs font-semibold mr-3 flex-shrink-0">
-                        {{ (comment.author.name or 'U')[0].upper() }}
-                    </div>
-                    <div class="flex-1">
-                        <div class="text-sm font-medium text-gray-800">{{ comment.author.name or 'Anonymous' }}</div>
-                        <p class="text-sm text-gray-600 mt-1">{{ comment.content[:100] }}{% if comment.content|length >
-                            100 %}...{% endif %}</p>
+                <!-- Recipe Title Overlay -->
+                <div
+                    class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-5">
+                    <h1 class="text-2xl md:text-3xl font-bold text-white mb-2">{{ recipe.name }}</h1>
+                    <div class="flex flex-wrap items-center gap-3 text-white/90 text-sm">
+                        <div class="flex items-center">
+                            <div class="w-7 h-7 bg-white/20 rounded-full flex items-center justify-center mr-2">
+                                <span class="text-sm font-semibold">{{ (recipe.author.name or 'A')[0].upper() }}</span>
+                            </div>
+                            <span class="font-medium">{{ recipe.author.name or 'Anonymous Chef' }}</span>
+                        </div>
+                        {% if recipe.category %}
+                        <span class="text-white/60">•</span>
+                        <span class="bg-white/20 px-3 py-1 rounded-full text-sm">{{ recipe.category.name }}</span>
+                        {% endif %}
                     </div>
                 </div>
-                {% endfor %}
             </div>
-
-            {% if recipe.comments|length > 3 %}
-            <button class="text-indigo-600 hover:text-indigo-700 text-sm font-medium">
-                View all {{ recipe.comments|length }} comments
-            </button>
-            {% endif %}
-            {% else %}
-            <p class="text-gray-500 text-sm mb-4">No comments yet. Be the first!</p>
             {% endif %}
 
-            <!-- Add Comment -->
-            <div class="border-t border-gray-100 pt-4">
-                <form method="POST" action="{{ url_for('dashboard.add_comment', recipe_id=recipe.id) }}">
-                    {{ form.hidden_tag() }}
-                    <div class="mb-4">
-                        {{ form.comment_text.label(class="block text-sm font-medium text-gray-700") }}
-                        {{ form.comment_text(class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm", rows=4) }}
+            {% if recipe.description %}
+            <div class="p-5 border-b border-gray-100">
+                <p class="text-gray-700 leading-relaxed">{{ recipe.description }}</p>
+            </div>
+            {% endif %}
+
+            <!-- Quick Stats -->
+            <div class="px-5 py-4 bg-gray-50">
+                <div class="flex justify-center space-x-8">
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-clock text-blue-600"></i>
+                        <span class="text-sm text-gray-700 font-medium">45 min total</span>
                     </div>
-                    <div>
-                        {{ form.submit(class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500") }}
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-users text-green-600"></i>
+                        <span class="text-sm text-gray-700 font-medium">4 servings</span>
                     </div>
-                </form>
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-signal text-orange-600"></i>
+                        <span class="text-sm text-gray-700 font-medium">Medium</span>
+                    </div>
+                </div>
             </div>
         </div>
+
+        <!-- Main Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <!-- Ingredients Sidebar -->
+            <div class="lg:col-span-4">
+                <div class="bg-white rounded-xl shadow-sm p-5 sticky top-20">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-lg font-bold text-gray-800 flex items-center">
+                            <i class="fas fa-list-ul text-green-600 mr-2"></i>
+                            Ingredients
+                            <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium ml-2">
+                                {{ recipe.ingredients|length }}
+                            </span>
+                        </h2>
+                        <!-- Serving Adjuster -->
+                        <div class="flex items-center space-x-2">
+                            <span class="text-xs text-gray-500">Servings:</span>
+                            <button
+                                class="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300 transition-colors"
+                                onclick="adjustServings(-1)">
+                                <i class="fas fa-minus text-xs"></i>
+                            </button>
+                            <span id="serving-count" class="font-bold text-sm min-w-[1.5rem] text-center">4</span>
+                            <button
+                                class="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300 transition-colors"
+                                onclick="adjustServings(1)">
+                                <i class="fas fa-plus text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Ingredients List -->
+                    <div class="space-y-2" id="ingredients-list">
+                        {% for ingredient in recipe.ingredients %}
+                        <div
+                            class="ingredient-item bg-white border border-gray-200 rounded-lg p-3 hover:border-green-300 hover:shadow-sm transition-all cursor-pointer">
+                            <div class="flex items-center space-x-3">
+                                <input type="checkbox" id="ingredient-{{ loop.index }}"
+                                    class="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500">
+
+                                <!-- Ingredient Image -->
+                                <div class="flex-shrink-0">
+                                    {% if ingredient.images and ingredient.images|length > 0 %}
+                                    <img src="{{ ingredient.images[0].url }}" alt="{{ ingredient.name }}"
+                                        class="w-10 h-10 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
+                                        onclick="openImageModal('{{ ingredient.images[0].url }}')">
+                                    {% else %}
+                                    <div
+                                        class="w-10 h-10 bg-gradient-to-br from-green-400 to-emerald-500 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-leaf text-white text-sm"></i>
+                                    </div>
+                                    {% endif %}
+                                </div>
+
+                                <label for="ingredient-{{ loop.index }}" class="flex-1 cursor-pointer">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex-1 min-w-0">
+                                            <h4 class="font-medium text-gray-900 text-sm">
+                                                {{ ingredient.name }}
+                                            </h4>
+                                            <div class="text-xs text-green-600 font-medium">
+                                                <span class="quantity" data-original="{{ ingredient.quantity or 0 }}">
+                                                    {{ ingredient.quantity or 'As needed' }}
+                                                </span>
+                                                {% if ingredient.unit %}
+                                                <span>{{ ingredient.unit }}</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        {% if ingredient.images and ingredient.images|length > 1 %}
+                                        <button
+                                            onclick="showIngredientImages({{ loop.index }}); event.stopPropagation();"
+                                            class="text-green-600 hover:text-green-700 transition-colors p-1 rounded hover:bg-green-50">
+                                            <i class="fas fa-images text-sm"></i>
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                    {% if ingredient.notes %}
+                                    <p class="text-xs text-gray-500 mt-1">{{ ingredient.notes }}</p>
+                                    {% endif %}
+                                </label>
+                            </div>
+
+                            <!-- Additional Ingredient Images -->
+                            {% if ingredient.images and ingredient.images|length > 1 %}
+                            <div class="ingredient-images mt-3 pt-3 border-t border-gray-100 hidden"
+                                id="ingredient-images-{{ loop.index }}">
+                                <div class="grid grid-cols-3 gap-2">
+                                    {% for image in ingredient.images[1:] %}
+                                    <div class="relative group cursor-pointer"
+                                        onclick="openImageModal('{{ image.url }}')">
+                                        <img src="{{ image.url }}" alt="{{ ingredient.name }}"
+                                            class="w-full h-20 object-cover rounded-lg shadow-sm group-hover:shadow-md transition-all">
+                                        <div
+                                            class="absolute inset-0 bg-black/0 group-hover:bg-black/20 rounded-lg transition-all flex items-center justify-center">
+                                            <i
+                                                class="fas fa-expand text-white opacity-0 group-hover:opacity-100 transition-all"></i>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Shopping List Button -->
+                    <button
+                        class="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white font-medium py-3 px-4 rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all flex items-center justify-center mt-4 shadow-sm">
+                        <i class="fas fa-shopping-cart mr-2"></i>
+                        Add to Shopping List
+                    </button>
+                </div>
+            </div>
+
+            <!-- Instructions Section -->
+            <div class="lg:col-span-8">
+                <div class="bg-white rounded-xl shadow-sm p-5 mb-5">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-lg font-bold text-gray-800 flex items-center">
+                            <i class="fas fa-clipboard-list text-indigo-600 mr-2"></i>
+                            Instructions
+                        </h2>
+                        <div class="flex items-center space-x-3">
+                            <span class="text-sm text-gray-500"><span id="progress-count">0</span>/{{
+                                recipe.steps|length }}</span>
+                            <button class="text-gray-500 hover:text-indigo-600 transition-colors" title="Cook Mode">
+                                <i class="fas fa-expand-arrows-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <div class="mb-5">
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div id="progress-bar"
+                                class="bg-gradient-to-r from-indigo-500 to-purple-600 h-2 rounded-full transition-all duration-500"
+                                style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Steps -->
+                    <div class="space-y-4" id="steps-container">
+                        {% for step in recipe.steps %}
+                        <div class="step-card bg-white border border-gray-200 rounded-xl p-4 transition-all"
+                            data-step="{{ loop.index }}">
+                            <div class="flex items-start space-x-4">
+                                <!-- Step Number/Image -->
+                                <div class="flex-shrink-0">
+                                    {% if step.images and step.images|length > 0 %}
+                                    <div class="relative cursor-pointer"
+                                        onclick="openImageModal('{{ step.images[0].url }}')">
+                                        <img src="{{ step.images[0].url }}" alt="Step {{ step.step_number }}"
+                                            class="w-14 h-14 object-cover rounded-lg hover:opacity-90 transition-opacity">
+                                        <div
+                                            class="absolute -bottom-1 -right-1 step-number-circle bg-indigo-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold shadow-md">
+                                            {{ step.step_number }}
+                                        </div>
+                                    </div>
+                                    {% else %}
+                                    <div
+                                        class="step-number-circle bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-lg w-14 h-14 flex items-center justify-center text-xl font-bold shadow-sm transition-all">
+                                        {{ step.step_number }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-start justify-between mb-2">
+                                        <div class="flex-1">
+                                            <h4 class="text-base font-bold text-gray-900">
+                                                {{ step.name or 'Step ' + step.step_number|string }}
+                                            </h4>
+                                            <div class="flex items-center space-x-3 mt-1">
+                                                {% if step.duration %}
+                                                <div class="flex items-center text-orange-600 text-xs">
+                                                    <i class="fas fa-clock mr-1"></i>
+                                                    <span>{{ step.duration }} min</span>
+                                                </div>
+                                                {% endif %}
+                                                {% if step.images and step.images|length > 0 %}
+                                                <button onclick="showStepImages({{ loop.index }})"
+                                                    class="flex items-center text-indigo-600 text-xs hover:text-indigo-800 transition-colors hover:bg-indigo-50 px-2 py-1 rounded">
+                                                    <i class="fas fa-images mr-1"></i>
+                                                    <span>{{ step.images|length }} photo{{ 's' if step.images|length > 1
+                                                        }}</span>
+                                                </button>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <button
+                                            class="step-complete-btn text-gray-400 hover:text-green-600 transition-all p-1"
+                                            onclick="toggleStepComplete({{ loop.index }})">
+                                            <i class="fas fa-check-circle text-xl"></i>
+                                        </button>
+                                    </div>
+
+                                    <div class="bg-gray-50 rounded-lg p-3 mb-2">
+                                        <p class="text-gray-800 leading-relaxed text-sm">{{ step.instruction }}</p>
+                                    </div>
+
+                                    {% if step.description %}
+                                    <div class="bg-blue-50 border-l-4 border-blue-400 p-3 rounded-r-lg">
+                                        <div class="flex items-start">
+                                            <i class="fas fa-lightbulb text-blue-600 mr-2 mt-0.5"></i>
+                                            <div>
+                                                <h5 class="font-medium text-blue-900 text-xs mb-1">Pro Tip</h5>
+                                                <p class="text-blue-800 text-sm">{{ step.description }}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+
+                                    <!-- Step Images Gallery -->
+                                    {% if step.images %}
+                                    <div class="step-images mt-4 pt-4 border-t border-gray-200 hidden"
+                                        id="step-images-{{ loop.index }}">
+                                        <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                            {% for image in step.images %}
+                                            <div class="relative group cursor-pointer"
+                                                onclick="openImageModal('{{ image.url }}')">
+                                                <img src="{{ image.url }}" alt="Step {{ step.step_number }}"
+                                                    class="w-full h-28 object-cover rounded-lg shadow-sm group-hover:shadow-md transition-all">
+                                                <div
+                                                    class="absolute inset-0 bg-black/0 group-hover:bg-black/30 rounded-lg transition-all flex items-center justify-center">
+                                                    <div
+                                                        class="bg-white/90 p-2 rounded-full opacity-0 group-hover:opacity-100 transition-all">
+                                                        <i class="fas fa-expand text-indigo-600"></i>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Completion Celebration -->
+                    <div id="completion-celebration" class="hidden text-center py-6 mt-4 border-t border-gray-200">
+                        <div class="text-5xl mb-3">🎉</div>
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">Congratulations!</h3>
+                        <p class="text-gray-600 mb-4">You've completed the recipe. How did it turn out?</p>
+                        <div class="flex items-center justify-center space-x-3">
+                            <button
+                                class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-2 rounded-lg font-medium hover:from-indigo-700 hover:to-purple-700 transition-all shadow-sm">
+                                Rate Recipe
+                            </button>
+                            <button
+                                class="bg-gray-100 text-gray-700 px-6 py-2 rounded-lg font-medium hover:bg-gray-200 transition-colors">
+                                Add to Meal Plan
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Comments Section -->
+                <div class="bg-white rounded-xl shadow-sm p-5">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                        <i class="fas fa-comments text-blue-600 mr-2"></i>
+                        Comments & Reviews
+                        {% if recipe.comments %}
+                        <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium ml-2">
+                            {{ recipe.comments|length }}
+                        </span>
+                        {% endif %}
+                    </h3>
+
+                    {% if recipe.comments %}
+                    <div class="space-y-3 mb-5">
+                        {% for comment in recipe.comments[:3] %}
+                        <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
+                            <div class="flex items-start space-x-3">
+                                <div
+                                    class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full w-9 h-9 flex items-center justify-center text-white font-semibold flex-shrink-0">
+                                    {{ (comment.author.name or 'U')[0].upper() }}
+                                </div>
+                                <div class="flex-1">
+                                    <div class="flex items-center justify-between mb-1">
+                                        <h4 class="font-medium text-gray-800 text-sm">{{ comment.author.name or
+                                            'Anonymous' }}</h4>
+                                        <span class="text-xs text-gray-500">{{ comment.created_at.strftime('%b %d, %Y')
+                                            }}</span>
+                                    </div>
+                                    <p class="text-gray-700 leading-relaxed text-sm">{{ comment.content }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-8 mb-5">
+                        <i class="fas fa-comments text-4xl text-gray-300 mb-2"></i>
+                        <p class="text-gray-500">Be the first to share your thoughts!</p>
+                    </div>
+                    {% endif %}
+
+                    <!-- Add Comment Form -->
+                    <div class="border-t border-gray-200 pt-5">
+                        <h4 class="font-semibold text-gray-800 mb-3">Leave a Comment</h4>
+                        <form method="POST" action="{{ url_for('dashboard.add_comment', recipe_id=recipe.id) }}"
+                            class="space-y-3">
+                            {{ form.hidden_tag() }}
+                            {{ form.comment_text(class="w-full border border-gray-300 rounded-lg shadow-sm py-3 px-4
+                            focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none",
+                            rows=3, placeholder="Share your experience with this recipe...") }}
+                            <div class="flex justify-end">
+                                {{ form.submit(class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white
+                                font-medium py-2 px-6 rounded-lg hover:from-indigo-700 hover:to-purple-700
+                                transition-all shadow-sm") }}
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Action Button -->
+    <div class="floating-action-btn">
+        <a href="{{ url_for('planner.index', add_recipe_id=recipe.id) }}"
+            class="bg-gradient-to-r from-green-500 to-emerald-600 text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-105 flex items-center justify-center"
+            title="Add to Meal Plan">
+            <i class="fas fa-calendar-plus text-lg"></i>
+        </a>
+    </div>
+
+    <!-- Image Modal -->
+    <div id="image-modal" class="fixed inset-0 bg-black/90 flex items-center justify-center z-50 hidden"
+        onclick="closeImageModal()">
+        <div class="relative max-w-6xl max-h-[90vh] p-4" onclick="event.stopPropagation()">
+            <button onclick="closeImageModal()"
+                class="absolute -top-3 -right-3 bg-white text-gray-800 w-10 h-10 rounded-full hover:bg-gray-100 transition-colors z-10 flex items-center justify-center shadow-lg">
+                <i class="fas fa-times text-lg"></i>
+            </button>
+            <img id="modal-image" src="" alt="" class="max-w-full max-h-full object-contain rounded-lg shadow-2xl">
+        </div>
+    </div>
+
+    <!-- Image Gallery Modal -->
+    <div id="gallery-modal" class="fixed inset-0 bg-black/95 flex items-center justify-center z-50 hidden"
+        onclick="closeImageGallery()">
+        <div class="relative w-full h-full p-4" onclick="event.stopPropagation()">
+            <button onclick="closeImageGallery()"
+                class="absolute top-6 right-6 bg-white text-gray-800 w-10 h-10 rounded-full hover:bg-gray-100 transition-colors z-10 flex items-center justify-center shadow-lg">
+                <i class="fas fa-times text-lg"></i>
+            </button>
+            <div class="h-full flex items-center justify-center overflow-y-auto">
+                <div class="max-w-6xl w-full py-12">
+                    <h3 class="text-white text-2xl font-bold mb-6 text-center">All Recipe Images</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        {% for image in recipe.images %}
+                        <div class="relative group cursor-pointer transform hover:scale-105 transition-all"
+                            onclick="openImageModal('{{ image.url }}'); closeImageGallery();">
+                            <img src="{{ image.url }}" alt="{{ recipe.name }}"
+                                class="w-full h-48 object-cover rounded-lg shadow-lg">
+                            <div
+                                class="absolute inset-0 bg-black/0 group-hover:bg-black/30 rounded-lg transition-all flex items-center justify-center">
+                                <i
+                                    class="fas fa-expand text-white text-xl opacity-0 group-hover:opacity-100 transition-all"></i>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
+
+<script>
+    let completedSteps = 0;
+    const totalSteps = {{ recipe.steps| length }};
+    let currentServings = 4;
+
+    function adjustServings(change) {
+        const newServings = Math.max(1, currentServings + change);
+        if (newServings !== currentServings) {
+            currentServings = newServings;
+            document.getElementById('serving-count').textContent = currentServings;
+            document.querySelectorAll('.quantity').forEach(el => {
+                const original = parseFloat(el.dataset.original) || 0;
+                if (original > 0) {
+                    const newAmount = (original * currentServings / 4).toFixed(2);
+                    el.textContent = parseFloat(newAmount) === parseInt(newAmount) ? parseInt(newAmount) : newAmount;
+                }
+            });
+        }
+    }
+
+    function toggleStepComplete(stepNumber) {
+        const stepCard = document.querySelector(`[data-step="${stepNumber}"]`);
+        const stepCircle = stepCard.querySelector('.step-number-circle');
+        const completeBtn = stepCard.querySelector('.step-complete-btn');
+
+        if (stepCard.classList.contains('completed')) {
+            stepCard.classList.remove('completed');
+            stepCircle.classList.remove('completed');
+            completeBtn.classList.remove('text-green-600');
+            completeBtn.classList.add('text-gray-400');
+            completedSteps--;
+        } else {
+            stepCard.classList.add('completed');
+            stepCircle.classList.add('completed');
+            completeBtn.classList.remove('text-gray-400');
+            completeBtn.classList.add('text-green-600');
+            completedSteps++;
+        }
+        updateProgress();
+    }
+
+    function updateProgress() {
+        const progressBar = document.getElementById('progress-bar');
+        const progressCount = document.getElementById('progress-count');
+        const completionCelebration = document.getElementById('completion-celebration');
+
+        const percentage = (completedSteps / totalSteps) * 100;
+        progressBar.style.width = percentage + '%';
+        progressCount.textContent = completedSteps;
+
+        if (completedSteps === totalSteps && totalSteps > 0) {
+            setTimeout(() => {
+                completionCelebration.classList.remove('hidden');
+                completionCelebration.scrollIntoView({ behavior: 'smooth' });
+            }, 500);
+        } else {
+            completionCelebration.classList.add('hidden');
+        }
+    }
+
+    // Show/hide step images
+    function showStepImages(stepNumber) {
+        const imagesDiv = document.getElementById(`step-images-${stepNumber}`);
+        imagesDiv.classList.toggle('hidden');
+    }
+
+    // Show/hide ingredient images
+    function showIngredientImages(ingredientNumber) {
+        const imagesDiv = document.getElementById(`ingredient-images-${ingredientNumber}`);
+        imagesDiv.classList.toggle('hidden');
+    }
+
+    // Image modal
+    function openImageModal(imageSrc) {
+        const modal = document.getElementById('image-modal');
+        const modalImage = document.getElementById('modal-image');
+        modalImage.src = imageSrc;
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeImageModal() {
+        const modal = document.getElementById('image-modal');
+        modal.classList.add('hidden');
+        document.body.style.overflow = 'auto';
+    }
+
+    // Show image gallery
+    function showImageGallery() {
+        const galleryModal = document.getElementById('gallery-modal');
+        if (galleryModal) {
+            galleryModal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+    }
+
+    function closeImageGallery() {
+        const galleryModal = document.getElementById('gallery-modal');
+        if (galleryModal) {
+            galleryModal.classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+    }
+
+    // Close modal on escape key
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            closeImageModal();
+            closeImageGallery();
+        }
+    });
+
+    // Ingredient checkbox handling
+    document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+        checkbox.addEventListener('change', function () {
+            this.closest('.ingredient-item').classList.toggle('checked', this.checked);
+        });
+    });
+
+    // Auto-save progress to localStorage
+    function saveProgress() {
+        const progress = {
+            completedSteps: Array.from(document.querySelectorAll('.step-card.completed')).map(card =>
+                parseInt(card.dataset.step)
+            ),
+            checkedIngredients: Array.from(document.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.id),
+            currentServings: currentServings
+        };
+        localStorage.setItem('recipe-{{ recipe.id }}-progress', JSON.stringify(progress));
+    }
+
+    // Load progress from localStorage
+    function loadProgress() {
+        const saved = localStorage.getItem('recipe-{{ recipe.id }}-progress');
+        if (saved) {
+            const progress = JSON.parse(saved);
+
+            // Restore completed steps
+            if (progress.completedSteps) {
+                progress.completedSteps.forEach(stepNumber => {
+                    toggleStepComplete(stepNumber);
+                });
+            }
+
+            // Restore checked ingredients
+            if (progress.checkedIngredients) {
+                progress.checkedIngredients.forEach(id => {
+                    const checkbox = document.getElementById(id);
+                    if (checkbox) {
+                        checkbox.checked = true;
+                        checkbox.closest('.ingredient-item').classList.add('checked');
+                    }
+                });
+            }
+
+            // Restore servings
+            if (progress.currentServings && progress.currentServings !== currentServings) {
+                const diff = progress.currentServings - currentServings;
+                adjustServings(diff);
+            }
+        }
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function () {
+        loadProgress();
+
+        // Save progress on changes
+        document.addEventListener('change', saveProgress);
+        document.querySelectorAll('.step-complete-btn').forEach(btn => {
+            btn.addEventListener('click', saveProgress);
+        });
+    });
+</script>
 {% endblock %}
