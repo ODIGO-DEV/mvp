@@ -2,44 +2,219 @@
 
 {% block title %}My Recipes - ODiGO{% endblock %}
 {% block dashboard_content %}
-<!-- Page Header -->
-<div class="flex items-start justify-between gap-4 mb-6">
-    <div>
-        <h1 class="text-2xl sm:text-3xl font-bold text-gray-800">My Recipes</h1>
-        <p class="text-sm text-gray-600 mt-1">Manage and organize your culinary creations</p>
-    </div>
 
-    <!-- Desktop Add Button -->
-    <div class="hidden sm:flex items-center gap-3">
-        <a href="{{ url_for('dashboard.add_recipe') }}"
-            class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg shadow-sm transition">
-            <i class="fa-solid fa-plus w-4 h-4"></i>
-            Add New Recipe
+<style>
+    /* Custom CSS for My Recipes page */
+    .recipe-card {
+        transition: all 0.3s ease;
+        border: 1px solid #f3f4f6;
+    }
+
+    .recipe-card:hover {
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        transform: translateY(-2px);
+    }
+
+    .recipe-card-image {
+        transition: transform 0.3s ease;
+    }
+
+    .recipe-card:hover .recipe-card-image {
+        transform: scale(1.05);
+    }
+
+    .action-button {
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.2s ease;
+    }
+
+    .action-button:hover {
+        background: rgba(255, 255, 255, 1);
+        transform: scale(1.1);
+    }
+
+    .stats-card {
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        border: 1px solid #e2e8f0;
+        transition: all 0.3s ease;
+    }
+
+    .stats-card:hover {
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        transform: translateY(-1px);
+    }
+
+    .filter-section {
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        border: 1px solid #e2e8f0;
+    }
+
+    .category-badge {
+        transition: all 0.2s ease;
+    }
+
+    .category-badge:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .search-input {
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(10px);
+        border: 1px solid #e2e8f0;
+        transition: all 0.2s ease;
+    }
+
+    .search-input:focus {
+        background: rgba(255, 255, 255, 1);
+        border-color: #6366f1;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    @media (max-width: 640px) {
+        .mobile-header {
+            padding: 1rem;
+            border-radius: 0.75rem;
+            margin-bottom: 1rem;
+        }
+    }
+</style>
+
+<!-- Enhanced Navigation Header -->
+<div class="bg-white border-b border-gray-200 rounded-xl p-4 mb-6 mobile-header">
+    <!-- Breadcrumb -->
+    <nav class="flex items-center space-x-2 text-sm text-gray-500 mb-3">
+        <a href="{{ url_for('dashboard.index') }}" class="hover:text-indigo-600 transition-colors">
+            <i class="fas fa-home w-4 h-4"></i>
         </a>
+        <i class="fas fa-chevron-right w-3 h-3"></i>
+        <span class="text-gray-800 font-medium">My Recipes</span>
+    </nav>
+
+    <!-- Header Content -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">My Recipe Collection</h1>
+            <p class="text-gray-600">Create, manage, and share your culinary masterpieces</p>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex items-center gap-3 flex-shrink-0">
+            <!-- View Toggle -->
+            <div class="hidden sm:flex items-center bg-gray-100 rounded-lg p-1">
+                <button onclick="toggleView('grid')" id="grid-view"
+                    class="p-2 rounded-md transition-colors bg-white shadow-sm">
+                    <i class="fas fa-th w-4 h-4 text-gray-700"></i>
+                </button>
+                <button onclick="toggleView('list')" id="list-view"
+                    class="p-2 rounded-md transition-colors text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-list w-4 h-4"></i>
+                </button>
+            </div>
+
+            <!-- Bulk Actions -->
+            <div class="relative hidden sm:block">
+                <button onclick="toggleBulkActions()"
+                    class="flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
+                    <i class="fas fa-tasks w-4 h-4"></i>
+                    <span class="text-sm">Actions</span>
+                    <i class="fas fa-chevron-down w-3 h-3"></i>
+                </button>
+                <div id="bulk-actions-menu"
+                    class="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg hidden z-10">
+                    <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Export All</a>
+                    <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Bulk Edit</a>
+                    <a href="#" class="block px-4 py-2 text-sm text-red-600 hover:bg-red-50">Delete Selected</a>
+                </div>
+            </div>
+
+            <!-- Add Recipe Button -->
+            <a href="{{ url_for('dashboard.add_recipe') }}"
+                class="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white px-4 py-2 rounded-lg shadow-md hover:shadow-lg transition-all duration-200">
+                <i class="fas fa-plus w-4 h-4"></i>
+                <span class="hidden sm:inline">Add Recipe</span>
+            </a>
+        </div>
     </div>
 </div>
 
-<!-- Stats -->
-<div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-    <div class="bg-white border border-gray-100 rounded-xl p-3">
-        <div class="text-lg font-semibold text-gray-800">{{ recipes.total }}</div>
-        <div class="text-xs text-gray-500 mt-1">Total</div>
-    </div>
-    <div class="bg-white border border-gray-100 rounded-xl p-3">
-        <div class="text-lg font-semibold text-indigo-600">
-            {{ recipes.items|selectattr('public')|list|length }}
+<!-- Enhanced Statistics Dashboard -->
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div class="stats-card rounded-xl p-4">
+        <div class="flex items-center justify-between">
+            <div>
+                <div class="text-2xl font-bold text-gray-900">{{ recipes.total }}</div>
+                <div class="text-sm text-gray-600 mt-1">Total Recipes</div>
+            </div>
+            <div
+                class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                <i class="fas fa-utensils text-white w-6 h-6"></i>
+            </div>
         </div>
-        <div class="text-xs text-gray-500 mt-1">Public</div>
-    </div>
-    <div class="bg-white border border-gray-100 rounded-xl p-3">
-        <div class="text-lg font-semibold text-orange-600">
-            {{ recipes.items|rejectattr('public')|list|length }}
+        <div class="mt-3 flex items-center text-sm">
+            <span class="text-green-600 font-medium">+2</span>
+            <span class="text-gray-600 ml-1">this month</span>
         </div>
-        <div class="text-xs text-gray-500 mt-1">Private</div>
     </div>
-    <div class="bg-white border border-gray-100 rounded-xl p-3">
-        <div class="text-lg font-semibold text-indigo-600">0</div>
-        <div class="text-xs text-gray-500 mt-1">Favorites</div>
+
+    <div class="stats-card rounded-xl p-4">
+        <div class="flex items-center justify-between">
+            <div>
+                <div class="text-2xl font-bold text-indigo-600">
+                    {{ recipes.items|selectattr('public')|list|length }}
+                </div>
+                <div class="text-sm text-gray-600 mt-1">Public</div>
+            </div>
+            <div
+                class="w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg flex items-center justify-center">
+                <i class="fas fa-globe text-white w-6 h-6"></i>
+            </div>
+        </div>
+        <div class="mt-3 flex items-center text-sm">
+            <span class="text-indigo-600 font-medium">{{ ((recipes.items|selectattr('public')|list|length /
+                recipes.total * 100) if recipes.total > 0 else 0)|round }}%</span>
+            <span class="text-gray-600 ml-1">visibility</span>
+        </div>
+    </div>
+
+    <div class="stats-card rounded-xl p-4">
+        <div class="flex items-center justify-between">
+            <div>
+                <div class="text-2xl font-bold text-orange-600">
+                    {{ recipes.items|rejectattr('public')|list|length }}
+                </div>
+                <div class="text-sm text-gray-600 mt-1">Private</div>
+            </div>
+            <div
+                class="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center">
+                <i class="fas fa-lock text-white w-6 h-6"></i>
+            </div>
+        </div>
+        <div class="mt-3 flex items-center text-sm">
+            <span class="text-orange-600 font-medium">{{ ((recipes.items|rejectattr('public')|list|length /
+                recipes.total * 100) if recipes.total > 0 else 0)|round }}%</span>
+            <span class="text-gray-600 ml-1">private</span>
+        </div>
+    </div>
+
+    <div class="stats-card rounded-xl p-4">
+        <div class="flex items-center justify-between">
+            <div>
+                <div class="text-2xl font-bold text-emerald-600">{{ categories|length if categories else 0 }}</div>
+                <div class="text-sm text-gray-600 mt-1">Categories</div>
+            </div>
+            <div
+                class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg flex items-center justify-center">
+                <i class="fas fa-layer-group text-white w-6 h-6"></i>
+            </div>
+        </div>
+        <div class="mt-3 flex items-center text-sm">
+            <span class="text-emerald-600 font-medium">{{ (recipes.total / (categories|length) if categories and
+                categories|length > 0 else 0)|round }}</span>
+            <span class="text-gray-600 ml-1">avg per category</span>
+        </div>
     </div>
 </div>
 
@@ -94,306 +269,811 @@
 </div>
 {% endif %}
 
-<!-- Filter & Sort -->
-<form method="GET" action="{{ url_for('dashboard.my_recipes') }}"
-    class="bg-white border border-gray-100 rounded-xl p-3 mb-6">
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div class="flex items-center gap-2 flex-wrap">
-            <!-- Category select -->
-            <label class="sr-only" for="category">Category</label>
-            <div class="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-2 py-1">
-                <i class="fa-solid fa-layer-group w-4 h-4 text-indigo-500"></i>
-                <select id="category" name="category" class="bg-transparent text-sm focus:outline-none">
-                    <option value="">All categories</option>
-                    {% for category in categories %}
-                    <option value="{{ category.id }}" {% if category.id==current_category %}selected{% endif %}>{{
-                        category.name }}</option>
-                    {% endfor %}
-                </select>
+<!-- Enhanced Search and Filter Section -->
+<div class="filter-section rounded-xl p-4 mb-6">
+    <!-- Search Bar -->
+    <div class="mb-4">
+        <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <i class="fas fa-search w-5 h-5 text-gray-400"></i>
             </div>
-
-            <!-- Visibility select -->
-            <div class="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-2 py-1">
-                <i class="fa-solid fa-eye w-4 h-4 text-indigo-500"></i>
-                <select name="visibility" class="bg-transparent text-sm focus:outline-none">
-                    <option value="all" {% if current_visibility=='all' %}selected{% endif %}>All</option>
-                    <option value="public" {% if current_visibility=='public' %}selected{% endif %}>Public</option>
-                    <option value="private" {% if current_visibility=='private' %}selected{% endif %}>Private</option>
-                </select>
+            <input type="text" placeholder="Search your recipes by name, ingredients, or description..."
+                class="search-input w-full pl-10 pr-4 py-3 rounded-lg text-sm focus:outline-none" id="recipe-search"
+                onkeyup="filterRecipes()">
+            <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                <button type="button" class="text-gray-400 hover:text-gray-600" onclick="clearSearch()">
+                    <i class="fas fa-times w-4 h-4"></i>
+                </button>
             </div>
-        </div>
-
-        <div class="flex items-center gap-2">
-            <div class="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-2 py-1">
-                <i class="fa-solid fa-sort w-4 h-4 text-indigo-500"></i>
-                <select name="sort_by" class="bg-transparent text-sm focus:outline-none">
-                    <option value="date_desc" {% if current_sort_by=='date_desc' %}selected{% endif %}>Newest</option>
-                    <option value="date_asc" {% if current_sort_by=='date_asc' %}selected{% endif %}>Oldest</option>
-                    <option value="name_asc" {% if current_sort_by=='name_asc' %}selected{% endif %}>Name A–Z</option>
-                    <option value="name_desc" {% if current_sort_by=='name_desc' %}selected{% endif %}>Name Z–A</option>
-                </select>
-            </div>
-
-            <button type="submit"
-                class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-lg text-sm transition">
-                <i class="fa-solid fa-filter w-4 h-4"></i>
-                Filter
-            </button>
         </div>
     </div>
-</form>
 
-<!-- Recipes Grid -->
-{% if recipes.items %}
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-6">
-    {% for recipe in recipes.items %}
-    <article
-        class="group bg-white border border-gray-100 rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition relative">
-        <!-- image -->
-        <div class="relative">
-            {% if recipe.images %}
-            <img src="{{ recipe.images[0].url }}" alt="{{ recipe.name }}" class="w-full h-40 object-cover">
-            {% else %}
-            <div class="w-full h-40 bg-gradient-to-r from-indigo-500 to-indigo-600 flex items-center justify-center">
-                <i class="fa-solid fa-image w-12 h-12 text-white opacity-60"></i>
-            </div>
-            {% endif %}
-
-            <!-- status & actions -->
-            <div class="absolute top-3 left-3">
-                <span
-                    class="inline-flex items-center gap-1 bg-white/20 text-white text-xs px-2 py-1 rounded-full backdrop-blur-sm">
-                    {% if recipe.public %}🌍 Public{% else %}🔒 Private{% endif %}
-                </span>
+    <!-- Advanced Filters -->
+    <form method="GET" action="{{ url_for('dashboard.my_recipes') }}" id="filter-form">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <!-- Category Filter -->
+            <div class="space-y-1">
+                <label class="text-xs font-medium text-gray-700" for="category">Category</label>
+                <div class="relative">
+                    <select id="category" name="category"
+                        class="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                        <option value="">All Categories</option>
+                        {% for category in categories %}
+                        <option value="{{ category.id }}" {% if category.id==current_category %}selected{% endif %}>
+                            {{ category.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
             </div>
 
-            <!-- actions (shows on hover) -->
-            <div class="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2"
-                aria-hidden="true">
-                <!-- view -->
-                <button class="bg-white/20 text-white p-1.5 rounded-full backdrop-blur-sm hover:bg-white/30"
-                    title="Quick View" onclick="openPreview({{ recipe.id|tojson }})">
-                    <i class="fa-solid fa-eye w-4 h-4"></i>
-                </button>
+            <!-- Visibility Filter -->
+            <div class="space-y-1">
+                <label class="text-xs font-medium text-gray-700" for="visibility">Visibility</label>
+                <div class="relative">
+                    <select name="visibility" id="visibility"
+                        class="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                        <option value="all" {% if current_visibility=='all' %}selected{% endif %}>All Recipes</option>
+                        <option value="public" {% if current_visibility=='public' %}selected{% endif %}>Public Only
+                        </option>
+                        <option value="private" {% if current_visibility=='private' %}selected{% endif %}>Private Only
+                        </option>
+                    </select>
+                </div>
+            </div>
 
-                <!-- edit -->
-                <a href="{{ url_for('dashboard.edit_recipe', recipe_id=recipe.id) }}"
-                    class="bg-white/20 text-white p-1.5 rounded-full backdrop-blur-sm hover:bg-white/30" title="Edit">
-                    <i class="fa-solid fa-pen-to-square w-4 h-4"></i>
-                </a>
+            <!-- Sort Options -->
+            <div class="space-y-1">
+                <label class="text-xs font-medium text-gray-700" for="sort_by">Sort By</label>
+                <div class="relative">
+                    <select name="sort_by" id="sort_by"
+                        class="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                        <option value="date_desc" {% if current_sort_by=='date_desc' %}selected{% endif %}>Newest First
+                        </option>
+                        <option value="date_asc" {% if current_sort_by=='date_asc' %}selected{% endif %}>Oldest First
+                        </option>
+                        <option value="name_asc" {% if current_sort_by=='name_asc' %}selected{% endif %}>Name A–Z
+                        </option>
+                        <option value="name_desc" {% if current_sort_by=='name_desc' %}selected{% endif %}>Name Z–A
+                        </option>
+                        <option value="updated_desc">Recently Updated</option>
+                    </select>
+                </div>
+            </div>
 
-                <!-- delete -->
-                <button class="bg-white/20 text-white p-1.5 rounded-full backdrop-blur-sm hover:bg-white/30"
-                    title="Delete"
-                    onclick="confirmDelete('{{ url_for('dashboard.delete_recipe', recipe_id=recipe.id) }}')">
-                    <i class="fa-solid fa-trash w-4 h-4"></i>
-                </button>
+            <!-- Action Buttons -->
+            <div class="space-y-1">
+                <label class="text-xs font-medium text-gray-700">&nbsp;</label>
+                <div class="flex items-center gap-2">
+                    <button type="submit"
+                        class="flex-1 inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-lg text-sm transition-colors">
+                        <i class="fas fa-filter w-4 h-4"></i>
+                        Apply
+                    </button>
+                    <a href="{{ url_for('dashboard.my_recipes') }}"
+                        class="inline-flex items-center justify-center px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                        <i class="fas fa-undo w-4 h-4"></i>
+                    </a>
+                </div>
             </div>
         </div>
+    </form>
+</div>
 
-        <!-- content -->
-        <div class="p-4">
-            <h3 class="font-semibold text-gray-800 mb-1 truncate">{{ recipe.name }}</h3>
-
-            {% if recipe.description %}
-            <p class="text-sm text-gray-600 line-clamp-2 mb-3">{{ recipe.description|striptags|truncate(120) }}</p>
-            {% endif %}
-
-            <div class="flex items-center justify-between text-xs text-gray-500">
-                <div>
-                    <span>{{ recipe.created_at.strftime('%b %d, %Y') }}</span>
+<!-- Enhanced Recipes Grid -->
+{% if recipes.items %}
+<div id="recipes-container">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6" id="recipes-grid">
+        {% for recipe in recipes.items %}
+        <article class="recipe-card bg-white rounded-xl overflow-hidden shadow-sm group"
+            data-recipe-name="{{ recipe.name|lower }}"
+            data-recipe-category="{{ recipe.category.name|lower if recipe.category else '' }}"
+            data-recipe-visibility="{{ 'public' if recipe.public else 'private' }}">
+            <!-- Enhanced Image Section -->
+            <div class="relative overflow-hidden">
+                {% if recipe.images %}
+                <img src="{{ recipe.images[0].url }}" alt="{{ recipe.name }}"
+                    class="recipe-card-image w-full h-48 object-cover">
+                {% else %}
+                <div
+                    class="w-full h-48 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center">
+                    <div class="text-center">
+                        <i class="fas fa-utensils w-12 h-12 text-white opacity-80 mb-2"></i>
+                        <p class="text-white text-sm opacity-70">No image</p>
+                    </div>
                 </div>
-                <div>
-                    {% if recipe.category %}
-                    <span class="bg-gray-100 px-2 py-0.5 rounded-full text-xs">{{ recipe.category.name }}</span>
+                {% endif %}
+
+                <!-- Status Badge -->
+                <div class="absolute top-3 left-3">
+                    {% if recipe.public %}
+                    <span
+                        class="inline-flex items-center gap-1 bg-emerald-500/90 text-white text-xs px-2 py-1 rounded-full backdrop-blur-sm">
+                        <i class="fas fa-globe w-3 h-3"></i>
+                        Public
+                    </span>
+                    {% else %}
+                    <span
+                        class="inline-flex items-center gap-1 bg-gray-700/90 text-white text-xs px-2 py-1 rounded-full backdrop-blur-sm">
+                        <i class="fas fa-lock w-3 h-3"></i>
+                        Private
+                    </span>
                     {% endif %}
                 </div>
-            </div>
 
-            <div class="mt-3 flex items-center justify-between">
-                <div class="text-xs text-gray-500 flex items-center gap-2">
-                    <i class="fa-solid fa-eye w-4 h-4"></i>
-                    0 views
+                <!-- Action Buttons -->
+                <div
+                    class="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-all duration-200 flex items-center gap-1">
+                    <button class="action-button text-gray-700 p-2 rounded-full transition-all" title="Quick Preview"
+                        onclick="openPreview({{ recipe.id|tojson }})">
+                        <i class="fas fa-eye w-4 h-4"></i>
+                    </button>
+                    <a href="{{ url_for('dashboard.edit_recipe', recipe_id=recipe.id) }}"
+                        class="action-button text-gray-700 p-2 rounded-full transition-all" title="Edit Recipe">
+                        <i class="fas fa-edit w-4 h-4"></i>
+                    </a>
+                    <button class="action-button text-red-600 p-2 rounded-full transition-all" title="Delete Recipe"
+                        onclick="confirmDelete('{{ url_for('dashboard.delete_recipe', recipe_id=recipe.id) }}')">
+                        <i class="fas fa-trash w-4 h-4"></i>
+                    </button>
                 </div>
-                <a href="{{ url_for('dashboard.view_recipe', recipe_id=recipe.id) }}"
-                    class="text-indigo-600 text-sm font-medium hover:underline">
-                    View Recipe →
-                </a>
+
+                <!-- Recipe Stats Overlay -->
+                <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-3">
+                    <div class="flex items-center justify-between text-white text-xs">
+                        <div class="flex items-center gap-3">
+                            <span class="flex items-center gap-1">
+                                <i class="fas fa-clock w-3 h-3"></i>
+                                30 min
+                            </span>
+                            <span class="flex items-center gap-1">
+                                <i class="fas fa-users w-3 h-3"></i>
+                                4 serves
+                            </span>
+                        </div>
+                        <span class="flex items-center gap-1">
+                            <i class="fas fa-heart w-3 h-3"></i>
+                            12
+                        </span>
+                    </div>
+                </div>
             </div>
-        </div>
-    </article>
-    {% endfor %}
-</div>
 
-<!-- Pagination -->
-{% if recipes.pages > 1 %}
-<div class="flex justify-center mb-6">
-    <nav class="inline-flex items-center gap-2" aria-label="Pagination">
-        {% if recipes.has_prev %}
-        <a href="{{ url_for('dashboard.my_recipes', page=recipes.prev_num) }}"
-            class="px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">Previous</a>
-        {% endif %}
+            <!-- Enhanced Content Section -->
+            <div class="p-4">
+                <!-- Recipe Title -->
+                <h3 class="font-bold text-gray-900 mb-2 text-lg leading-tight line-clamp-2">
+                    {{ recipe.name }}
+                </h3>
 
-        {% for page_num in recipes.iter_pages() %}
-        {% if page_num %}
-        {% if page_num != recipes.page %}
-        <a href="{{ url_for('dashboard.my_recipes', page=page_num) }}"
-            class="px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">{{ page_num
-            }}</a>
-        {% else %}
-        <span class="px-3 py-2 rounded-lg bg-indigo-600 text-white text-sm">{{ page_num }}</span>
-        {% endif %}
-        {% else %}
-        <span class="px-2 text-gray-400">…</span>
-        {% endif %}
+                <!-- Description -->
+                {% if recipe.description %}
+                <p class="text-gray-600 text-sm mb-3 line-clamp-2 leading-relaxed">
+                    {{ recipe.description|striptags|truncate(100) }}
+                </p>
+                {% endif %}
+
+                <!-- Recipe Metadata -->
+                <div class="flex items-center justify-between mb-3">
+                    <div class="text-xs text-gray-500">
+                        <span>{{ recipe.created_at.strftime('%b %d, %Y') }}</span>
+                    </div>
+                    {% if recipe.category %}
+                    <span
+                        class="category-badge bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full text-xs font-medium">
+                        {{ recipe.category.name }}
+                    </span>
+                    {% endif %}
+                </div>
+
+                <!-- Action Bar -->
+                <div class="flex items-center justify-between pt-3 border-t border-gray-100">
+                    <div class="flex items-center gap-3 text-xs text-gray-500">
+                        <span class="flex items-center gap-1">
+                            <i class="fas fa-eye w-3 h-3"></i>
+                            24 views
+                        </span>
+                        <span class="flex items-center gap-1">
+                            <i class="fas fa-heart w-3 h-3"></i>
+                            5 likes
+                        </span>
+                    </div>
+                    <a href="{{ url_for('dashboard.view_recipe', recipe_id=recipe.id) }}"
+                        class="inline-flex items-center gap-1 text-indigo-600 text-sm font-medium hover:text-indigo-700 transition-colors">
+                        View Recipe
+                        <i class="fas fa-arrow-right w-3 h-3"></i>
+                    </a>
+                </div>
+            </div>
+        </article>
         {% endfor %}
-
-        {% if recipes.has_next %}
-        <a href="{{ url_for('dashboard.my_recipes', page=recipes.next_num) }}"
-            class="px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">Next</a>
-        {% endif %}
-    </nav>
-</div>
-{% endif %}
-
-<!-- Empty state -->
-{% else %}
-<div class="text-center py-16">
-    <div
-        class="mx-auto mb-5 w-24 h-24 rounded-full bg-gradient-to-br from-indigo-600 to-indigo-700 flex items-center justify-center">
-        <i class="fa-solid fa-utensils w-10 h-10 text-white"></i>
-    </div>
-    <h3 class="text-lg font-semibold text-gray-800 mb-2">No recipes yet! 🍽️</h3>
-    <p class="text-sm text-gray-600 mb-6 max-w-lg mx-auto">Start your culinary journey by creating your first recipe.
-        Share your favorite dishes with the world!</p>
-
-    <div class="flex flex-col sm:flex-row gap-3 justify-center">
-        <a href="{{ url_for('dashboard.add_recipe') }}"
-            class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg">
-            <i class="fa-solid fa-plus w-4 h-4"></i>
-            Create your first recipe
-        </a>
-        <a href="{{ url_for('dashboard.explore') }}"
-            class="inline-flex items-center gap-2 border border-gray-200 px-4 py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-50">
-            <i class="fa-solid fa-compass w-4 h-4"></i>
-            Explore global recipes
-        </a>
     </div>
 </div>
-{% endif %}
 
-<!-- Mobile FAB -->
-<a href="{{ url_for('dashboard.add_recipe') }}" id="fab-add"
-    class="fixed bottom-5 right-5 sm:hidden inline-flex items-center justify-center w-14 h-14 rounded-full shadow-lg bg-indigo-600 text-white z-40"
-    aria-label="Add new recipe" title="Add new recipe">
-    <i class="fa-solid fa-plus w-6 h-6"></i>
-</a>
+<!-- Enhanced Pagination -->
+{% if recipes.pages > 1 %}
+<div class="bg-white border border-gray-200 rounded-xl p-4 mb-6">
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+        <!-- Results Info -->
+        <div class="text-sm text-gray-600">
+            Showing {{ (recipes.page - 1) * recipes.per_page + 1 }} to
+            {{ recipes.page * recipes.per_page if recipes.page * recipes.per_page < recipes.total else recipes.total }}
+                of {{ recipes.total }} recipes </div>
 
-<!-- Preview Modal (hidden by default) -->
-<div id="recipe-preview" class="fixed inset-0 z-50 hidden items-center justify-center px-4 py-6">
-    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closePreview()" aria-hidden="true"></div>
-    <div class="relative bg-white rounded-xl max-w-2xl w-full overflow-hidden shadow-2xl">
-        <div class="flex items-center justify-between p-4 border-b border-gray-100">
-            <h3 id="preview-title" class="text-lg font-semibold text-gray-800">Recipe Title</h3>
-            <div class="flex items-center gap-2">
-                <button class="text-sm text-indigo-600 hover:underline" id="preview-edit">Edit</button>
-                <button class="text-sm text-gray-500" onclick="closePreview()">Close</button>
-            </div>
+                <!-- Pagination Controls -->
+                <nav class="flex items-center gap-1" aria-label="Pagination">
+                    <!-- Previous Button -->
+                    {% if recipes.has_prev %}
+                    <a href="{{ url_for('dashboard.my_recipes', page=recipes.prev_num,
+                                category=current_category,
+                                visibility=current_visibility,
+                                sort_by=current_sort_by) }}"
+                        class="inline-flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                        <i class="fas fa-chevron-left w-3 h-3"></i>
+                        Previous
+                    </a>
+                    {% else %}
+                    <span
+                        class="inline-flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-400 cursor-not-allowed">
+                        <i class="fas fa-chevron-left w-3 h-3"></i>
+                        Previous
+                    </span>
+                    {% endif %}
+
+                    <!-- Page Numbers -->
+                    <div class="hidden sm:flex items-center gap-1">
+                        {% for page_num in recipes.iter_pages(left_edge=1, right_edge=1, left_current=1,
+                        right_current=2) %}
+                        {% if page_num %}
+                        {% if page_num != recipes.page %}
+                        <a href="{{ url_for('dashboard.my_recipes', page=page_num,
+                                            category=current_category,
+                                            visibility=current_visibility,
+                                            sort_by=current_sort_by) }}"
+                            class="px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                            {{ page_num }}
+                        </a>
+                        {% else %}
+                        <span class="px-3 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium">
+                            {{ page_num }}
+                        </span>
+                        {% endif %}
+                        {% else %}
+                        <span class="px-2 py-2 text-gray-400">…</span>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+
+                    <!-- Mobile Page Info -->
+                    <div class="sm:hidden flex items-center">
+                        <span class="text-sm text-gray-600">
+                            Page {{ recipes.page }} of {{ recipes.pages }}
+                        </span>
+                    </div>
+
+                    <!-- Next Button -->
+                    {% if recipes.has_next %}
+                    <a href="{{ url_for('dashboard.my_recipes', page=recipes.next_num,
+                                category=current_category,
+                                visibility=current_visibility,
+                                sort_by=current_sort_by) }}"
+                        class="inline-flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                        Next
+                        <i class="fas fa-chevron-right w-3 h-3"></i>
+                    </a>
+                    {% else %}
+                    <span
+                        class="inline-flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-400 cursor-not-allowed">
+                        Next
+                        <i class="fas fa-chevron-right w-3 h-3"></i>
+                    </span>
+                    {% endif %}
+                </nav>
         </div>
+    </div>
+    {% endif %}
 
-        <div class="p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div class="md:col-span-1">
-                <img id="preview-image" src="" alt="" class="w-full h-40 object-cover rounded-md bg-gray-100">
+    <!-- Empty state -->
+    {% else %}
+    <div class="text-center py-16">
+        <div
+            class="mx-auto mb-5 w-24 h-24 rounded-full bg-gradient-to-br from-indigo-600 to-indigo-700 flex items-center justify-center">
+            <i class="fa-solid fa-utensils w-10 h-10 text-white"></i>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-800 mb-2">No recipes yet! 🍽️</h3>
+        <p class="text-sm text-gray-600 mb-6 max-w-lg mx-auto">Start your culinary journey by creating your first
+            recipe.
+            Share your favorite dishes with the world!</p>
+
+        <div class="flex flex-col sm:flex-row gap-3 justify-center">
+            <a href="{{ url_for('dashboard.add_recipe') }}"
+                class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg">
+                <i class="fa-solid fa-plus w-4 h-4"></i>
+                Create your first recipe
+            </a>
+            <a href="{{ url_for('dashboard.explore') }}"
+                class="inline-flex items-center gap-2 border border-gray-200 px-4 py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-50">
+                <i class="fa-solid fa-compass w-4 h-4"></i>
+                Explore global recipes
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Mobile FAB -->
+    <a href="{{ url_for('dashboard.add_recipe') }}" id="fab-add"
+        class="fixed bottom-5 right-5 sm:hidden inline-flex items-center justify-center w-14 h-14 rounded-full shadow-lg bg-indigo-600 text-white z-40"
+        aria-label="Add new recipe" title="Add new recipe">
+        <i class="fa-solid fa-plus w-6 h-6"></i>
+    </a>
+
+    <!-- Preview Modal (hidden by default) -->
+    <div id="recipe-preview" class="fixed inset-0 z-50 hidden items-center justify-center px-4 py-6">
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closePreview()" aria-hidden="true"></div>
+        <div class="relative bg-white rounded-xl max-w-2xl w-full overflow-hidden shadow-2xl">
+            <div class="flex items-center justify-between p-4 border-b border-gray-100">
+                <h3 id="preview-title" class="text-lg font-semibold text-gray-800">Recipe Title</h3>
+                <div class="flex items-center gap-2">
+                    <button class="text-sm text-indigo-600 hover:underline" id="preview-edit">Edit</button>
+                    <button class="text-sm text-gray-500" onclick="closePreview()">Close</button>
+                </div>
             </div>
-            <div class="md:col-span-2">
-                <div class="text-xs text-gray-500 mb-2" id="preview-meta">Category • Date • Visibility</div>
-                <p id="preview-desc" class="text-sm text-gray-700 leading-relaxed"></p>
-                <div class="mt-4 flex items-center gap-3">
-                    <a id="preview-open" href="#"
-                        class="inline-flex items-center gap-2 text-indigo-600 font-medium text-sm">Open full recipe
-                        →</a>
-                    <button id="preview-delete" class="text-sm text-red-500">Delete</button>
+
+            <div class="p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="md:col-span-1">
+                    <img id="preview-image" src="" alt="" class="w-full h-40 object-cover rounded-md bg-gray-100">
+                </div>
+                <div class="md:col-span-2">
+                    <div class="text-xs text-gray-500 mb-2" id="preview-meta">Category • Date • Visibility</div>
+                    <p id="preview-desc" class="text-sm text-gray-700 leading-relaxed"></p>
+                    <div class="mt-4 flex items-center gap-3">
+                        <a id="preview-open" href="#"
+                            class="inline-flex items-center gap-2 text-indigo-600 font-medium text-sm">Open full recipe
+                            →</a>
+                        <button id="preview-delete" class="text-sm text-red-500">Delete</button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
-<!-- JS: modal, preview, delete confirm -->
-<script>
-    // hold a simple mapping of recipe data: populate from server into a JS object
-    const RECIPES = {
+    <!-- JS: modal, preview, delete confirm -->
+    <script>
+        // hold a simple mapping of recipe data: populate from server into a JS object
+        const RECIPES = {
     {% for r in recipes.items %}
-    "{{ r.id }}": {
-        id: "{{ r.id }}",
-            name: { { r.name | tojson } },
-        description: { { (r.description | striptags if r.description else '')| tojson } },
-        image: { { (r.images[0].url if r.images) | default ('') | tojson } },
-        category: { { (r.category.name if r.category else '')| tojson } },
-        date: "{{ r.created_at.strftime('%b %d, %Y') }}",
-            public: { { 'true' if r.public else 'false' } },
-        url_view: "{{ url_for('dashboard.view_recipe', recipe_id=r.id) }}",
+        "{{ r.id }}": {
+            id: "{{ r.id }}",
+            name: {{ r.name | tojson }},
+            description: {{ (r.description | striptags if r.description else '') | tojson }},
+            image: {{ (r.images[0].url if r.images else '') | tojson }},
+            category: {{ (r.category.name if r.category else '') | tojson }},
+            date: "{{ r.created_at.strftime('%b %d, %Y') }}",
+            public: {{ 'true' if r.public else 'false' }},
+            url_view: "{{ url_for('dashboard.view_recipe', recipe_id=r.id) }}",
             url_edit: "{{ url_for('dashboard.edit_recipe', recipe_id=r.id) }}",
-                url_delete: "{{ url_for('dashboard.delete_recipe', recipe_id=r.id) }}"
-    } {% if not loop.last %}, {% endif %}
-    {% endfor %}
+            url_delete: "{{ url_for('dashboard.delete_recipe', recipe_id=r.id) }}"
+        }{% if not loop.last %},{% endif %}
+        {% endfor %}
   };
 
-    // open preview by id
-    function openPreview(id) {
-        const recipe = RECIPES[String(id)];
-        if (!recipe) return;
-        document.getElementById('preview-title').textContent = recipe.name;
-        document.getElementById('preview-desc').textContent = recipe.description || 'No description provided.';
-        document.getElementById('preview-image').src = recipe.image || '';
-        document.getElementById('preview-image').alt = recipe.name;
-        document.getElementById('preview-meta').textContent = (recipe.category ? recipe.category + ' • ' : '') + recipe.date + ' • ' + (recipe.public === true || recipe.public === 'true' ? 'Public' : 'Private');
-        document.getElementById('preview-open').href = recipe.url_view;
-        document.getElementById('preview-edit').onclick = function () { window.location = recipe.url_edit; };
-        document.getElementById('preview-delete').onclick = function () { confirmDelete(recipe.url_delete); };
-        document.getElementById('recipe-preview').classList.remove('hidden');
-        document.getElementById('recipe-preview').classList.add('flex');
-        document.body.style.overflow = 'hidden';
-        // focus for accessibility
-        document.getElementById('preview-title').focus();
-    }
-
-    function closePreview() {
-        document.getElementById('recipe-preview').classList.add('hidden');
-        document.getElementById('recipe-preview').classList.remove('flex');
-        document.body.style.overflow = '';
-    }
-
-    // close with Esc
-    document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape') closePreview();
-    });
-
-    // confirm delete (simple)
-    function confirmDelete(deleteUrl) {
-        const ok = confirm('Are you sure you want to delete this recipe? This action cannot be undone.');
-        if (ok) {
-            // navigate to delete endpoint (GET/POST depends on your view)
-            // Prefer to submit a form/POST in production. This uses GET for simplicity; adapt as required.
-            window.location = deleteUrl;
+        // open preview by id
+        function openPreview(id) {
+            const recipe = RECIPES[String(id)];
+            if (!recipe) return;
+            document.getElementById('preview-title').textContent = recipe.name;
+            document.getElementById('preview-desc').textContent = recipe.description || 'No description provided.';
+            document.getElementById('preview-image').src = recipe.image || '';
+            document.getElementById('preview-image').alt = recipe.name;
+            document.getElementById('preview-meta').textContent = (recipe.category ? recipe.category + ' • ' : '') + recipe.date + ' • ' + (recipe.public === true || recipe.public === 'true' ? 'Public' : 'Private');
+            document.getElementById('preview-open').href = recipe.url_view;
+            document.getElementById('preview-edit').onclick = function () { window.location = recipe.url_edit; };
+            document.getElementById('preview-delete').onclick = function () { confirmDelete(recipe.url_delete); };
+            document.getElementById('recipe-preview').classList.remove('hidden');
+            document.getElementById('recipe-preview').classList.add('flex');
+            document.body.style.overflow = 'hidden';
+            // focus for accessibility
+            document.getElementById('preview-title').focus();
         }
-    }
 
-    // Toggle additional categories
-    function toggleAllCategories() {
-        const additionalCategories = document.getElementById('additional-categories');
-        const showMoreBtn = document.getElementById('show-more-btn');
-
-        if (additionalCategories.classList.contains('hidden')) {
-            additionalCategories.classList.remove('hidden');
-            additionalCategories.classList.add('flex');
-            showMoreBtn.innerHTML = 'Show less';
-        } else {
-            additionalCategories.classList.add('hidden');
-            additionalCategories.classList.remove('flex');
-            const categoriesCount = parseInt(showMoreBtn.innerHTML.match(/\d+/)[0]);
-            showMoreBtn.innerHTML = `+${categoriesCount} more`;
+        function closePreview() {
+            document.getElementById('recipe-preview').classList.add('hidden');
+            document.getElementById('recipe-preview').classList.remove('flex');
+            document.body.style.overflow = '';
         }
-    }
-</script>
-{% endblock %}
+
+        // close with Esc
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') closePreview();
+        });
+
+        // confirm delete (simple)
+        function confirmDelete(deleteUrl) {
+            const ok = confirm('Are you sure you want to delete this recipe? This action cannot be undone.');
+            if (ok) {
+                // navigate to delete endpoint (GET/POST depends on your view)
+                // Prefer to submit a form/POST in production. This uses GET for simplicity; adapt as required.
+                window.location = deleteUrl;
+            }
+        }
+
+        // Toggle additional categories
+        function toggleAllCategories() {
+            const additionalCategories = document.getElementById('additional-categories');
+            const showMoreBtn = document.getElementById('show-more-btn');
+
+            if (additionalCategories.classList.contains('hidden')) {
+                additionalCategories.classList.remove('hidden');
+                additionalCategories.classList.add('flex');
+                showMoreBtn.innerHTML = 'Show less';
+            } else {
+                additionalCategories.classList.add('hidden');
+                additionalCategories.classList.remove('flex');
+                const categoriesCount = parseInt(showMoreBtn.innerHTML.match(/\d+/)[0]);
+                showMoreBtn.innerHTML = `+${categoriesCount} more`;
+            }
+        }
+
+        // View toggle functionality
+        function toggleView(viewType) {
+            const gridView = document.getElementById('grid-view');
+            const listView = document.getElementById('list-view');
+            const recipesGrid = document.getElementById('recipes-grid');
+
+            if (viewType === 'grid') {
+                gridView.classList.add('bg-white', 'shadow-sm');
+                gridView.classList.remove('text-gray-500', 'hover:text-gray-700');
+                listView.classList.remove('bg-white', 'shadow-sm');
+                listView.classList.add('text-gray-500', 'hover:text-gray-700');
+
+                recipesGrid.className = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6';
+            } else {
+                listView.classList.add('bg-white', 'shadow-sm');
+                listView.classList.remove('text-gray-500', 'hover:text-gray-700');
+                gridView.classList.remove('bg-white', 'shadow-sm');
+                gridView.classList.add('text-gray-500', 'hover:text-gray-700');
+
+                recipesGrid.className = 'grid grid-cols-1 gap-4 mb-6';
+            }
+
+            // Store preference in localStorage
+            localStorage.setItem('recipesView', viewType);
+        }
+
+        // Bulk actions toggle
+        function toggleBulkActions() {
+            const menu = document.getElementById('bulk-actions-menu');
+            menu.classList.toggle('hidden');
+        }
+
+        // Close bulk actions menu when clicking outside
+        document.addEventListener('click', function (event) {
+            const menu = document.getElementById('bulk-actions-menu');
+            const button = event.target.closest('button[onclick="toggleBulkActions()"]');
+
+            if (!button && !menu.contains(event.target)) {
+                menu.classList.add('hidden');
+            }
+        });
+
+        // Real-time recipe search and filtering
+        function filterRecipes() {
+            const searchTerm = document.getElementById('recipe-search').value.toLowerCase();
+            const recipes = document.querySelectorAll('.recipe-card');
+            let visibleCount = 0;
+
+            recipes.forEach(recipe => {
+                const name = recipe.dataset.recipeName || '';
+                const category = recipe.dataset.recipeCategory || '';
+                const visibility = recipe.dataset.recipeVisibility || '';
+
+                // Get description text from the recipe card
+                const descElement = recipe.querySelector('p');
+                const description = descElement ? descElement.textContent.toLowerCase() : '';
+
+                const matchesSearch = name.includes(searchTerm) ||
+                    description.includes(searchTerm) ||
+                    category.includes(searchTerm);
+
+                if (matchesSearch) {
+                    recipe.style.display = 'block';
+                    visibleCount++;
+                } else {
+                    recipe.style.display = 'none';
+                }
+            });
+
+            // Show/hide no results message
+            updateSearchResults(visibleCount, searchTerm);
+        }
+
+        function updateSearchResults(count, searchTerm) {
+            // Remove existing no-results message
+            const existingMessage = document.getElementById('no-search-results');
+            if (existingMessage) {
+                existingMessage.remove();
+            }
+
+            if (count === 0 && searchTerm.trim() !== '') {
+                const recipesContainer = document.getElementById('recipes-container');
+                const noResultsDiv = document.createElement('div');
+                noResultsDiv.id = 'no-search-results';
+                noResultsDiv.className = 'text-center py-12';
+                noResultsDiv.innerHTML = `
+                    <div class="mx-auto mb-4 w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center">
+                        <i class="fas fa-search w-6 h-6 text-gray-400"></i>
+                    </div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">No recipes found</h3>
+                    <p class="text-gray-500 mb-4">We couldn't find any recipes matching "${searchTerm}"</p>
+                    <button onclick="clearSearch()" class="text-indigo-600 hover:text-indigo-700 font-medium">
+                        Clear search
+                    </button>
+                `;
+                recipesContainer.appendChild(noResultsDiv);
+            }
+        }
+
+        // Clear search functionality
+        function clearSearch() {
+            document.getElementById('recipe-search').value = '';
+            filterRecipes();
+        }
+
+        // Auto-submit form when filters change
+        document.addEventListener('DOMContentLoaded', function () {
+            // Restore view preference
+            const savedView = localStorage.getItem('recipesView') || 'grid';
+            toggleView(savedView);
+
+            // Auto-submit filter form when select values change
+            const filterSelects = document.querySelectorAll('#filter-form select');
+            filterSelects.forEach(select => {
+                select.addEventListener('change', function () {
+                    // Small delay to improve UX
+                    setTimeout(() => {
+                        document.getElementById('filter-form').submit();
+                    }, 100);
+                });
+            });
+
+            // Search input debouncing for better performance
+            let searchTimeout;
+            const searchInput = document.getElementById('recipe-search');
+            searchInput.addEventListener('input', function () {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(filterRecipes, 300);
+            });
+
+            // Initialize FAB animation
+            initializeFAB();
+        });
+
+        // Enhanced FAB with scroll behavior
+        function initializeFAB() {
+            const fab = document.getElementById('fab-add');
+            let lastScrollY = window.scrollY;
+
+            window.addEventListener('scroll', () => {
+                const currentScrollY = window.scrollY;
+
+                if (currentScrollY > lastScrollY && currentScrollY > 100) {
+                    // Scrolling down - hide FAB
+                    fab.style.transform = 'translateY(100px)';
+                    fab.style.opacity = '0';
+                } else {
+                    // Scrolling up - show FAB
+                    fab.style.transform = 'translateY(0)';
+                    fab.style.opacity = '1';
+                }
+
+                lastScrollY = currentScrollY;
+            });
+        }
+
+        // Keyboard navigation support
+        document.addEventListener('keydown', function (e) {
+            // Escape key functionality
+            if (e.key === 'Escape') {
+                closePreview();
+                // Close bulk actions menu
+                document.getElementById('bulk-actions-menu').classList.add('hidden');
+            }
+
+            // Quick search focus with Ctrl/Cmd + K
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                document.getElementById('recipe-search').focus();
+            }
+        });
+
+        // Enhanced accessibility and animations
+        function enhanceAccessibility() {
+            // Add ARIA labels to interactive elements
+            const actionButtons = document.querySelectorAll('.action-button');
+            actionButtons.forEach(button => {
+                const icon = button.querySelector('i');
+                if (icon.classList.contains('fa-eye')) {
+                    button.setAttribute('aria-label', 'Quick preview recipe');
+                } else if (icon.classList.contains('fa-edit')) {
+                    button.setAttribute('aria-label', 'Edit recipe');
+                } else if (icon.classList.contains('fa-trash')) {
+                    button.setAttribute('aria-label', 'Delete recipe');
+                }
+            });
+
+            // Add focus management for recipe cards
+            const recipeCards = document.querySelectorAll('.recipe-card');
+            recipeCards.forEach(card => {
+                card.setAttribute('tabindex', '0');
+                card.addEventListener('keydown', function (e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        const viewLink = card.querySelector('a[href*="view_recipe"]');
+                        if (viewLink) viewLink.click();
+                    }
+                });
+            });
+        }
+
+        // Initialize accessibility enhancements when DOM is loaded
+        document.addEventListener('DOMContentLoaded', enhanceAccessibility);
+
+        // Toast notification system
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 transform transition-all duration-300 translate-x-full ${type === 'success' ? 'bg-green-500 text-white' :
+                type === 'error' ? 'bg-red-500 text-white' :
+                    'bg-blue-500 text-white'
+                }`;
+            toast.textContent = message;
+
+            document.body.appendChild(toast);
+
+            // Animate in
+            setTimeout(() => {
+                toast.classList.remove('translate-x-full');
+            }, 100);
+
+            // Auto remove after 3 seconds
+            setTimeout(() => {
+                toast.classList.add('translate-x-full');
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 300);
+            }, 3000);
+        }
+
+        // Recipe card hover effects and interactions
+        function initializeCardEffects() {
+            const cards = document.querySelectorAll('.recipe-card');
+
+            cards.forEach(card => {
+                card.addEventListener('mouseenter', function () {
+                    const actions = this.querySelector('.recipe-actions');
+                    if (actions) {
+                        actions.style.opacity = '1';
+                        actions.style.transform = 'translateY(0)';
+                    }
+                });
+
+                card.addEventListener('mouseleave', function () {
+                    const actions = this.querySelector('.recipe-actions');
+                    if (actions) {
+                        actions.style.opacity = '0';
+                        actions.style.transform = 'translateY(10px)';
+                    }
+                });
+            });
+        }
+
+        // Advanced filtering with animation
+        function applyAdvancedFilter(filterType, value) {
+            const cards = document.querySelectorAll('.recipe-card');
+            let visibleCount = 0;
+
+            cards.forEach(card => {
+                let shouldShow = true;
+
+                switch (filterType) {
+                    case 'category':
+                        shouldShow = value === 'all' || card.dataset.recipeCategory === value;
+                        break;
+                    case 'difficulty':
+                        shouldShow = value === 'all' || card.dataset.recipeDifficulty === value;
+                        break;
+                    case 'time':
+                        const cookTime = parseInt(card.dataset.recipeCookTime) || 0;
+                        if (value === '30') shouldShow = cookTime <= 30;
+                        else if (value === '60') shouldShow = cookTime <= 60;
+                        else if (value === '120') shouldShow = cookTime <= 120;
+                        else shouldShow = true;
+                        break;
+                }
+
+                if (shouldShow) {
+                    card.style.display = 'block';
+                    card.style.animation = 'fadeInUp 0.3s ease-out';
+                    visibleCount++;
+                } else {
+                    card.style.animation = 'fadeOut 0.2s ease-out';
+                    setTimeout(() => {
+                        card.style.display = 'none';
+                    }, 200);
+                }
+            });
+
+            // Update results count
+            updateFilterResults(visibleCount);
+        }
+
+        function updateFilterResults(count) {
+            const resultsInfo = document.getElementById('results-info');
+            if (resultsInfo) {
+                resultsInfo.textContent = `Showing ${count} recipe${count !== 1 ? 's' : ''}`;
+            }
+        }
+
+        // Initialize all enhanced features
+        document.addEventListener('DOMContentLoaded', function () {
+            initializeCardEffects();
+            // Add any other initialization functions here
+        });
+
+        // CSS animations for cards
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeInUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(20px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            @keyframes fadeOut {
+                from {
+                    opacity: 1;
+                    transform: scale(1);
+                }
+                to {
+                    opacity: 0;
+                    transform: scale(0.95);
+                }
+            }
+
+            .recipe-card {
+                transition: all 0.3s ease;
+            }
+
+            .recipe-card:hover {
+                transform: translateY(-4px);
+                box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            }
+
+            .recipe-actions {
+                transition: all 0.3s ease;
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            #fab-add {
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+
+            .view-toggle-btn {
+                transition: all 0.2s ease;
+            }
+
+            .view-toggle-btn.active {
+                background-color: rgb(79 70 229);
+                color: white;
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+    {% endblock %}
