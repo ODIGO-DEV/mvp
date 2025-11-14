@@ -101,7 +101,7 @@ def my_recipes():
 @login_required
 def explore():
     page = request.args.get('page', 1, type=int)
-    category_id = request.args.get('category', type=int)
+    category_param = request.args.get('category')
     origin_id = request.args.get('origin', type=int)
     search = request.args.get('search', '')
     per_page = 12
@@ -109,8 +109,19 @@ def explore():
     # Build query
     query = Recipe.query.filter(Recipe.public == True)
 
-    if category_id:
-        query = query.filter_by(category_id=category_id)
+    # Handle category by ID or name
+    category_id = None
+    if category_param:
+        try:
+            # Try to parse as integer first (ID)
+            category_id = int(category_param)
+            query = query.filter_by(category_id=category_id)
+        except ValueError:
+            # If not an integer, treat as category name
+            category = Category.query.filter_by(name=category_param).first()
+            if category:
+                category_id = category.id
+                query = query.filter_by(category_id=category.id)
 
     if origin_id:
         query = query.filter_by(origin_id=origin_id)
