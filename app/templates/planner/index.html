@@ -1,140 +1,439 @@
 {% extends "dashboard/base.html" %}
 {% block title %}Meal Planner - ODiGO{% endblock %}
+{% block page_title %}Meal Planner{% endblock %}
 {% block dashboard_content %}
-<div class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl p-8 text-white mb-6">
-  <div class="flex items-center">
-    <div class="bg-white bg-opacity-20 rounded-full p-3 mr-4">
-      <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2v-7H3v7a2 2 0 002 2z"/></svg>
+<!-- Header Section -->
+<section
+    class="bg-gradient-to-r from-indigo-700 to-purple-600 text-white rounded-2xl p-6 sm:p-8 mb-6 relative overflow-hidden">
+    <div class="absolute inset-0 opacity-10">
+        <svg class="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">
+            <pattern id="pattern" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+                <circle cx="10" cy="10" r="1" fill="white" />
+            </pattern>
+            <rect width="100%" height="100%" fill="url(#pattern)" />
+        </svg>
     </div>
-    <div>
-      <h1 class="text-3xl font-bold mb-1">Meal Planner</h1>
-      <p class="text-indigo-100">Plan breakfast, lunch and dinner, see macros, and generate your grocery list.</p>
+    <div class="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="flex items-center">
+            <div class="bg-white/20 border border-white/30 backdrop-blur-sm rounded-full p-3 mr-4">
+                <i class="fa-solid fa-calendar-days text-2xl"></i>
+            </div>
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-bold">Meal Planner</h1>
+                <p class="text-indigo-100 text-sm sm:text-base mt-1">Plan your meals, track nutrition, and generate
+                    grocery lists</p>
+            </div>
+        </div>
+        <div class="bg-white/20 border border-white/30 backdrop-blur-sm px-5 py-3 rounded-xl text-center">
+            <div class="text-2xl font-bold text-yellow-300">{{ '%.0f' % totals.calories }}</div>
+            <p class="text-xs text-indigo-100">Daily Calories</p>
+        </div>
     </div>
-  </div>
+</section>
+
+<!-- Date Selection -->
+<div class="bg-white rounded-xl p-6 border border-gray-200 mb-6 shadow-sm">
+    <form method="get" class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+        <div class="flex items-center gap-3">
+            <i class="fa-solid fa-calendar text-indigo-600"></i>
+            <label class="font-medium text-gray-700">Planning Date:</label>
+        </div>
+        <div class="flex items-center gap-3">
+            <input type="date" name="date" value="{{ selected_date.isoformat() }}"
+                class="border border-gray-300 px-3 py-2 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+            <button type="submit"
+                class="px-4 py-2 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-lg hover:from-indigo-700 hover:to-indigo-800 transition-all">
+                <i class="fa-solid fa-arrow-right mr-2"></i>Go
+            </button>
+        </div>
+    </form>
 </div>
 
-<div class="bg-white rounded-xl p-6 border border-gray-200 card">
-  <form method="get" class="mb-4">
-    <label class="mr-2">Date</label>
-    <input type="date" name="date" value="{{ selected_date.isoformat() }}" class="border p-2 rounded">
-    <button class="ml-2 px-4 py-2 bg-indigo-600 text-white rounded">Go</button>
-  </form>
+<!-- Meal Planning Form -->
+<div class="bg-white rounded-xl p-6 border border-gray-200 mb-6 shadow-sm">
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="text-xl font-semibold text-gray-800">Plan Your Meals</h2>
+        <div class="text-sm text-gray-500">{{ selected_date.strftime('%A, %B %d, %Y') }}</div>
+    </div>
 
-  <form method="post" class="space-y-4">
-    {{ form.hidden_tag() }}
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-      {% set meal_types = ['breakfast','lunch','dinner'] %}
-      {% for mt in meal_types %}
-      <div class="border rounded-lg p-4">
-        <div class="flex items-center mb-2">
-          <span class="badge badge-info capitalize mr-2">{{ mt }}</span>
-          {% if entries.get(mt) %}
-          <span class="text-xs text-gray-500">currently: {{ entries.get(mt).recipe.name }}</span>
-          {% endif %}
+    <form method="post" class="space-y-6">
+        {{ form.hidden_tag() }}
+
+        <!-- Meal Types Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {% set meal_types = [
+            ('breakfast', 'fa-solid fa-sun', 'from-orange-500 to-yellow-500', 'Breakfast'),
+            ('lunch', 'fa-solid fa-cloud-sun', 'from-green-500 to-emerald-600', 'Lunch'),
+            ('dinner', 'fa-solid fa-moon', 'from-indigo-500 to-purple-600', 'Dinner')
+            ] %}
+
+            {% for mt, icon, gradient, label in meal_types %}
+            <div class="border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow">
+                <!-- Meal Type Header -->
+                <div class="flex items-center mb-4">
+                    <div class="bg-gradient-to-r {{ gradient }} text-white rounded-full p-2 mr-3">
+                        <i class="{{ icon }}"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-800">{{ label }}</h3>
+                        {% if entries.get(mt) %}
+                        <p class="text-sm text-gray-500">{{ entries.get(mt).recipe.name }}</p>
+                        {% else %}
+                        <p class="text-sm text-gray-400">No recipe selected</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Recipe Selection -->
+                <input type="hidden" name="{{ mt }}_recipe_id" id="{{ mt }}_recipe_id"
+                    value="{{ entries.get(mt).recipe_id if entries.get(mt) else '' }}">
+
+                {% if entries.get(mt) %}
+                <div class="mb-3 p-3 bg-gray-50 rounded-lg">
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm font-medium text-gray-700">{{ entries.get(mt).recipe.name }}</span>
+                        <button type="button" class="text-xs text-indigo-600 hover:text-indigo-800 clear-selection-btn"
+                            data-meal-type="{{ mt }}">
+                            <i class="fa-solid fa-times"></i> Change
+                        </button>
+                    </div>
+                </div>
+                {% endif %}
+
+                <button type="button"
+                    class="w-full bg-gradient-to-r {{ gradient }} text-white py-3 rounded-lg font-medium hover:opacity-90 transition-opacity meal-select-btn"
+                    data-meal-type="{{ mt }}">
+                    <i class="fa-solid fa-plus mr-2"></i>
+                    {% if entries.get(mt) %}Change Recipe{% else %}Select Recipe{% endif %}
+                </button>
+            </div>
+            {% endfor %}
         </div>
-        <input type="hidden" name="{{ mt }}_recipe_id" id="{{ mt }}_recipe_id" value="{{ entries.get(mt).recipe_id if entries.get(mt) else '' }}">
-        <button type="button" class="w-full border rounded p-2 bg-gray-100 hover:bg-gray-200" onclick="openModal('{{ mt }}')">Select Recipe</button>
-      </div>
-      {% endfor %}
-    </div>
-    <div class="text-right">
-      {{ form.submit(class="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded") }}
-    </div>
-  </form>
 
-  <hr class="my-6">
-  <h2 class="text-xl font-semibold mb-3">Daily Nutrition</h2>
-  <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-    <div class="p-3 bg-indigo-50 rounded"><span class="text-sm text-indigo-700">Protein</span><div class="text-lg font-semibold">{{ '%.1f' % totals.protein }} g</div></div>
-    <div class="p-3 bg-blue-50 rounded"><span class="text-sm text-blue-700">Carbs</span><div class="text-lg font-semibold">{{ '%.1f' % totals.carbs }} g</div></div>
-    <div class="p-3 bg-purple-50 rounded"><span class="text-sm text-purple-700">Fats</span><div class="text-lg font-semibold">{{ '%.1f' % totals.fats }} g</div></div>
-    <div class="p-3 bg-green-50 rounded"><span class="text-sm text-green-700">Calories</span><div class="text-lg font-semibold">{{ '%.0f' % totals.calories }}</div></div>
-  </div>
-
-  <div class="mt-6">
-    <a class="px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded" href="{{ url_for('planner.grocery_list', date=selected_date.isoformat()) }}">Generate Grocery List</a>
-    <a class="ml-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-fuchsia-600 text-white rounded" href="{{ url_for('planner.suggestions', goal='high_protein') }}">REMii: High Protein</a>
-    <a class="ml-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-fuchsia-600 text-white rounded" href="{{ url_for('planner.suggestions', goal='low_carb') }}">REMii: Low Carb</a>
-  </div>
-  {% if selected_recipes %}
-  <div class="mt-6">
-    <h3 class="font-semibold mb-2">Planned Meals</h3>
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-      {% for meal_type, r in selected_recipes %}
-      <div class="border rounded-lg overflow-hidden card">
-        {% if r.images %}
-        <img src="{{ r.images[0].url }}" class="w-full h-32 object-cover">
-        {% endif %}
-        <div class="p-3">
-          <div class="text-xs text-gray-500 capitalize">{{ meal_type }}</div>
-          <div class="font-semibold">{{ r.name }}</div>
+        <!-- Save Button -->
+        <div class="flex justify-center pt-4">
+            {{ form.submit(class="px-8 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg
+            font-medium hover:from-green-600 hover:to-emerald-700 transition-all transform hover:scale-105") }}
         </div>
-      </div>
-      {% endfor %}
-    </div>
-  </div>
-  {% endif %}
+    </form>
 </div>
 
-<!-- Recipe Modal -->
-<div id="recipe-modal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center z-50 hidden">
-  <div class="bg-white rounded-lg p-6 w-full max-w-3xl max-h-full overflow-y-auto">
-    <div class="flex justify-between items-center mb-4">
-      <h2 class="text-2xl font-bold">Select a Recipe</h2>
-      <button class="text-gray-500 hover:text-gray-700" onclick="closeModal()">&times;</button>
+<!-- Daily Nutrition Overview -->
+<div class="bg-white rounded-xl p-6 border border-gray-200 mb-6 shadow-sm">
+    <div class="flex items-center mb-6">
+        <i class="fa-solid fa-chart-pie text-indigo-600 mr-3"></i>
+        <h2 class="text-xl font-semibold text-gray-800">Daily Nutrition Overview</h2>
     </div>
-    <div class="mb-4">
-      <input type="text" id="recipe-search" placeholder="Search recipes..." class="w-full border p-2 rounded">
-    </div>
-    <div id="recipe-grid" class="grid grid-cols-1 md:grid-cols-3 gap-4">
-      {% for r in recipes %}
-      <div class="border rounded-lg overflow-hidden card recipe-card" data-recipe-id="{{ r.id }}" data-recipe-name="{{ r.name }}">
-        {% if r.images %}
-        <img src="{{ r.images[0].url }}" class="w-full h-32 object-cover">
-        {% endif %}
-        <div class="p-3">
-          <div class="font-semibold">{{ r.name }}</div>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {% set nutrition_items = [
+        ('protein', 'fa-solid fa-dumbbell', 'from-red-500 to-pink-600', 'Protein', totals.protein),
+        ('carbs', 'fa-solid fa-wheat-awn', 'from-blue-500 to-indigo-600', 'Carbs', totals.carbs),
+        ('fats', 'fa-solid fa-droplet', 'from-yellow-500 to-orange-500', 'Fats', totals.fats),
+        ('calories', 'fa-solid fa-fire', 'from-green-500 to-emerald-600', 'Calories', totals.calories)
+        ] %}
+
+        {% for key, icon, gradient, label, value in nutrition_items %}
+        <div class="bg-gradient-to-br {{ gradient }} text-white rounded-xl p-4 text-center">
+            <div class="bg-white/20 rounded-full w-10 h-10 flex items-center justify-center mx-auto mb-2">
+                <i class="{{ icon }}"></i>
+            </div>
+            <div class="text-2xl font-bold">
+                {% if key == 'calories' %}
+                {{ '%.0f' % value }}
+                {% else %}
+                {{ '%.1f' % value }}g
+                {% endif %}
+            </div>
+            <div class="text-xs opacity-90">{{ label }}</div>
         </div>
-      </div>
-      {% endfor %}
+        {% endfor %}
     </div>
-  </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="bg-white rounded-xl p-6 border border-gray-200 mb-6 shadow-sm">
+    <div class="flex items-center mb-6">
+        <i class="fa-solid fa-bolt text-indigo-600 mr-3"></i>
+        <h2 class="text-xl font-semibold text-gray-800">Quick Actions</h2>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <a href="{{ url_for('planner.grocery_list', date=selected_date.isoformat()) }}"
+            class="flex items-center p-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl hover:from-blue-600 hover:to-indigo-700 transition-all transform hover:scale-105">
+            <i class="fa-solid fa-list-check text-xl mr-3"></i>
+            <div>
+                <div class="font-semibold">Grocery List</div>
+                <div class="text-xs opacity-90">Generate shopping list</div>
+            </div>
+        </a>
+
+        <a href="{{ url_for('planner.suggestions', goal='high_protein') }}"
+            class="flex items-center p-4 bg-gradient-to-r from-purple-500 to-fuchsia-600 text-white rounded-xl hover:from-purple-600 hover:to-fuchsia-700 transition-all transform hover:scale-105">
+            <i class="fa-solid fa-robot text-xl mr-3"></i>
+            <div>
+                <div class="font-semibold">REMii: High Protein</div>
+                <div class="text-xs opacity-90">AI recipe suggestions</div>
+            </div>
+        </a>
+
+        <a href="{{ url_for('planner.suggestions', goal='low_carb') }}"
+            class="flex items-center p-4 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl hover:from-emerald-600 hover:to-teal-700 transition-all transform hover:scale-105">
+            <i class="fa-solid fa-leaf text-xl mr-3"></i>
+            <div>
+                <div class="font-semibold">REMii: Low Carb</div>
+                <div class="text-xs opacity-90">Healthy alternatives</div>
+            </div>
+        </a>
+    </div>
+</div>
+<!-- Planned Meals Preview -->
+{% if selected_recipes %}
+<div class="bg-white rounded-xl p-6 border border-gray-200 mb-6 shadow-sm">
+    <div class="flex items-center mb-6">
+        <i class="fa-solid fa-utensils text-indigo-600 mr-3"></i>
+        <h2 class="text-xl font-semibold text-gray-800">Today's Planned Meals</h2>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {% set meal_icons = {'breakfast': 'fa-solid fa-sun', 'lunch': 'fa-solid fa-cloud-sun', 'dinner': 'fa-solid
+        fa-moon'} %}
+        {% set meal_gradients = {'breakfast': 'from-orange-500 to-yellow-500', 'lunch': 'from-green-500 to-emerald-600',
+        'dinner': 'from-indigo-500 to-purple-600'} %}
+
+        {% for meal_type, r in selected_recipes %}
+        <div class="border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg transition-shadow">
+            {% if r.images %}
+            <div class="relative">
+                <img src="{{ r.images[0].url }}" class="w-full h-40 object-cover">
+                <div class="absolute top-2 left-2">
+                    <div
+                        class="bg-gradient-to-r {{ meal_gradients[meal_type] }} text-white px-2 py-1 rounded-full text-xs font-medium flex items-center">
+                        <i class="{{ meal_icons[meal_type] }} mr-1"></i>
+                        {{ meal_type.title() }}
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="h-40 bg-gradient-to-r {{ meal_gradients[meal_type] }} flex items-center justify-center">
+                <div class="text-center text-white">
+                    <i class="{{ meal_icons[meal_type] }} text-3xl mb-2"></i>
+                    <div class="text-sm font-medium">{{ meal_type.title() }}</div>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="p-4">
+                <h3 class="font-semibold text-gray-800 mb-2">{{ r.name }}</h3>
+                <div class="flex items-center justify-between">
+                    <div class="text-sm text-gray-500">
+                        <i class="fa-solid fa-clock mr-1"></i>
+                        {% if r.prep_time %}{{ r.prep_time }} min{% else %}Quick{% endif %}
+                    </div>
+                    <a href="{{ url_for('dashboard.view_recipe', recipe_id=r.id) }}"
+                        class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">
+                        View Recipe
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Recipe Selection Modal -->
+<div id="recipe-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-2xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto m-4 shadow-2xl">
+        <!-- Modal Header -->
+        <div class="flex justify-between items-center mb-6">
+            <div class="flex items-center">
+                <div class="bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-full p-2 mr-3">
+                    <i class="fa-solid fa-utensils"></i>
+                </div>
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-800">Select a Recipe</h2>
+                    <p class="text-sm text-gray-500">Choose from your recipes and community favorites</p>
+                </div>
+            </div>
+            <button class="text-gray-400 hover:text-gray-600 text-2xl font-bold" id="close-modal-btn">
+                <i class="fa-solid fa-times"></i>
+            </button>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="mb-6">
+            <div class="relative">
+                <i class="fa-solid fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                <input type="text" id="recipe-search" placeholder="Search recipes by name, ingredients, or cuisine..."
+                    class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+        </div>
+
+        <!-- Recipe Grid -->
+        <div id="recipe-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto">
+            {% for r in recipes %}
+            <div class="border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg transition-all cursor-pointer recipe-card"
+                data-recipe-id="{{ r.id }}" data-recipe-name="{{ r.name }}">
+                {% if r.images %}
+                <img src="{{ r.images[0].url }}" class="w-full h-32 object-cover">
+                {% else %}
+                <div
+                    class="w-full h-32 bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center">
+                    <i class="fa-solid fa-utensils text-white text-2xl"></i>
+                </div>
+                {% endif %}
+
+                <div class="p-4">
+                    <h3 class="font-semibold text-gray-800 mb-1">{{ r.name }}</h3>
+                    <div class="flex items-center justify-between text-sm text-gray-500">
+                        <div class="flex items-center">
+                            <i class="fa-solid fa-clock mr-1"></i>
+                            {% if r.prep_time %}{{ r.prep_time }} min{% else %}Quick{% endif %}
+                        </div>
+                        {% if r.user_id == current_user.id %}
+                        <span class="bg-indigo-100 text-indigo-800 px-2 py-1 rounded-full text-xs">Your Recipe</span>
+                        {% else %}
+                        <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Community</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="mt-6 pt-4 border-t border-gray-200">
+            <div class="flex justify-between items-center">
+                <p class="text-sm text-gray-500">{{ recipes|length }} recipes available</p>
+                <button class="px-4 py-2 text-gray-600 hover:text-gray-800" id="cancel-modal-btn">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
 
 {% endblock %}
 
 {% block scripts %}
 <script>
-  let currentMealType = null;
+    let currentMealType = null;
 
-  function openModal(mealType) {
-    currentMealType = mealType;
-    document.getElementById('recipe-modal').classList.remove('hidden');
-  }
+    function openModal(mealType) {
+        currentMealType = mealType;
+        document.getElementById('recipe-modal').classList.remove('hidden');
+        document.body.style.overflow = 'hidden'; // Prevent background scrolling
+    }
 
-  function closeModal() {
-    document.getElementById('recipe-modal').classList.add('hidden');
-  }
+    function closeModal() {
+        document.getElementById('recipe-modal').classList.add('hidden');
+        document.body.style.overflow = ''; // Restore scrolling
+        const searchInput = document.getElementById('recipe-search');
+        if (searchInput) {
+            searchInput.value = ''; // Clear search
+        }
+        // Reset all recipe cards visibility
+        document.querySelectorAll('.recipe-card').forEach(card => {
+            card.style.display = '';
+        });
+    }
 
-  document.getElementById('recipe-search').addEventListener('keyup', function() {
-    const filter = this.value.toLowerCase();
-    const recipeCards = document.querySelectorAll('.recipe-card');
-    recipeCards.forEach(card => {
-      const name = card.dataset.recipeName.toLowerCase();
-      if (name.includes(filter)) {
-        card.style.display = '';
-      } else {
-        card.style.display = 'none';
-      }
+    function clearSelection(mealType) {
+        document.getElementById(mealType + '_recipe_id').value = '';
+        location.reload();
+    }
+
+    // Initialize event listeners when DOM is loaded
+    document.addEventListener('DOMContentLoaded', function () {
+        // Meal selection buttons
+        document.querySelectorAll('.meal-select-btn').forEach(button => {
+            button.addEventListener('click', function () {
+                const mealType = this.dataset.mealType;
+                openModal(mealType);
+            });
+        });
+
+        // Clear selection buttons
+        document.querySelectorAll('.clear-selection-btn').forEach(button => {
+            button.addEventListener('click', function () {
+                const mealType = this.dataset.mealType;
+                clearSelection(mealType);
+            });
+        });
+
+        // Modal close buttons
+        const closeModalBtn = document.getElementById('close-modal-btn');
+        const cancelModalBtn = document.getElementById('cancel-modal-btn');
+
+        if (closeModalBtn) {
+            closeModalBtn.addEventListener('click', closeModal);
+        }
+
+        if (cancelModalBtn) {
+            cancelModalBtn.addEventListener('click', closeModal);
+        }
+
+        // Search functionality
+        const recipeSearch = document.getElementById('recipe-search');
+        if (recipeSearch) {
+            recipeSearch.addEventListener('keyup', function () {
+                const filter = this.value.toLowerCase();
+                const recipeCards = document.querySelectorAll('.recipe-card');
+
+                recipeCards.forEach(card => {
+                    const name = card.dataset.recipeName.toLowerCase();
+                    if (name.includes(filter)) {
+                        card.style.display = '';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            });
+        }
+
+        // Recipe selection
+        document.querySelectorAll('.recipe-card').forEach(card => {
+            card.addEventListener('click', function () {
+                const recipeId = this.dataset.recipeId;
+
+                // Add visual feedback
+                this.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    this.style.transform = '';
+                }, 150);
+
+                // Set the selected recipe
+                if (currentMealType) {
+                    document.getElementById(currentMealType + '_recipe_id').value = recipeId;
+                }
+
+                // Close modal with slight delay for visual feedback
+                setTimeout(() => {
+                    closeModal();
+                }, 200);
+            });
+        });
+
+        // Close modal when clicking outside
+        const recipeModal = document.getElementById('recipe-modal');
+        if (recipeModal) {
+            recipeModal.addEventListener('click', function (e) {
+                if (e.target === this) {
+                    closeModal();
+                }
+            });
+        }
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                const modal = document.getElementById('recipe-modal');
+                if (modal && !modal.classList.contains('hidden')) {
+                    closeModal();
+                }
+            }
+        });
     });
-  });
-
-  document.querySelectorAll('.recipe-card').forEach(card => {
-    card.addEventListener('click', function() {
-      const recipeId = this.dataset.recipeId;
-      document.getElementById(currentMealType + '_recipe_id').value = recipeId;
-      closeModal();
-    });
-  });
 </script>
 {% endblock %}

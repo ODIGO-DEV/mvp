@@ -1,41 +1,173 @@
 {% extends "dashboard/base.html" %}
 {% block title %}REMii Suggestions - ODiGO{% endblock %}
+{% block page_title %}REMii AI Suggestions{% endblock %}
 {% block dashboard_content %}
-<div class="bg-white rounded-xl p-6 border border-gray-200 card">
-  <h1 class="text-2xl font-bold mb-2">REMii Suggestions: {{ goal.replace('_',' ') | title }}</h1>
-  <p class="text-gray-600 mb-4">Our AI-powered assistant, REMii, has analyzed your preferences and selected these recipes to help you achieve your goals.</p>
-
-  <div class="flex justify-between items-center mb-4">
-    <div>
-      <a href="{{ url_for('planner.suggestions', goal='high_protein') }}" class="px-3 py-1 rounded-full text-sm font-semibold {{ 'bg-indigo-600 text-white' if goal == 'high_protein' else 'bg-gray-200 text-gray-700' }}">High Protein</a>
-      <a href="{{ url_for('planner.suggestions', goal='low_carb') }}" class="ml-2 px-3 py-1 rounded-full text-sm font-semibold {{ 'bg-indigo-600 text-white' if goal == 'low_carb' else 'bg-gray-200 text-gray-700' }}">Low Carb</a>
-      <a href="{{ url_for('planner.suggestions', goal='balanced') }}" class="ml-2 px-3 py-1 rounded-full text-sm font-semibold {{ 'bg-indigo-600 text-white' if goal == 'balanced' else 'bg-gray-200 text-gray-700' }}">Balanced</a>
+<!-- Header Section -->
+<section
+    class="bg-gradient-to-r from-purple-700 to-fuchsia-600 text-white rounded-2xl p-6 sm:p-8 mb-6 relative overflow-hidden">
+    <div class="absolute inset-0 opacity-10">
+        <svg class="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">
+            <pattern id="pattern" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+                <circle cx="10" cy="10" r="1" fill="white" />
+            </pattern>
+            <rect width="100%" height="100%" fill="url(#pattern)" />
+        </svg>
     </div>
-  </div>
+    <div class="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="flex items-center">
+            <div class="bg-white/20 border border-white/30 backdrop-blur-sm rounded-full p-3 mr-4">
+                <i class="fa-solid fa-robot text-2xl"></i>
+            </div>
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-bold">REMii AI Suggestions</h1>
+                <p class="text-purple-100 text-sm sm:text-base mt-1">{{ goal.replace('_',' ') | title }} recipes powered
+                    by AI</p>
+            </div>
+        </div>
+        <div class="bg-white/20 border border-white/30 backdrop-blur-sm px-5 py-3 rounded-xl text-center">
+            <div class="text-2xl font-bold text-yellow-300">{{ scored|length }}</div>
+            <p class="text-xs text-purple-100">Suggestions</p>
+        </div>
+    </div>
+</section>
 
-  {% if scored %}
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-    {% for recipe, score in scored %}
-      <div class="border rounded-lg overflow-hidden card flex flex-col">
-        {% if recipe.images %}
-        <img src="{{ recipe.images[0].url }}" class="w-full h-40 object-cover">
-        {% endif %}
-        <div class="p-4 flex-grow">
-          <div class="font-semibold">{{ recipe.name }}</div>
-          <div class="text-sm text-gray-500 mb-2">REMii Score: {{ '%.2f' % score }}</div>
-          <p class="text-sm text-gray-600 mb-2">This recipe is a great choice for a <strong>{{ goal.replace('_',' ') }}</strong> diet. It's high in protein and low in carbs, making it perfect for your goals.</p>
+<!-- Goal Selection -->
+<div class="bg-white rounded-xl p-6 border border-gray-200 mb-6 shadow-sm">
+    <div class="flex items-center mb-4">
+        <i class="fa-solid fa-target text-indigo-600 mr-3"></i>
+        <h2 class="text-xl font-semibold text-gray-800">Choose Your Goal</h2>
+    </div>
+
+    <div class="flex flex-wrap gap-3">
+        {% set goals = [
+        ('high_protein', 'fa-solid fa-dumbbell', 'from-red-500 to-pink-600', 'High Protein'),
+        ('low_carb', 'fa-solid fa-leaf', 'from-green-500 to-emerald-600', 'Low Carb'),
+        ('balanced', 'fa-solid fa-balance-scale', 'from-blue-500 to-indigo-600', 'Balanced')
+        ] %}
+
+        {% for goal_key, icon, gradient, label in goals %}
+        <a href="{{ url_for('planner.suggestions', goal=goal_key) }}" class="flex items-center px-4 py-2 rounded-lg font-medium transition-all
+           {% if goal == goal_key %}
+           bg-gradient-to-r {{ gradient }} text-white transform scale-105
+           {% else %}
+           bg-gray-100 text-gray-700 hover:bg-gray-200
+           {% endif %}">
+            <i class="{{ icon }} mr-2"></i>
+            {{ label }}
+        </a>
+        {% endfor %}
+    </div>
+
+    <div class="mt-4 p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg">
+        <div class="flex items-start">
+            <i class="fa-solid fa-lightbulb text-indigo-600 mr-3 mt-1"></i>
+            <div>
+                <h3 class="font-semibold text-gray-800 mb-1">How REMii Works</h3>
+                <p class="text-sm text-gray-600">Our AI analyzes recipe nutritional content, ingredient combinations,
+                    and your preferences to suggest the best recipes for your goals.</p>
+            </div>
         </div>
-        <div class="p-4 bg-gray-50 border-t">
-            <a href="{{ url_for('dashboard.view_recipe', recipe_id=recipe.id) }}" class="text-indigo-600 text-sm font-semibold">View Recipe</a>
+    </div>
+</div>
+
+<!-- Recipe Suggestions -->
+{% if scored %}
+<div class="bg-white rounded-xl p-6 border border-gray-200 mb-6 shadow-sm">
+    <div class="flex items-center mb-6">
+        <i class="fa-solid fa-star text-indigo-600 mr-3"></i>
+        <h2 class="text-xl font-semibold text-gray-800">Top Suggestions for {{ goal.replace('_',' ') | title }}</h2>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for recipe, score in scored %}
+        <div class="border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg transition-shadow">
+            {% if recipe.images %}
+            <div class="relative">
+                <img src="{{ recipe.images[0].url }}" class="w-full h-48 object-cover">
+                <div class="absolute top-2 right-2">
+                    <div
+                        class="bg-gradient-to-r from-purple-500 to-fuchsia-600 text-white px-2 py-1 rounded-full text-xs font-bold">
+                        {{ '%.1f' % (score * 10) }}/10
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="h-48 bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center relative">
+                <i class="fa-solid fa-utensils text-white text-3xl"></i>
+                <div class="absolute top-2 right-2">
+                    <div class="bg-white/20 text-white px-2 py-1 rounded-full text-xs font-bold">
+                        {{ '%.1f' % (score * 10) }}/10
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="p-6">
+                <h3 class="font-semibold text-gray-800 mb-2">{{ recipe.name }}</h3>
+
+                <div class="flex items-center mb-3">
+                    <div class="flex items-center text-purple-600 mr-4">
+                        <i class="fa-solid fa-robot text-sm mr-1"></i>
+                        <span class="text-sm font-medium">REMii Score: {{ '%.2f' % score }}</span>
+                    </div>
+                    {% if recipe.prep_time %}
+                    <div class="flex items-center text-gray-500">
+                        <i class="fa-solid fa-clock text-sm mr-1"></i>
+                        <span class="text-sm">{{ recipe.prep_time }} min</span>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <p class="text-sm text-gray-600 mb-4">
+                    {% if goal == 'high_protein' %}
+                    Excellent protein content and balanced nutrition make this perfect for muscle building and recovery.
+                    {% elif goal == 'low_carb' %}
+                    Low in carbohydrates while maintaining great flavor and nutritional value for your dietary goals.
+                    {% else %}
+                    Well-balanced nutritional profile with optimal macro distribution for overall health.
+                    {% endif %}
+                </p>
+
+                <div class="flex items-center justify-between">
+                    <div class="text-xs text-gray-500">
+                        {% if recipe.user_id == current_user.id %}
+                        <span class="bg-indigo-100 text-indigo-800 px-2 py-1 rounded-full">Your Recipe</span>
+                        {% else %}
+                        <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full">Community</span>
+                        {% endif %}
+                    </div>
+                    <a href="{{ url_for('dashboard.view_recipe', recipe_id=recipe.id) }}"
+                        class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:from-indigo-700 hover:to-purple-700 transition-all">
+                        View Recipe
+                    </a>
+                </div>
+            </div>
         </div>
-      </div>
-    {% endfor %}
-  </div>
-  {% else %}
-  <p>No suggestions available.</p>
-  {% endif %}
-  <div class="mt-4">
-    <a href="{{ url_for('planner.index') }}" class="px-4 py-2 bg-gray-200 rounded">Back to Planner</a>
-  </div>
+        {% endfor %}
+    </div>
+</div>
+{% else %}
+<div class="bg-white rounded-xl p-6 border border-gray-200 mb-6 shadow-sm">
+    <div class="text-center py-12">
+        <div class="bg-gray-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+            <i class="fa-solid fa-robot text-gray-400 text-2xl"></i>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-800 mb-2">No Suggestions Available</h3>
+        <p class="text-gray-500 mb-6">REMii couldn't find recipes matching your {{ goal.replace('_',' ') }} goal. Try
+            adding more recipes to your collection!</p>
+        <a href="{{ url_for('dashboard.add_recipe') }}"
+            class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all">
+            <i class="fa-solid fa-plus mr-2"></i>Add Recipe
+        </a>
+    </div>
+</div>
+{% endif %}
+
+<!-- Back Navigation -->
+<div class="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+    <a href="{{ url_for('planner.index') }}"
+        class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+        <i class="fa-solid fa-arrow-left mr-2"></i>Back to Meal Planner
+    </a>
 </div>
 {% endblock %}

@@ -1,19 +1,76 @@
 {% extends "dashboard/base.html" %}
 {% block title %}Grocery List - ODiGO{% endblock %}
+{% block page_title %}Grocery List{% endblock %}
 {% block dashboard_content %}
-<div class="bg-white rounded-xl p-6 border border-gray-200 card">
-  <h1 class="text-2xl font-bold mb-4">Grocery List for {{ selected_date.strftime('%Y-%m-%d') }}</h1>
-  {% if items %}
-  <ul class="list-disc ml-6 space-y-1">
-    {% for item in items %}
-      <li>{{ '%.2f' % item.quantity if item.quantity else '' }} {{ item.unit }} {{ item.name }}</li>
-    {% endfor %}
-  </ul>
-  {% else %}
-  <p>No items. Add meals to your planner first.</p>
-  {% endif %}
-  <div class="mt-4">
-    <a href="{{ url_for('planner.index', date=selected_date.isoformat()) }}" class="px-4 py-2 bg-gray-200 rounded">Back to Planner</a>
-  </div>
+<!-- Header Section -->
+<section
+    class="bg-gradient-to-r from-blue-700 to-indigo-600 text-white rounded-2xl p-6 sm:p-8 mb-6 relative overflow-hidden">
+    <div class="absolute inset-0 opacity-10">
+        <svg class="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">
+            <pattern id="pattern" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+                <circle cx="10" cy="10" r="1" fill="white" />
+            </pattern>
+            <rect width="100%" height="100%" fill="url(#pattern)" />
+        </svg>
+    </div>
+    <div class="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="flex items-center">
+            <div class="bg-white/20 border border-white/30 backdrop-blur-sm rounded-full p-3 mr-4">
+                <i class="fa-solid fa-list-check text-2xl"></i>
+            </div>
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-bold">Grocery List</h1>
+                <p class="text-blue-100 text-sm sm:text-base mt-1">{{ selected_date.strftime('%A, %B %d, %Y') }}</p>
+            </div>
+        </div>
+        <div class="bg-white/20 border border-white/30 backdrop-blur-sm px-5 py-3 rounded-xl text-center">
+            <div class="text-2xl font-bold text-yellow-300">{{ items|length }}</div>
+            <p class="text-xs text-blue-100">Items</p>
+        </div>
+    </div>
+</section>
+
+<div class="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+    {% if items %}
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="text-xl font-semibold text-gray-800">Shopping List</h2>
+        <button onclick="window.print()"
+            class="px-4 py-2 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-lg hover:from-indigo-700 hover:to-indigo-800 transition-all">
+            <i class="fa-solid fa-print mr-2"></i>Print List
+        </button>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {% for item in items %}
+        <div class="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+            <div class="flex items-center justify-center w-8 h-8 bg-indigo-100 text-indigo-600 rounded-full mr-3">
+                <i class="fa-solid fa-check text-sm"></i>
+            </div>
+            <div class="flex-1">
+                <div class="font-medium text-gray-800">{{ item.name }}</div>
+                <div class="text-sm text-gray-500">
+                    {% if item.quantity %}{{ '%.2f' % item.quantity }}{% endif %}
+                    {% if item.unit %}{{ item.unit }}{% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-12">
+        <div class="bg-gray-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+            <i class="fa-solid fa-cart-shopping text-gray-400 text-2xl"></i>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-800 mb-2">No Items Yet</h3>
+        <p class="text-gray-500 mb-6">Add meals to your planner to generate a grocery list</p>
+    </div>
+    {% endif %}
+
+    <div class="mt-8 pt-6 border-t border-gray-200">
+        <a href="{{ url_for('planner.index', date=selected_date.isoformat()) }}"
+            class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+            <i class="fa-solid fa-arrow-left mr-2"></i>Back to Planner
+        </a>
+    </div>
 </div>
 {% endblock %}
