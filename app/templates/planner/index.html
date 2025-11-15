@@ -321,9 +321,17 @@
     let currentMealType = null;
 
     function openModal(mealType) {
+        console.log('Opening modal for meal type:', mealType);
         currentMealType = mealType;
-        document.getElementById('recipe-modal').classList.remove('hidden');
-        document.body.style.overflow = 'hidden'; // Prevent background scrolling
+        const modal = document.getElementById('recipe-modal');
+        console.log('Modal element found:', modal);
+        if (modal) {
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden'; // Prevent background scrolling
+            console.log('Modal should now be visible');
+        } else {
+            console.error('Modal element not found!');
+        }
     }
 
     function closeModal() {
@@ -346,9 +354,17 @@
 
     // Initialize event listeners when DOM is loaded
     document.addEventListener('DOMContentLoaded', function () {
+        console.log('DOM loaded, initializing event listeners...');
+
         // Meal selection buttons
-        document.querySelectorAll('.meal-select-btn').forEach(button => {
-            button.addEventListener('click', function () {
+        const mealSelectButtons = document.querySelectorAll('.meal-select-btn');
+        console.log('Found meal select buttons:', mealSelectButtons.length);
+
+        mealSelectButtons.forEach(button => {
+            console.log('Adding click listener to button:', button.dataset.mealType);
+            button.addEventListener('click', function (e) {
+                e.preventDefault();
+                console.log('Button clicked for meal type:', this.dataset.mealType);
                 const mealType = this.dataset.mealType;
                 openModal(mealType);
             });
