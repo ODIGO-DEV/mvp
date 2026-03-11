@@ -80,6 +80,7 @@
         <div class="flex gap-2">
             {% if checked_items > 0 %}
             <form method="POST" action="{{ url_for('shopping.clear_checked') }}" class="inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <button type="submit" onclick="return confirm('Clear all checked items?')"
                     class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm">
                     <i class="fa-solid fa-trash mr-2"></i>Clear Checked
@@ -145,6 +146,7 @@
             {% for item in items_in_cat %}
             <div class="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors {% if item.checked %}opacity-60{% endif %}">
                 <form method="POST" action="{{ url_for('shopping.toggle_item', item_id=item.id) }}" class="inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                     <button type="submit" class="mr-3">
                         <div class="w-6 h-6 border-2 border-gray-300 rounded {% if item.checked %}bg-green-500 border-green-500{% endif %} flex items-center justify-center hover:border-green-500 transition-colors">
                             {% if item.checked %}
@@ -170,6 +172,7 @@
                         <i class="fa-solid fa-edit"></i>
                     </a>
                     <form method="POST" action="{{ url_for('shopping.delete_item', item_id=item.id) }}" class="inline">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                         <button type="submit" onclick="return confirm('Delete this item?')"
                             class="text-red-600 hover:text-red-800 p-2">
                             <i class="fa-solid fa-trash"></i>
