@@ -134,3 +134,63 @@ def edit_item(item_id):
         return redirect(url_for("shopping.index"))
     
     return render_template("shopping/edit.html", form=form, item=item)
+
+
+@shopping_bp.route("/add-from-recipe/<int:recipe_id>", methods=["POST"])
+@login_required
+def add_from_recipe(recipe_id):
+    """Add all ingredients from a recipe to the shopping list"""
+    from app.models.recipe import Recipe
+    
+    try:
+        recipe = Recipe.query.get_or_404(recipe_id)
+        
+        if not recipe.ingredients:
+            return jsonify({"success": False, "message": "No ingredients found in this recipe"}), 400
+        
+        added_count = 0
+        for ingredient in recipe.ingredients:
+            # Format quantity with unit
+            quantity_str = ""
+            if ingredient.quantity:
+                quantity_str = f"{ingredient.quantity}"
+                if ingredient.unit:
+                    quantity_str += f" {ingredient.unit}"
+            elif ingredient.unit:
+                quantity_str = ingredient.unit
+            
+            # Check if item already exists
+            existing_item = ShoppingListItem.query.filter_by(
+                user_id=current_user.id,
+                name=ingredient.name,
+                checked=False  # Only check unchecked items
+            ).first()
+            
+            if existing_item:
+                # Update quantity if it exists
+                if quantity_str and existing_item.quantity:
+                    existing_item.notes = f"From recipe: {recipe.name}"
+                continue
+            
+            # Create new shopping list item
+            item = ShoppingListItem(
+                user_id=current_user.id,
+                name=ingredient.name,
+                quantity=quantity_str or "As needed",
+                category="groceries",  # Default category, could be improved
+                notes=f"From recipe: {recipe.name}"
+            )
+            db.session.add(item)
+            added_count += 1
+        
+        db.session.commit()
+        
+        return jsonify({
+            "success": True,
+            "added_count": added_count,
+            "message": f"Added {added_count} ingredient(s) to your shopping list"
+        })
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error adding recipe to shopping list: {str(e)}")
+        return jsonify({"success": False, "message": f"Error: {str(e)}"}), 500

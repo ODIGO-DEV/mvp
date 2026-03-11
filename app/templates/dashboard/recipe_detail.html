@@ -661,6 +661,7 @@
 
                 <!-- Shopping List Button -->
                 <button
+                    onclick="addToShoppingList()"
                     class="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white font-medium py-3 px-4 rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all flex items-center justify-center mt-4 shadow-sm">
                     <i class="fas fa-shopping-cart mr-2"></i>
                     Add to Shopping List
@@ -1233,5 +1234,48 @@
             }, 300);
         }, 4000);
     }
+
+    // Add recipe ingredients to shopping list
+    function addToShoppingList() {
+        const button = event.target.closest('button');
+        const originalText = button.innerHTML;
+        
+        // Disable button and show loading state
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Adding...';
+        
+        // Get CSRF token from meta tag or generate it
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}';
+        
+        fetch('/shopping/add-from-recipe/{{ recipe.id }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast(data.message, 'success');
+                button.innerHTML = '<i class="fas fa-check mr-2"></i>Added!';
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                }, 2000);
+            } else {
+                showToast(data.message || 'Failed to add ingredients', 'error');
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('An error occurred. Please try again.', 'error');
+            button.innerHTML = originalText;
+            button.disabled = false;
+        });
+    }
+
 </script>
 {% endblock %}
