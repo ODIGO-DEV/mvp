@@ -6,8 +6,9 @@ from .dashboard import dashboard_bp
 from .planner import planner_bp
 from .community import community_bp
 from .shopping import shopping_bp
+from .favorites import favorites_bp
 
-blueprints = [main_bp, auth_bp, dashboard_bp, planner_bp, community_bp, shopping_bp]
+blueprints = [main_bp, auth_bp, dashboard_bp, planner_bp, community_bp, shopping_bp, favorites_bp]
 
 
 def register_blueprints(app: Flask):

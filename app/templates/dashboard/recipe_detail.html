@@ -928,12 +928,44 @@ function cookNext() { if (cookIdx < STEPS.length-1) { cookIdx++; renderCookStep(
 
 /* ── Favourite ── */
 let isFav = false;
-function toggleFavorite() {
-  isFav = !isFav;
+
+// Check initial favorite status
+fetch(`/favorites/check/{{ recipe.id }}`)
+  .then(res => res.json())
+  .then(data => {
+    isFav = data.favorited;
+    updateFavoriteUI();
+  })
+  .catch(err => console.error('Error checking favorite status:', err));
+
+function updateFavoriteUI() {
   const icon = document.getElementById('fav-icon');
-  icon.setAttribute('fill', isFav ? '#ef4444' : 'none');
-  icon.setAttribute('stroke', isFav ? '#ef4444' : 'currentColor');
-  showToast(isFav ? 'Saved to favourites' : 'Removed from favourites', isFav ? 'green' : '');
+  icon.setAttribute('fill', isFav ? '#ec4899' : 'none');
+  icon.setAttribute('stroke', isFav ? '#ec4899' : 'currentColor');
+}
+
+function toggleFavorite() {
+  fetch(`/favorites/toggle/{{ recipe.id }}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': '{{ csrf_token() }}'
+    }
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      isFav = data.favorited;
+      updateFavoriteUI();
+      showToast(data.message, isFav ? 'green' : '');
+    } else {
+      showToast('Error updating favorite', 'red');
+    }
+  })
+  .catch(err => {
+    console.error('Error toggling favorite:', err);
+    showToast('Error updating favorite', 'red');
+  });
 }
 
 /* ── Share ── */

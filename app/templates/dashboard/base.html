@@ -108,19 +108,15 @@ class="flex items-center gap-3 px-3 py-2 rounded hover:bg-indigo-600">
 My Recipes
 </a>
 
-<a href=""
+<a href="{{ url_for('favorites.index') }}"
 class="flex items-center gap-3 px-3 py-2 rounded hover:bg-indigo-600">
 
 <i class="fa-solid fa-heart w-4"></i>
 Favorites
 </a>
 
-<a href=""
-class="flex items-center gap-3 px-3 py-2 rounded hover:bg-indigo-600">
 
-<i class="fa-solid fa-file w-4"></i>
-Draft Recipes
-</a>
+
 
 <a href="{{ url_for('dashboard.add_recipe') }}"
 class="flex items-center gap-3 px-3 py-2 rounded hover:bg-indigo-600">

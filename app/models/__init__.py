@@ -2,6 +2,7 @@ from .user import User
 from .category import Category
 from .collection import Collection
 from .comment import Comment
+from .favorite import Favorite
 from .image import Image
 from .ingredients import Ingredient
 from .kyc import KYC
@@ -23,6 +24,7 @@ __all__ = [
     "Category",
     "Collection",
     "Comment",
+    "Favorite",
     "Image",
     "Ingredient",
     "KYC",
