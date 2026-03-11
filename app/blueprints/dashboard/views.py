@@ -12,6 +12,7 @@ from app.blueprints.dashboard.forms import RecipeForm, CommentForm
 from app.models.step import Step
 from app.models.ingredients import Ingredient
 from app.models.image import Image
+from app.models.video import Video
 from app.services.upload import upload_service
 from datetime import datetime
 
@@ -290,6 +291,52 @@ def add_recipe():
                             except Exception as e:
                                 flash(f"Error uploading step image: {str(e)}", "error")
 
+            # Handle video - YouTube or Upload
+            youtube_embed_id = request.form.get('youtube_embed_id', '').strip()
+            recipe_video_file = request.files.get('recipe_video')
+
+            if youtube_embed_id:
+                # Save YouTube video
+                youtube_url = f"https://www.youtube.com/embed/{youtube_embed_id}"
+                video = Video(
+                    video_url=youtube_url,
+                    is_main=True,
+                    recipe_id=recipe.id
+                )
+                db.session.add(video)
+                print(f"DEBUG: Added YouTube video: {youtube_url}")
+            elif recipe_video_file and recipe_video_file.filename:
+                # Handle video upload
+                allowed_video_extensions = {'mp4', 'webm', 'mov', 'avi', 'quicktime'}
+                video_ext = recipe_video_file.filename.rsplit('.', 1)[1].lower() if '.' in recipe_video_file.filename else ''
+
+                if video_ext not in allowed_video_extensions and video_ext not in ['mov']:
+                    flash(f"Invalid video format. Allowed: MP4, WebM, MOV, AVI", "error")
+                else:
+                    # Check file size (500MB max)
+                    recipe_video_file.seek(0, 2)
+                    video_size = recipe_video_file.tell()
+                    recipe_video_file.seek(0)
+
+                    if video_size > 500 * 1024 * 1024:  # 500MB
+                        flash(f"Video file is too large. Maximum size is 500MB.", "error")
+                    else:
+                        try:
+                            ok, url = upload_service.upload_file(recipe_video_file)
+                            if ok and url:
+                                video = Video(
+                                    video_url=url,
+                                    is_main=True,
+                                    recipe_id=recipe.id
+                                )
+                                db.session.add(video)
+                                print(f"DEBUG: Added uploaded video: {url}")
+                            else:
+                                flash(f"Failed to upload video", "error")
+                        except Exception as e:
+                            print(f"DEBUG: Exception during video upload: {str(e)}")
+                            flash(f"Error uploading video: {str(e)}", "error")
+
             db.session.commit()
             flash("Recipe created successfully!", "success")
             return redirect(url_for("dashboard.my_recipes"))
@@ -387,6 +434,46 @@ def edit_recipe(recipe_id):
                         recipe_id=recipe.id
                     )
                     db.session.add(step)
+
+            # Handle video - YouTube or Upload
+            # Clear existing videos first
+            Video.query.filter_by(recipe_id=recipe.id).delete()
+
+            youtube_embed_id = request.form.get('youtube_embed_id', '').strip()
+            recipe_video_file = request.files.get('recipe_video')
+
+            if youtube_embed_id:
+                # Save YouTube video
+                youtube_url = f"https://www.youtube.com/embed/{youtube_embed_id}"
+                video = Video(
+                    video_url=youtube_url,
+                    is_main=True,
+                    recipe_id=recipe.id
+                )
+                db.session.add(video)
+            elif recipe_video_file and recipe_video_file.filename:
+                # Handle video upload
+                allowed_video_extensions = {'mp4', 'webm', 'mov', 'avi', 'quicktime'}
+                video_ext = recipe_video_file.filename.rsplit('.', 1)[1].lower() if '.' in recipe_video_file.filename else ''
+
+                if video_ext in allowed_video_extensions or video_ext == 'mov':
+                    # Check file size (500MB max)
+                    recipe_video_file.seek(0, 2)
+                    video_size = recipe_video_file.tell()
+                    recipe_video_file.seek(0)
+
+                    if video_size <= 500 * 1024 * 1024:  # 500MB
+                        try:
+                            ok, url = upload_service.upload_file(recipe_video_file)
+                            if ok and url:
+                                video = Video(
+                                    video_url=url,
+                                    is_main=True,
+                                    recipe_id=recipe.id
+                                )
+                                db.session.add(video)
+                        except Exception as e:
+                            flash(f"Error uploading video: {str(e)}", "error")
 
             db.session.commit()
             flash("Recipe updated successfully!", "success")

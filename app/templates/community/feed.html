@@ -5,7 +5,7 @@
 
 <!-- Header Section -->
 <section
-    class="bg-gradient-to-r from-indigo-700 to-purple-600 text-white rounded-2xl p-6 sm:p-8 mb-6 relative overflow-hidden">
+    class="bg-gradient-to-r from-indigo-700 to-indigo-600 text-white rounded-2xl p-6 sm:p-8 mb-6 relative overflow-hidden">
     <div class="absolute inset-0 opacity-10">
         <svg class="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">
             <pattern id="pattern" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
@@ -26,7 +26,7 @@
             </div>
         </div>
         <div class="bg-white/20 border border-white/30 backdrop-blur-sm px-5 py-3 rounded-xl text-center">
-            <div class="text-2xl font-bold text-yellow-300">{{ (posts|length + recipes|length) }}</div>
+            <div class="text-2xl font-bold text-white">{{ (posts|length + recipes|length) }}</div>
             <p class="text-xs text-indigo-100">Recent Posts</p>
         </div>
     </div>
@@ -42,20 +42,20 @@
     {% endfor %}
 
     {% set stats = [
-    {'color': 'from-green-500 to-emerald-600', 'title': 'Recipes', 'icon': 'fa-solid fa-utensils', 'count':
+    {'color': 'from-indigo-600 to-indigo-700', 'title': 'Recipes', 'icon': 'fa-solid fa-utensils', 'count':
     recipes|length},
-    {'color': 'from-blue-500 to-indigo-600', 'title': 'Posts', 'icon': 'fa-solid fa-pen', 'count': posts|length},
-    {'color': 'from-purple-500 to-fuchsia-600', 'title': 'Comments', 'icon': 'fa-solid fa-comments', 'count':
+    {'color': 'from-indigo-500 to-indigo-600', 'title': 'Posts', 'icon': 'fa-solid fa-pen', 'count': posts|length},
+    {'color': 'from-indigo-700 to-indigo-800', 'title': 'Comments', 'icon': 'fa-solid fa-comments', 'count':
     total_comments},
-    {'color': 'from-orange-500 to-yellow-500', 'title': 'Active', 'icon': 'fa-solid fa-fire', 'count': 'Now'}
+    {'color': 'from-indigo-400 to-indigo-500', 'title': 'Active', 'icon': 'fa-solid fa-fire', 'count': 'Now'}
     ] %}
     {% for stat in stats %}
-    <div class="p-4 rounded-xl bg-gradient-to-br {{ stat.color }} text-white text-center">
+    <div class="p-4 rounded-xl bg-gradient-to-br {{ stat.color }} text-white text-center shadow-md">
         <div class="bg-white/20 w-10 h-10 flex items-center justify-center rounded-lg mx-auto mb-2">
             <i class="{{ stat.icon }} w-5 h-5"></i>
         </div>
         <div class="font-semibold text-sm">{{ stat.title }}</div>
-        <div class="text-xs text-white/80 mt-0.5">{{ stat.count }}</div>
+        <div class="text-xs text-white/90 mt-0.5">{{ stat.count }}</div>
     </div>
     {% endfor %}
 </div>
@@ -84,7 +84,7 @@
                     class="w-full sm:w-64 pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
             </div>
             <button id="create-post-btn"
-                class="px-4 py-2 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-lg hover:from-indigo-700 hover:to-indigo-800 transition-all whitespace-nowrap">
+                class="px-4 py-2 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-lg hover:from-indigo-700 hover:to-indigo-800 transition-all whitespace-nowrap shadow-md">
                 <i class="fa-solid fa-plus mr-2"></i>Create Post
             </button>
         </div>
@@ -97,7 +97,7 @@
         <div class="flex justify-between items-center mb-6">
             <div class="flex items-center">
                 <div
-                    class="bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-full w-12 h-12 flex items-center justify-center mr-4">
+                    class="bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-full w-12 h-12 flex items-center justify-center mr-4">
                     {{ (current_user.name or 'U')[0].upper() }}
                 </div>
                 <div>

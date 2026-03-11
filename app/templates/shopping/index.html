@@ -4,7 +4,7 @@
 {% block dashboard_content %}
 
 <!-- Header Section -->
-<section class="bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-2xl p-6 sm:p-8 mb-6 relative overflow-hidden">
+<section class="bg-gradient-to-r from-indigo-700 to-indigo-600 text-white rounded-2xl p-6 sm:p-8 mb-6 relative overflow-hidden">
     <div class="absolute inset-0 opacity-10">
         <svg class="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">
             <pattern id="pattern" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
@@ -20,17 +20,17 @@
             </div>
             <div>
                 <h1 class="text-2xl sm:text-3xl font-bold">Shopping List</h1>
-                <p class="text-green-100 text-sm sm:text-base mt-1">Keep track of everything you need</p>
+                <p class="text-indigo-100 text-sm sm:text-base mt-1">Keep track of everything you need</p>
             </div>
         </div>
         <div class="flex gap-3">
             <div class="bg-white/20 border border-white/30 backdrop-blur-sm px-4 py-2 rounded-xl text-center">
-                <div class="text-xl font-bold text-yellow-300">{{ unchecked_items }}</div>
-                <p class="text-xs text-green-100">To Buy</p>
+                <div class="text-xl font-bold text-white">{{ unchecked_items }}</div>
+                <p class="text-xs text-indigo-100">To Buy</p>
             </div>
             <div class="bg-white/20 border border-white/30 backdrop-blur-sm px-4 py-2 rounded-xl text-center">
                 <div class="text-xl font-bold">{{ total_items }}</div>
-                <p class="text-xs text-green-100">Total</p>
+                <p class="text-xs text-indigo-100">Total</p>
             </div>
         </div>
     </div>
@@ -39,7 +39,7 @@
 <!-- Add Item Form -->
 <div class="bg-white rounded-xl p-6 border border-gray-200 shadow-sm mb-6">
     <div class="flex items-center mb-4">
-        <i class="fa-solid fa-plus-circle text-green-600 mr-3 text-xl"></i>
+        <i class="fa-solid fa-plus-circle text-indigo-600 mr-3 text-xl"></i>
         <h2 class="text-xl font-semibold text-gray-800">Add New Item</h2>
     </div>
     
@@ -48,26 +48,26 @@
         
         <div class="md:col-span-2">
             {{ form.name.label(class="block text-sm font-medium text-gray-700 mb-1") }}
-            {{ form.name(class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500", placeholder="e.g., Tomatoes") }}
+            {{ form.name(class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500", placeholder="e.g., Tomatoes") }}
         </div>
         
         <div>
             {{ form.quantity.label(class="block text-sm font-medium text-gray-700 mb-1") }}
-            {{ form.quantity(class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500", placeholder="e.g., 2 lbs") }}
+            {{ form.quantity(class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500", placeholder="e.g., 2 lbs") }}
         </div>
         
         <div>
             {{ form.category.label(class="block text-sm font-medium text-gray-700 mb-1") }}
-            {{ form.category(class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500") }}
+            {{ form.category(class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500") }}
         </div>
         
         <div class="md:col-span-3">
             {{ form.notes.label(class="block text-sm font-medium text-gray-700 mb-1") }}
-            {{ form.notes(class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500", rows="2", placeholder="Optional notes...") }}
+            {{ form.notes(class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500", rows="2", placeholder="Optional notes...") }}
         </div>
         
         <div class="flex items-end">
-            {{ form.submit(class="w-full px-6 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg font-medium hover:from-green-600 hover:to-emerald-700 transition-all transform hover:scale-105") }}
+            {{ form.submit(class="w-full px-6 py-2 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-lg font-medium hover:from-indigo-700 hover:to-indigo-800 transition-all transform hover:scale-105 shadow-md") }}
         </div>
     </form>
 </div>
@@ -88,7 +88,7 @@
             </form>
             {% endif %}
             <button onclick="window.print()"
-                class="px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-700 text-white rounded-lg hover:from-green-700 hover:to-emerald-800 transition-all text-sm">
+                class="px-4 py-2 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-lg hover:from-indigo-700 hover:to-indigo-800 transition-all text-sm shadow-md">
                 <i class="fa-solid fa-print mr-2"></i>Print
             </button>
         </div>
@@ -108,14 +108,14 @@
     } %}
 
     {% set category_colors = {
-        'produce': 'from-green-500 to-emerald-600',
-        'dairy': 'from-blue-500 to-indigo-600',
-        'meat': 'from-red-500 to-pink-600',
-        'bakery': 'from-yellow-500 to-orange-500',
-        'pantry': 'from-purple-500 to-fuchsia-600',
-        'frozen': 'from-cyan-500 to-blue-600',
-        'beverages': 'from-orange-500 to-red-500',
-        'snacks': 'from-pink-500 to-rose-600',
+        'produce': 'from-indigo-400 to-indigo-500',
+        'dairy': 'from-indigo-500 to-indigo-600',
+        'meat': 'from-indigo-600 to-indigo-700',
+        'bakery': 'from-indigo-400 to-indigo-500',
+        'pantry': 'from-indigo-700 to-indigo-800',
+        'frozen': 'from-indigo-500 to-indigo-600',
+        'beverages': 'from-indigo-600 to-indigo-700',
+        'snacks': 'from-indigo-400 to-indigo-500',
         'other': 'from-gray-500 to-gray-700'
     } %}
 
@@ -148,7 +148,7 @@
                 <form method="POST" action="{{ url_for('shopping.toggle_item', item_id=item.id) }}" class="inline">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                     <button type="submit" class="mr-3">
-                        <div class="w-6 h-6 border-2 border-gray-300 rounded {% if item.checked %}bg-green-500 border-green-500{% endif %} flex items-center justify-center hover:border-green-500 transition-colors">
+                        <div class="w-6 h-6 border-2 border-gray-300 rounded {% if item.checked %}bg-indigo-600 border-indigo-600{% endif %} flex items-center justify-center hover:border-indigo-500 transition-colors">
                             {% if item.checked %}
                             <i class="fa-solid fa-check text-white text-xs"></i>
                             {% endif %}

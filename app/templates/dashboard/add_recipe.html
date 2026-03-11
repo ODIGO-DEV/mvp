@@ -1,1313 +1,794 @@
 {% extends "dashboard/base.html" %}
-
 {% block title %}Add Recipe{% endblock %}
-
 {% block dashboard_content %}
+
 <style>
-    .modal-content {
-        animation: modalFadeIn 0.3s ease-out;
-    }
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
 
-    @keyframes modalFadeIn {
-        from {
-            opacity: 0;
-            transform: scale(0.9) translateY(-20px);
-        }
+  :root {
+    --indigo: #6366f1;
+    --indigo-dark: #4f46e5;
+    --indigo-light: #eef2ff;
+  }
 
-        to {
-            opacity: 1;
-            transform: scale(1) translateY(0);
-        }
-    }
+  .page-font  { font-family: 'DM Sans', sans-serif; }
+  .disp-font  { font-family: 'Syne', sans-serif; }
 
-    .ingredient-card,
-    .step-card {
-        transition: all 0.2s ease;
-    }
+  /* ── Upload zone ── */
+  .drop-zone {
+    transition: border-color .2s, background .2s, transform .2s;
+  }
+  .drop-zone.over {
+    border-color: var(--indigo);
+    background: var(--indigo-light);
+    transform: scale(1.01);
+  }
 
-    .ingredient-card:hover,
-    .step-card:hover {
-        transform: translateY(-1px);
-    }
+  /* ── Tab pill ── */
+  .tab-pill { transition: background .15s, color .15s, box-shadow .15s; }
+  .tab-pill.active {
+    background: var(--indigo);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(99,102,241,.3);
+  }
 
-    #upload-zone {
-        transition: all 0.3s ease;
-    }
+  /* ── Card item ── */
+  .list-item { transition: box-shadow .2s, transform .2s; }
+  .list-item:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,.07); }
 
-    #upload-zone.dragover {
-        transform: scale(1.02);
-        box-shadow: 0 10px 25px rgba(79, 70, 229, 0.1);
-    }
+  /* ── Modal ── */
+  [x-cloak] { display: none !important; }
+  .modal-box {
+    animation: modalIn .22s cubic-bezier(.34,1.56,.64,1) both;
+  }
+  @keyframes modalIn {
+    from { opacity:0; transform: scale(.94) translateY(10px); }
+    to   { opacity:1; transform: scale(1)  translateY(0); }
+  }
 
-    .image-preview-item {
-        animation: fadeInUp 0.3s ease-out;
-    }
+  /* ── Image thumb ── */
+  .img-thumb { animation: fadeUp .25s ease both; }
+  @keyframes fadeUp {
+    from { opacity:0; transform:translateY(8px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
 
-    @keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
+  /* ── YouTube preview ── */
+  .yt-embed { aspect-ratio: 16/9; }
 
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
+  /* ── Step / ingredient accent ── */
+  .step-badge   { background: linear-gradient(135deg,#f97316,#fb923c); }
+  .ingr-badge   { background: linear-gradient(135deg,#22c55e,#4ade80); }
 
-    /* Modal image upload zones */
-    #ingredient-upload-zone.dragover,
-    #step-upload-zone.dragover {
-        transform: scale(1.02);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    }
-
-    /* Smooth transitions for all elements */
-    .transition-all {
-        transition: all 0.2s ease-in-out;
-    }
-
-    /* Custom scrollbar for ingredients/steps lists */
-    #ingredients-list::-webkit-scrollbar,
-    #steps-list::-webkit-scrollbar {
-        width: 4px;
-    }
-
-    #ingredients-list::-webkit-scrollbar-track,
-    #steps-list::-webkit-scrollbar-track {
-        background: #f1f5f9;
-        border-radius: 2px;
-    }
-
-    #ingredients-list::-webkit-scrollbar-thumb,
-    #steps-list::-webkit-scrollbar-thumb {
-        background: #cbd5e1;
-        border-radius: 2px;
-    }
-
-    #ingredients-list::-webkit-scrollbar-thumb:hover,
-    #steps-list::-webkit-scrollbar-thumb:hover {
-        background: #94a3b8;
-    }
+  /* scrollbar */
+  .slim-scroll::-webkit-scrollbar { width: 4px; }
+  .slim-scroll::-webkit-scrollbar-track { background:#f1f5f9; border-radius:2px; }
+  .slim-scroll::-webkit-scrollbar-thumb { background:#cbd5e1; border-radius:2px; }
 </style>
 
-<div class="min-h-screen bg-gray-50">
-    <!-- Compact Header -->
-    <div class="bg-white border-b px-6 py-4">
-        <div class="max-w-7xl mx-auto flex justify-between items-center">
+<div class="page-font" x-data="recipePage()" x-init="init()">
+
+  <!-- ══ STICKY HEADER ═══════════════════════════════════════════════ -->
+  <div class="bg-white border-b border-gray-100 sticky top-0 z-30 px-0 py-3 mb-6">
+    <div class="flex items-center justify-between gap-4">
+      <div>
+        <nav class="flex items-center gap-1.5 text-xs text-gray-400 mb-0.5">
+          <a href="{{ url_for('dashboard.index') }}" class="hover:text-indigo-500 transition-colors">Home</a>
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          <a href="{{ url_for('dashboard.my_recipes') }}" class="hover:text-indigo-500 transition-colors">My Recipes</a>
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          <span class="text-gray-600 font-medium">New Recipe</span>
+        </nav>
+        <h1 class="disp-font text-2xl font-bold text-gray-900 tracking-tight">Create New Recipe</h1>
+      </div>
+      <div class="flex items-center gap-2 shrink-0">
+        <a href="{{ url_for('dashboard.my_recipes') }}"
+          class="px-4 py-2 text-sm border border-gray-200 rounded-lg text-gray-600 hover:border-gray-300 hover:bg-gray-50 transition-all">
+          Cancel
+        </a>
+        <button type="submit" form="recipe-form"
+          class="inline-flex items-center gap-2 px-5 py-2 text-sm font-medium bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg shadow-sm shadow-indigo-200 transition-all">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+          <span class="hidden sm:inline">Create Recipe</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Flash -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+    <div class="mb-4 px-4 py-3 rounded-lg text-sm {{ 'bg-red-50 text-red-700 border border-red-200' if category == 'error' else 'bg-emerald-50 text-emerald-700 border border-emerald-200' }}">
+      {{ message }}
+    </div>
+    {% endfor %}
+  {% endif %}
+  {% endwith %}
+
+  <!-- ══ FORM ════════════════════════════════════════════════════════ -->
+  <form id="recipe-form" method="POST" action="{{ url_for('dashboard.add_recipe') }}" enctype="multipart/form-data">
+    {{ form.hidden_tag() }}
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+
+      <!-- ── COL 1 · Basic Info ─────────────────────────────────── -->
+      <div class="lg:col-span-1 space-y-5">
+
+        <div class="bg-white border border-gray-100 rounded-xl p-5 shadow-sm">
+          <h2 class="disp-font text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <span class="w-6 h-6 bg-indigo-50 rounded-md flex items-center justify-center">
+              <svg class="w-3.5 h-3.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </span>
+            Basic Info
+          </h2>
+          <div class="space-y-3">
             <div>
-                <h1 class="text-2xl font-bold text-gray-900">Create New Recipe</h1>
-                <p class="text-gray-600 text-sm">Share your culinary creation with the world</p>
+              {{ form.name.label(class="block text-xs font-medium text-gray-600 mb-1") }}
+              {{ form.name(class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors", placeholder="e.g. Grandma's Lasagna") }}
             </div>
-            <div class="flex space-x-3">
-                <a href="{{ url_for('dashboard.my_recipes') }}"
-                    class="px-4 py-2 text-gray-600 hover:text-gray-800 border border-gray-300 rounded-md">
-                    Cancel
-                </a>
-                <button type="submit" form="recipe-form"
-                    class="px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
-                    Create Recipe
-                </button>
+            <div>
+              {{ form.description.label(class="block text-xs font-medium text-gray-600 mb-1") }}
+              {{ form.description(class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors resize-none", rows=3, placeholder="What makes this recipe special?") }}
             </div>
+            <div>
+              {{ form.category_id.label(class="block text-xs font-medium text-gray-600 mb-1") }}
+              {{ form.category_id(class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors bg-white") }}
+            </div>
+            <div>
+              {{ form.origin_id.label(class="block text-xs font-medium text-gray-600 mb-1") }}
+              {{ form.origin_id(class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors bg-white") }}
+            </div>
+            <label class="flex items-center gap-2.5 cursor-pointer select-none">
+              {{ form.public(class="w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500") }}
+              <span class="text-sm text-gray-700">{{ form.public.label.text }}</span>
+            </label>
+          </div>
         </div>
-    </div>
 
-    <!-- Flash Messages -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-    <div class="flash-messages" style="display: none;">
-        {% for category, message in messages %}
-        <div class="flash-message {{ category }}">{{ message }}</div>
-        {% endfor %}
-    </div>
-    {% endif %}
-    {% endwith %}
+        <!-- ── Ingredients ── -->
+        <div class="bg-white border border-gray-100 rounded-xl p-5 shadow-sm">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="disp-font text-base font-semibold text-gray-900 flex items-center gap-2">
+              <span class="w-6 h-6 bg-green-50 rounded-md flex items-center justify-center">
+                <svg class="w-3.5 h-3.5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+              </span>
+              Ingredients
+            </h2>
+            <button type="button" @click="openModal('ingredient')"
+              class="inline-flex items-center gap-1.5 text-xs font-medium bg-green-50 hover:bg-green-100 text-green-700 px-3 py-1.5 rounded-lg transition-colors">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+              Add
+            </button>
+          </div>
 
-    <!-- Main Content -->
-    <div class="max-w-7xl mx-auto p-6">
-        <form id="recipe-form" method="POST" action="{{ url_for('dashboard.add_recipe') }}"
-            enctype="multipart/form-data">
-            {{ form.hidden_tag() }}
-
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- Left Column: Basic Info -->
-                <div class="lg:col-span-1">
-                    <div class="bg-white rounded-lg shadow-sm border p-6 sticky top-6">
-                        <h2 class="text-lg font-semibold text-gray-900 mb-4">Basic Information</h2>
-
-                        <div class="space-y-4">
-                            <div>
-                                {{ form.name.label(class="block text-sm font-medium text-gray-700 mb-1") }}
-                                {{ form.name(class="w-full px-3 py-2 border border-gray-300 rounded-md
-                                focus:ring-indigo-500 focus:border-indigo-500") }}
-                            </div>
-
-                            <div>
-                                {{ form.description.label(class="block text-sm font-medium text-gray-700 mb-1") }}
-                                {{ form.description(class="w-full px-3 py-2 border border-gray-300 rounded-md
-                                focus:ring-indigo-500 focus:border-indigo-500", rows=3) }}
-                            </div>
-
-                            <div class="grid grid-cols-1 gap-4">
-                                <div>
-                                    {{ form.category_id.label(class="block text-sm font-medium text-gray-700 mb-1") }}
-                                    {{ form.category_id(class="w-full px-3 py-2 border border-gray-300 rounded-md
-                                    focus:ring-indigo-500 focus:border-indigo-500") }}
-                                </div>
-
-                                <div>
-                                    {{ form.origin_id.label(class="block text-sm font-medium text-gray-700 mb-1") }}
-                                    {{ form.origin_id(class="w-full px-3 py-2 border border-gray-300 rounded-md
-                                    focus:ring-indigo-500 focus:border-indigo-500") }}
-                                </div>
-                            </div>
-
-                            <div class="flex items-center">
-                                {{ form.public(class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300
-                                rounded") }}
-                                {{ form.public.label(class="ml-2 block text-sm text-gray-900") }}
-                            </div>
-                        </div>
+          <div id="ingredients-list" class="space-y-2 max-h-64 overflow-y-auto slim-scroll">
+            <template x-if="ingredients.length === 0">
+              <p class="text-gray-400 text-sm text-center py-4">No ingredients yet</p>
+            </template>
+            <template x-for="(ing, idx) in ingredients" :key="ing.id">
+              <div class="list-item bg-green-50 border border-green-100 rounded-lg px-3 py-2.5 flex items-center justify-between group">
+                <div class="flex items-center gap-2.5 min-w-0">
+                  <div class="ingr-badge w-7 h-7 rounded-full flex items-center justify-center shrink-0">
+                    <svg class="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 2a1 1 0 011 1v1h1a1 1 0 010 2H6v1a1 1 0 01-2 0V6H3a1 1 0 010-2h1V3a1 1 0 011-1zm0 10a1 1 0 011 1v1h1a1 1 0 110 2H6v1a1 1 0 11-2 0v-1H3a1 1 0 110-2h1v-1a1 1 0 011-1zM12 2a1 1 0 01.967.744L14.146 7.2 17.5 9.134a1 1 0 010 1.732l-3.354 1.935-1.18 4.455a1 1 0 01-1.933 0L9.854 12.8 6.5 10.866a1 1 0 010-1.732l3.354-1.935 1.18-4.455A1 1 0 0112 2z" clip-rule="evenodd"/></svg>
+                  </div>
+                  <div class="min-w-0">
+                    <div class="text-sm font-medium text-gray-800 truncate" x-text="ing.name"></div>
+                    <div class="text-xs text-gray-500 truncate">
+                      <span x-text="[ing.quantity, ing.unit].filter(Boolean).join(' ') || 'As needed'"></span>
+                      <span x-show="ing.notes" class="ml-1" x-text="'· ' + ing.notes"></span>
                     </div>
+                  </div>
                 </div>
-
-                <!-- Middle Column: Images -->
-                <div class="lg:col-span-1">
-                    <div class="bg-white rounded-lg shadow-sm border p-6">
-                        <h2 class="text-lg font-semibold text-gray-900 mb-4">Recipe Images</h2>
-
-                        <div class="space-y-4">
-                            <!-- Upload Area -->
-                            <div id="upload-zone"
-                                class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-indigo-400 hover:bg-indigo-50 transition-all duration-200 cursor-pointer group">
-                                {{ form.recipe_images(class="hidden", multiple=True, accept="image/*",
-                                id="recipe-images") }}
-                                <div id="upload-area" class="space-y-3">
-                                    <div
-                                        class="w-16 h-16 mx-auto bg-gray-100 rounded-full flex items-center justify-center group-hover:bg-indigo-100 transition-colors">
-                                        <i class="fas fa-camera text-2xl text-gray-400 group-hover:text-indigo-500"></i>
-                                    </div>
-                                    <div>
-                                        <p class="text-lg font-medium text-gray-700 group-hover:text-indigo-600">Upload
-                                            Recipe Images</p>
-                                        <p class="text-sm text-gray-500">Drag & drop or click to browse</p>
-                                        <p class="text-xs text-gray-400 mt-1">PNG, JPG, GIF, WEBP up to 30MB each</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Image Preview Grid -->
-                            <div id="image-preview" class="grid grid-cols-2 sm:grid-cols-3 gap-3 hidden"></div>
-
-                            <!-- Upload Progress -->
-                            <div id="upload-progress" class="hidden">
-                                <div class="bg-gray-200 rounded-full h-2">
-                                    <div id="progress-bar"
-                                        class="bg-indigo-600 h-2 rounded-full transition-all duration-300"
-                                        style="width: 0%"></div>
-                                </div>
-                                <p class="text-sm text-gray-600 mt-1">Uploading images...</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Right Column: Ingredients & Steps -->
-                <div class="lg:col-span-1">
-                    <div class="space-y-6">
-                        <!-- Ingredients Section -->
-                        <div class="bg-white rounded-lg shadow-sm border p-6">
-                            <div class="flex justify-between items-center mb-4">
-                                <h2 class="text-lg font-semibold text-gray-900">Ingredients</h2>
-                                <button type="button" id="add-ingredient-btn"
-                                    class="bg-green-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-600 transition-colors flex items-center space-x-1 shadow-sm">
-                                    <i class="fas fa-plus text-xs"></i>
-                                    <span>Add</span>
-                                </button>
-                            </div>
-
-                            <div id="ingredients-list" class="space-y-2 max-h-60 overflow-y-auto">
-                                <p class="text-gray-500 text-sm" id="no-ingredients">No ingredients added yet</p>
-                            </div>
-                        </div>
-
-                        <!-- Steps Section -->
-                        <div class="bg-white rounded-lg shadow-sm border p-6">
-                            <div class="flex justify-between items-center mb-4">
-                                <h2 class="text-lg font-semibold text-gray-900">Cooking Steps</h2>
-                                <button type="button" id="add-step-btn"
-                                    class="bg-orange-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-orange-600 transition-colors flex items-center space-x-1 shadow-sm">
-                                    <i class="fas fa-plus text-xs"></i>
-                                    <span>Add</span>
-                                </button>
-                            </div>
-
-                            <div id="steps-list" class="space-y-2 max-h-60 overflow-y-auto">
-                                <p class="text-gray-500 text-sm" id="no-steps">No steps added yet</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- Ingredient Modal -->
-<div id="ingredient-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden backdrop-blur-sm">
-    <div class="flex items-center justify-center min-h-screen p-4">
-        <div
-            class="bg-white rounded-xl max-w-lg w-full p-6 shadow-2xl transform transition-all duration-300 scale-95 modal-content">
-            <div class="flex justify-between items-center mb-6">
-                <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                        <i class="fas fa-carrot text-green-600"></i>
-                    </div>
-                    <h3 class="text-xl font-semibold text-gray-900">Add Ingredient</h3>
-                </div>
-                <button type="button"
-                    class="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-2 transition-colors"
-                    onclick="closeIngredientModal()">
-                    <i class="fas fa-times text-lg"></i>
+                <button type="button" @click="removeIngredient(ing.id)"
+                  class="shrink-0 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all p-1 rounded">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                 </button>
-            </div>
-
-            <form id="ingredient-form" class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Ingredient Name *</label>
-                    <input type="text" id="ingredient-name" placeholder="e.g., Chicken breast"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-                        required>
-                </div>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
-                        <input type="text" id="ingredient-quantity" placeholder="2"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Unit</label>
-                        <input type="text" id="ingredient-unit" placeholder="cups"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500">
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Notes (optional)</label>
-                    <input type="text" id="ingredient-notes" placeholder="diced, organic, etc."
-                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500">
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Images (optional)</label>
-
-                    <!-- Ingredient Image Upload Zone -->
-                    <div id="ingredient-upload-zone"
-                        class="border-2 border-dashed border-green-300 rounded-lg p-4 text-center hover:border-green-400 hover:bg-green-50 transition-all duration-200 cursor-pointer group">
-                        <input type="file" id="ingredient-images" multiple accept="image/*" class="hidden">
-                        <div id="ingredient-upload-area" class="space-y-2">
-                            <div
-                                class="w-12 h-12 mx-auto bg-green-100 rounded-full flex items-center justify-center group-hover:bg-green-200 transition-colors">
-                                <i class="fas fa-image text-green-600"></i>
-                            </div>
-                            <div>
-                                <p class="text-sm font-medium text-gray-700 group-hover:text-green-600">Upload Images
-                                </p>
-                                <p class="text-xs text-gray-500">Drag & drop or click</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Ingredient Image Preview -->
-                    <div id="ingredient-image-preview" class="grid grid-cols-3 gap-2 mt-3 hidden"></div>
-                </div>
-
-                <div class="flex justify-end space-x-3 pt-4">
-                    <button type="button" onclick="closeIngredientModal()"
-                        class="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50">
-                        Cancel
-                    </button>
-                    <button type="submit" class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600">
-                        Add Ingredient
-                    </button>
-                </div>
-            </form>
+              </div>
+            </template>
+          </div>
         </div>
-    </div>
-</div>
 
-<!-- Step Modal -->
-<div id="step-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden backdrop-blur-sm">
-    <div class="flex items-center justify-center min-h-screen p-4">
-        <div
-            class="bg-white rounded-xl max-w-lg w-full p-6 shadow-2xl transform transition-all duration-300 scale-95 modal-content">
-            <div class="flex justify-between items-center mb-6">
-                <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
-                        <i class="fas fa-list-ol text-orange-600"></i>
+        <!-- ── Steps ── -->
+        <div class="bg-white border border-gray-100 rounded-xl p-5 shadow-sm">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="disp-font text-base font-semibold text-gray-900 flex items-center gap-2">
+              <span class="w-6 h-6 bg-orange-50 rounded-md flex items-center justify-center">
+                <svg class="w-3.5 h-3.5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+              </span>
+              Cooking Steps
+            </h2>
+            <button type="button" @click="openModal('step')"
+              class="inline-flex items-center gap-1.5 text-xs font-medium bg-orange-50 hover:bg-orange-100 text-orange-700 px-3 py-1.5 rounded-lg transition-colors">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+              Add
+            </button>
+          </div>
+
+          <div id="steps-list" class="space-y-2 max-h-64 overflow-y-auto slim-scroll">
+            <template x-if="steps.length === 0">
+              <p class="text-gray-400 text-sm text-center py-4">No steps yet</p>
+            </template>
+            <template x-for="(step, idx) in steps" :key="step.id">
+              <div class="list-item bg-orange-50 border border-orange-100 rounded-lg px-3 py-2.5 flex items-start justify-between group">
+                <div class="flex items-start gap-2.5 min-w-0 flex-1">
+                  <div class="step-badge w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-0.5">
+                    <span class="text-white text-xs font-bold" x-text="idx + 1"></span>
+                  </div>
+                  <div class="min-w-0 flex-1">
+                    <div class="text-sm font-medium text-gray-800" x-text="step.name || ('Step ' + (idx + 1))"></div>
+                    <div class="text-xs text-gray-500 line-clamp-2 mt-0.5" x-text="step.instruction"></div>
+                    <div x-show="step.duration" class="text-xs text-orange-600 mt-1 flex items-center gap-1">
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                      <span x-text="step.duration + ' min'"></span>
                     </div>
-                    <h3 class="text-xl font-semibold text-gray-900">Add Cooking Step</h3>
+                  </div>
                 </div>
-                <button type="button"
-                    class="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-2 transition-colors"
-                    onclick="closeStepModal()">
-                    <i class="fas fa-times text-lg"></i>
+                <button type="button" @click="removeStep(step.id)"
+                  class="shrink-0 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all p-1 rounded mt-0.5">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                 </button>
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── COL 2+3 · Media ───────────────────────────────────── -->
+      <div class="lg:col-span-2 space-y-5">
+
+        <!-- Images card -->
+        <div class="bg-white border border-gray-100 rounded-xl p-5 shadow-sm">
+          <h2 class="disp-font text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <span class="w-6 h-6 bg-indigo-50 rounded-md flex items-center justify-center">
+              <svg class="w-3.5 h-3.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            </span>
+            Recipe Photos
+          </h2>
+
+          <!-- Drop zone -->
+          <div id="img-drop-zone"
+            class="drop-zone border-2 border-dashed border-gray-200 rounded-xl p-8 text-center cursor-pointer hover:border-indigo-300 hover:bg-indigo-50/40 mb-4"
+            @click="$refs.imgInput.click()"
+            @dragover.prevent="$el.classList.add('over')"
+            @dragleave.prevent="$el.classList.remove('over')"
+            @drop.prevent="handleImageDrop($event)">
+            {{ form.recipe_images(class="hidden", multiple=True, accept="image/*", id="recipe-images", x__ref="imgInput") }}
+            <input type="file" x-ref="imgInput" multiple accept="image/*" class="hidden" @change="handleImageFiles($event.target.files)">
+            <div class="w-12 h-12 bg-indigo-50 rounded-xl mx-auto mb-3 flex items-center justify-center">
+              <svg class="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            </div>
+            <p class="text-sm font-medium text-gray-600 mb-0.5">Drop photos here or <span class="text-indigo-600">browse</span></p>
+            <p class="text-xs text-gray-400">PNG, JPG, WEBP · max 30 MB each</p>
+          </div>
+
+          <!-- Preview grid -->
+          <div x-show="imagePreviews.length > 0" class="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-2">
+            <template x-for="(img, idx) in imagePreviews" :key="idx">
+              <div class="img-thumb relative group aspect-square rounded-lg overflow-hidden border border-gray-100">
+                <img :src="img.src" :alt="img.name" class="w-full h-full object-cover">
+                <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors"></div>
+                <button type="button" @click="removeImage(idx)"
+                  class="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-xs">
+                  ×
+                </button>
+                <div x-show="idx === 0"
+                  class="absolute bottom-1 left-1 text-[9px] font-bold bg-indigo-600 text-white px-1.5 py-0.5 rounded-full">
+                  Cover
+                </div>
+              </div>
+            </template>
+          </div>
+        </div>
+
+        <!-- ── VIDEO SECTION ───────────────────────────────────── -->
+        <div class="bg-white border border-gray-100 rounded-xl p-5 shadow-sm">
+          <h2 class="disp-font text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <span class="w-6 h-6 bg-red-50 rounded-md flex items-center justify-center">
+              <svg class="w-3.5 h-3.5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.069A1 1 0 0121 8.82v6.361a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/></svg>
+            </span>
+            Recipe Video
+            <span class="text-xs font-normal text-gray-400 ml-1">optional</span>
+          </h2>
+
+          <!-- Tab toggle -->
+          <div class="flex items-center bg-gray-100 rounded-lg p-0.5 w-fit mb-5 gap-0.5">
+            <button type="button" @click="videoTab = 'youtube'"
+              :class="videoTab === 'youtube' ? 'tab-pill active' : 'tab-pill text-gray-500 hover:text-gray-700'"
+              class="flex items-center gap-1.5 px-4 py-1.5 rounded-md text-sm font-medium transition-all">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+              YouTube
+            </button>
+            <button type="button" @click="videoTab = 'upload'"
+              :class="videoTab === 'upload' ? 'tab-pill active' : 'tab-pill text-gray-500 hover:text-gray-700'"
+              class="flex items-center gap-1.5 px-4 py-1.5 rounded-md text-sm font-medium transition-all">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+              Upload Video
+            </button>
+          </div>
+
+          <!-- ── YouTube tab ── -->
+          <div x-show="videoTab === 'youtube'" x-transition.opacity>
+            <div class="relative mb-3">
+              <div class="absolute left-3 top-1/2 -translate-y-1/2">
+                <svg class="w-4 h-4 text-red-400" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+              </div>
+              <input type="text" x-model="youtubeUrl" name="youtube_url"
+                @input.debounce.500ms="parseYoutube()"
+                placeholder="Paste YouTube URL — e.g. https://youtube.com/watch?v=..."
+                class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors pl-9 pr-20">
+              <button type="button" x-show="youtubeUrl" @click="youtubeUrl=''; youtubeEmbed=''; youtubeError=''"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 hover:text-gray-600">Clear</button>
             </div>
 
-            <form id="step-form" class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Step Name (optional)</label>
-                    <input type="text" id="step-name" placeholder="e.g., Prepare vegetables"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500">
+            <!-- Error -->
+            <p x-show="youtubeError" class="text-xs text-red-500 mb-3" x-text="youtubeError"></p>
+
+            <!-- Embed preview -->
+            <div x-show="youtubeEmbed" x-transition class="rounded-xl overflow-hidden border border-gray-100 shadow-sm">
+              <div class="yt-embed">
+                <iframe
+                  :src="'https://www.youtube.com/embed/' + youtubeEmbed + '?rel=0&modestbranding=1'"
+                  class="w-full h-full" frameborder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowfullscreen>
+                </iframe>
+              </div>
+              <input type="hidden" name="youtube_embed_id" :value="youtubeEmbed">
+              <div class="flex items-center justify-between px-4 py-2.5 bg-gray-50 border-t border-gray-100">
+                <div class="flex items-center gap-2 text-xs text-gray-500">
+                  <svg class="w-3.5 h-3.5 text-red-500" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                  YouTube video linked
                 </div>
+                <button type="button" @click="youtubeUrl=''; youtubeEmbed=''"
+                  class="text-xs text-red-400 hover:text-red-600 transition-colors">Remove</button>
+              </div>
+            </div>
 
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Instructions *</label>
-                    <textarea id="step-instruction" placeholder="Describe what to do in this step..." rows="3"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500 resize-none"
-                        required></textarea>
+            <!-- Placeholder when empty -->
+            <div x-show="!youtubeEmbed && !youtubeError" class="mt-3 rounded-xl border-2 border-dashed border-gray-100 py-8 text-center text-gray-400">
+              <svg class="w-8 h-8 mx-auto mb-2 opacity-40" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+              <p class="text-xs">Paste a YouTube link above to preview</p>
+            </div>
+          </div>
+
+          <!-- ── Upload tab ── -->
+          <div x-show="videoTab === 'upload'" x-transition.opacity>
+            <!-- Drop zone -->
+            <div x-show="!videoFile"
+              class="drop-zone border-2 border-dashed border-gray-200 rounded-xl p-8 text-center cursor-pointer hover:border-indigo-300 hover:bg-indigo-50/40"
+              @click="$refs.vidInput.click()"
+              @dragover.prevent="$el.classList.add('over')"
+              @dragleave.prevent="$el.classList.remove('over')"
+              @drop.prevent="handleVideoDrop($event)">
+              <input type="file" x-ref="vidInput" accept="video/mp4,video/webm,video/mov,video/avi,video/quicktime" name="recipe_video" class="hidden" @change="handleVideoFile($event.target.files[0])">
+              <div class="w-12 h-12 bg-gray-50 rounded-xl mx-auto mb-3 flex items-center justify-center">
+                <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10l4.553-2.069A1 1 0 0121 8.82v6.361a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/></svg>
+              </div>
+              <p class="text-sm font-medium text-gray-600 mb-0.5">Drop a video or <span class="text-indigo-600">browse</span></p>
+              <p class="text-xs text-gray-400">MP4, WebM, MOV, AVI · max 500 MB</p>
+            </div>
+
+            <!-- Video preview -->
+            <div x-show="videoFile" x-transition class="rounded-xl overflow-hidden border border-gray-100 shadow-sm">
+              <video :src="videoPreviewUrl" controls class="w-full max-h-64 bg-black" style="display:block"></video>
+              <div class="flex items-center justify-between px-4 py-2.5 bg-gray-50 border-t border-gray-100">
+                <div class="flex items-center gap-2 min-w-0">
+                  <svg class="w-4 h-4 text-indigo-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.069A1 1 0 0121 8.82v6.361a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/></svg>
+                  <span class="text-xs text-gray-600 truncate" x-text="videoFile ? videoFile.name : ''"></span>
+                  <span class="text-xs text-gray-400 shrink-0" x-text="videoFile ? formatBytes(videoFile.size) : ''"></span>
                 </div>
+                <button type="button" @click="removeVideo()"
+                  class="text-xs text-red-400 hover:text-red-600 transition-colors shrink-0 ml-2">Remove</button>
+              </div>
+            </div>
 
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Duration (minutes)</label>
-                    <input type="number" id="step-duration" placeholder="15" min="1"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500">
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Additional Notes (optional)</label>
-                    <textarea id="step-description" placeholder="Tips, warnings, or additional information..." rows="2"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500 resize-none"></textarea>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Images (optional)</label>
-
-                    <!-- Step Image Upload Zone -->
-                    <div id="step-upload-zone"
-                        class="border-2 border-dashed border-orange-300 rounded-lg p-4 text-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-200 cursor-pointer group">
-                        <input type="file" id="step-images" multiple accept="image/*" class="hidden">
-                        <div id="step-upload-area" class="space-y-2">
-                            <div
-                                class="w-12 h-12 mx-auto bg-orange-100 rounded-full flex items-center justify-center group-hover:bg-orange-200 transition-colors">
-                                <i class="fas fa-image text-orange-600"></i>
-                            </div>
-                            <div>
-                                <p class="text-sm font-medium text-gray-700 group-hover:text-orange-600">Upload Images
-                                </p>
-                                <p class="text-xs text-gray-500">Drag & drop or click</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Step Image Preview -->
-                    <div id="step-image-preview" class="grid grid-cols-3 gap-2 mt-3 hidden"></div>
-                </div>
-
-                <div class="flex justify-end space-x-3 pt-4">
-                    <button type="button" onclick="closeStepModal()"
-                        class="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50">
-                        Cancel
-                    </button>
-                    <button type="submit" class="px-4 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600">
-                        Add Step
-                    </button>
-                </div>
-            </form>
+            <!-- Size warning -->
+            <div x-show="videoSizeError" class="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p class="text-xs text-red-600" x-text="videoSizeError"></p>
+            </div>
+          </div>
         </div>
+
+      </div><!-- end col 2+3 -->
+    </div><!-- end grid -->
+  </form>
+
+  <!-- ══ INGREDIENT MODAL ══════════════════════════════════════════ -->
+  <div x-show="modal === 'ingredient'" x-cloak x-transition.opacity
+    class="fixed inset-0 z-50 flex items-center justify-center px-4"
+    @keydown.escape.window="modal = null">
+    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="modal = null"></div>
+    <div x-show="modal === 'ingredient'" x-transition class="modal-box relative bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden">
+      <div class="flex items-center justify-between p-5 border-b border-gray-100">
+        <div class="flex items-center gap-2.5">
+          <div class="ingr-badge w-8 h-8 rounded-lg flex items-center justify-center">
+            <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 2a1 1 0 011 1v1h1a1 1 0 010 2H6v1a1 1 0 01-2 0V6H3a1 1 0 010-2h1V3a1 1 0 011-1z" clip-rule="evenodd"/></svg>
+          </div>
+          <h3 class="disp-font font-semibold text-gray-900">Add Ingredient</h3>
+        </div>
+        <button @click="modal = null" class="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="p-5 space-y-3" @keydown.enter.prevent>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Name <span class="text-red-400">*</span></label>
+          <input type="text" x-model="ingForm.name" placeholder="e.g. Chicken breast" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" @keydown.enter.prevent x-ref="ingNameInput">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Quantity</label>
+            <input type="text" x-model="ingForm.quantity" placeholder="2" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Unit</label>
+            <input type="text" x-model="ingForm.unit" placeholder="cups" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Notes <span class="text-gray-400 font-normal">(optional)</span></label>
+          <input type="text" x-model="ingForm.notes" placeholder="diced, room temperature…" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
+        </div>
+
+        <!-- mini image upload -->
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Photos <span class="text-gray-400 font-normal">(optional)</span></label>
+          <div class="drop-zone border border-dashed border-green-200 rounded-lg p-3 text-center cursor-pointer hover:border-green-400 hover:bg-green-50/50 transition-all"
+            @click="$refs.ingImgInput.click()">
+            <input type="file" x-ref="ingImgInput" multiple accept="image/*" class="hidden" @change="handleModalImages('ing', $event.target.files)">
+            <p class="text-xs text-gray-500">Click to add photos</p>
+          </div>
+          <div x-show="ingForm.imagePreviews.length > 0" class="grid grid-cols-4 gap-1.5 mt-2">
+            <template x-for="(img, i) in ingForm.imagePreviews" :key="i">
+              <div class="relative aspect-square rounded overflow-hidden group">
+                <img :src="img" class="w-full h-full object-cover">
+                <button type="button" @click="ingForm.imagePreviews.splice(i,1)"
+                  class="absolute top-0.5 right-0.5 w-4 h-4 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 text-[10px] flex items-center justify-center">×</button>
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-2.5 px-5 pb-5">
+        <button type="button" @click="modal = null"
+          class="px-4 py-2 text-sm border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">Cancel</button>
+        <button type="button" @click="saveIngredient()"
+          class="px-5 py-2 text-sm font-medium bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors shadow-sm">
+          Add Ingredient
+        </button>
+      </div>
     </div>
-</div>
+  </div>
 
-<!-- Hidden form fields container -->
-<div id="hidden-fields" style="display: none;"></div>
+  <!-- ══ STEP MODAL ════════════════════════════════════════════════ -->
+  <div x-show="modal === 'step'" x-cloak x-transition.opacity
+    class="fixed inset-0 z-50 flex items-center justify-center px-4"
+    @keydown.escape.window="modal = null">
+    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="modal = null"></div>
+    <div x-show="modal === 'step'" x-transition class="modal-box relative bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto slim-scroll">
+      <div class="flex items-center justify-between p-5 border-b border-gray-100 sticky top-0 bg-white">
+        <div class="flex items-center gap-2.5">
+          <div class="step-badge w-8 h-8 rounded-lg flex items-center justify-center">
+            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+          </div>
+          <h3 class="disp-font font-semibold text-gray-900">Add Cooking Step</h3>
+        </div>
+        <button @click="modal = null" class="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
 
+      <div class="p-5 space-y-3">
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Step Title <span class="text-gray-400 font-normal">(optional)</span></label>
+          <input type="text" x-model="stepForm.name" placeholder="e.g. Prepare the sauce" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Instructions <span class="text-red-400">*</span></label>
+          <textarea x-model="stepForm.instruction" placeholder="Describe what to do…" rows="3" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors resize-none"></textarea>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Duration (min)</label>
+            <input type="number" x-model="stepForm.duration" placeholder="15" min="1" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Tip <span class="text-gray-400 font-normal">(optional)</span></label>
+            <input type="text" x-model="stepForm.description" placeholder="Pro tip…" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
+          </div>
+        </div>
+
+        <!-- mini image upload -->
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Photos <span class="text-gray-400 font-normal">(optional)</span></label>
+          <div class="drop-zone border border-dashed border-orange-200 rounded-lg p-3 text-center cursor-pointer hover:border-orange-400 hover:bg-orange-50/50 transition-all"
+            @click="$refs.stepImgInput.click()">
+            <input type="file" x-ref="stepImgInput" multiple accept="image/*" class="hidden" @change="handleModalImages('step', $event.target.files)">
+            <p class="text-xs text-gray-500">Click to add step photos</p>
+          </div>
+          <div x-show="stepForm.imagePreviews.length > 0" class="grid grid-cols-4 gap-1.5 mt-2">
+            <template x-for="(img, i) in stepForm.imagePreviews" :key="i">
+              <div class="relative aspect-square rounded overflow-hidden group">
+                <img :src="img" class="w-full h-full object-cover">
+                <button type="button" @click="stepForm.imagePreviews.splice(i,1)"
+                  class="absolute top-0.5 right-0.5 w-4 h-4 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 text-[10px] flex items-center justify-center">×</button>
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-2.5 px-5 pb-5">
+        <button type="button" @click="modal = null"
+          class="px-4 py-2 text-sm border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">Cancel</button>
+        <button type="button" @click="saveStep()"
+          class="px-5 py-2 text-sm font-medium bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors shadow-sm">
+          Add Step
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ TOAST ══════════════════════════════════════════════════════ -->
+  <div x-show="toast.show" x-cloak x-transition
+    class="fixed top-4 right-4 z-50 flex items-center gap-2.5 px-4 py-3 rounded-xl shadow-lg text-sm font-medium"
+    :class="toast.type === 'error' ? 'bg-red-500 text-white' : 'bg-gray-900 text-white'">
+    <svg x-show="toast.type === 'error'" class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+    <span x-text="toast.msg"></span>
+  </div>
+
+</div><!-- end x-data -->
+
+{% endblock %}
+
+{% block scripts %}
 <script>
-    let ingredientCount = 0;
-    let stepCount = 0;
-    let ingredients = [];
-    let steps = [];
+function recipePage() {
+  return {
+    // ── modals & state
+    modal: null,
+    toast: { show: false, msg: '', type: 'info' },
 
-    // Modal Functions with animations
-    function openIngredientModal() {
-        const modal = document.getElementById('ingredient-modal');
-        const content = modal.querySelector('.modal-content');
+    // ── ingredients
+    ingredients: [],
+    ingCount: 0,
+    ingForm: { name:'', quantity:'', unit:'', notes:'', images:[], imagePreviews:[] },
 
-        modal.classList.remove('hidden');
-        content.classList.remove('scale-95');
-        content.classList.add('scale-100');
+    // ── steps
+    steps: [],
+    stepCount: 0,
+    stepForm: { name:'', instruction:'', duration:'', description:'', images:[], imagePreviews:[] },
 
-        setTimeout(() => {
-            document.getElementById('ingredient-name').focus();
-        }, 100);
-    }
+    // ── images
+    imagePreviews: [],
+    imageFiles: [],
 
-    function closeIngredientModal() {
-        const modal = document.getElementById('ingredient-modal');
-        const content = modal.querySelector('.modal-content');
+    // ── video
+    videoTab: 'youtube',
+    youtubeUrl: '',
+    youtubeEmbed: '',
+    youtubeError: '',
+    videoFile: null,
+    videoPreviewUrl: '',
+    videoSizeError: '',
 
-        content.classList.remove('scale-100');
-        content.classList.add('scale-95');
+    init() {
+      // form submit handler
+      document.getElementById('recipe-form').addEventListener('submit', (e) => {
+        if (!this.validateForm(e)) return;
+        this.buildHiddenFields();
+      });
+    },
 
-        setTimeout(() => {
-            modal.classList.add('hidden');
-            document.getElementById('ingredient-form').reset();
-            clearIngredientPreviews();
-        }, 150);
-    }
+    // ── Modal helpers
+    openModal(type) {
+      this.modal = type;
+      if (type === 'ingredient') {
+        this.ingForm = { name:'', quantity:'', unit:'', notes:'', images:[], imagePreviews:[] };
+        this.$nextTick(() => this.$refs.ingNameInput && this.$refs.ingNameInput.focus());
+      } else {
+        this.stepForm = { name:'', instruction:'', duration:'', description:'', images:[], imagePreviews:[] };
+      }
+    },
 
-    function openStepModal() {
-        const modal = document.getElementById('step-modal');
-        const content = modal.querySelector('.modal-content');
+    // ── Ingredients
+    saveIngredient() {
+      if (!this.ingForm.name.trim()) {
+        this.showToast('Ingredient name is required', 'error'); return;
+      }
+      this.ingredients.push({ ...this.ingForm, id: this.ingCount++ });
+      this.modal = null;
+    },
+    removeIngredient(id) {
+      this.ingredients = this.ingredients.filter(i => i.id !== id);
+    },
 
-        modal.classList.remove('hidden');
-        content.classList.remove('scale-95');
-        content.classList.add('scale-100');
+    // ── Steps
+    saveStep() {
+      if (!this.stepForm.instruction.trim()) {
+        this.showToast('Step instruction is required', 'error'); return;
+      }
+      this.steps.push({ ...this.stepForm, id: this.stepCount++, number: this.steps.length + 1 });
+      this.modal = null;
+    },
+    removeStep(id) {
+      this.steps = this.steps.filter(s => s.id !== id);
+      this.steps.forEach((s, i) => s.number = i + 1);
+    },
 
-        setTimeout(() => {
-            document.getElementById('step-instruction').focus();
-        }, 100);
-    }
-
-    function closeStepModal() {
-        const modal = document.getElementById('step-modal');
-        const content = modal.querySelector('.modal-content');
-
-        content.classList.remove('scale-100');
-        content.classList.add('scale-95');
-
-        setTimeout(() => {
-            modal.classList.add('hidden');
-            document.getElementById('step-form').reset();
-            clearStepPreviews();
-        }, 150);
-    }
-
-    // Add ingredient from modal
-    document.getElementById('ingredient-form').addEventListener('submit', function (e) {
-        e.preventDefault();
-
-        const name = document.getElementById('ingredient-name').value.trim();
-        const quantity = document.getElementById('ingredient-quantity').value.trim();
-        const unit = document.getElementById('ingredient-unit').value.trim();
-        const notes = document.getElementById('ingredient-notes').value.trim();
-        const images = document.getElementById('ingredient-images').files;
-
-        if (!name) {
-            alert('Ingredient name is required');
-            return;
-        }
-
-        const ingredient = {
-            id: ingredientCount,
-            name: name,
-            quantity: quantity,
-            unit: unit,
-            notes: notes,
-            images: images
+    // ── Image upload (main)
+    handleImageDrop(e) {
+      document.getElementById('img-drop-zone').classList.remove('over');
+      this.handleImageFiles(e.dataTransfer.files);
+    },
+    handleImageFiles(files) {
+      Array.from(files).forEach(file => {
+        if (!file.type.startsWith('image/')) return;
+        if (file.size > 30 * 1024 * 1024) { this.showToast(file.name + ' exceeds 30 MB', 'error'); return; }
+        const reader = new FileReader();
+        reader.onload = e => {
+          this.imagePreviews.push({ src: e.target.result, name: file.name });
+          this.imageFiles.push(file);
         };
+        reader.readAsDataURL(file);
+      });
+    },
+    removeImage(idx) {
+      this.imagePreviews.splice(idx, 1);
+      this.imageFiles.splice(idx, 1);
+    },
 
-        ingredients.push(ingredient);
-        console.log('Added ingredient:', ingredient);
-        console.log('Total ingredients:', ingredients.length);
-        renderIngredients();
-        createHiddenIngredientFields();
-        closeIngredientModal();
-        ingredientCount++;
-    });
+    // ── Modal image upload
+    handleModalImages(target, files) {
+      const form = target === 'ing' ? this.ingForm : this.stepForm;
+      Array.from(files).forEach(file => {
+        if (!file.type.startsWith('image/')) return;
+        const reader = new FileReader();
+        reader.onload = e => form.imagePreviews.push(e.target.result);
+        reader.readAsDataURL(file);
+        form.images.push(file);
+      });
+    },
 
-    // Add step from modal
-    document.getElementById('step-form').addEventListener('submit', function (e) {
+    // ── Video upload
+    handleVideoDrop(e) {
+      e.target.classList.remove('over');
+      const file = e.dataTransfer.files[0];
+      if (file) this.handleVideoFile(file);
+    },
+    handleVideoFile(file) {
+      this.videoSizeError = '';
+      if (!file) return;
+      const allowed = ['video/mp4','video/webm','video/quicktime','video/avi','video/mov'];
+      if (!allowed.includes(file.type) && !file.name.match(/\.(mp4|webm|mov|avi)$/i)) {
+        this.videoSizeError = 'Unsupported format. Please use MP4, WebM, MOV, or AVI.'; return;
+      }
+      if (file.size > 500 * 1024 * 1024) {
+        this.videoSizeError = 'File too large. Maximum size is 500 MB.'; return;
+      }
+      this.videoFile = file;
+      this.videoPreviewUrl = URL.createObjectURL(file);
+    },
+    removeVideo() {
+      this.videoFile = null;
+      if (this.videoPreviewUrl) URL.revokeObjectURL(this.videoPreviewUrl);
+      this.videoPreviewUrl = '';
+    },
+
+    // ── YouTube parser
+    parseYoutube() {
+      this.youtubeEmbed = '';
+      this.youtubeError = '';
+      if (!this.youtubeUrl.trim()) return;
+
+      const patterns = [
+        /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/,
+        /^([a-zA-Z0-9_-]{11})$/,
+      ];
+      for (const p of patterns) {
+        const m = this.youtubeUrl.match(p);
+        if (m) { this.youtubeEmbed = m[1]; return; }
+      }
+      this.youtubeError = 'Could not find a valid YouTube video ID in that URL.';
+    },
+
+    // ── Validation
+    validateForm(e) {
+      const name = document.querySelector('[name="name"]')?.value?.trim();
+      const errors = [];
+      if (!name) errors.push('Recipe name is required.');
+      if (this.ingredients.length === 0) errors.push('Add at least one ingredient.');
+      if (this.steps.length === 0) errors.push('Add at least one cooking step.');
+      if (errors.length) {
         e.preventDefault();
+        this.showToast(errors[0], 'error');
+        return false;
+      }
+      return true;
+    },
 
-        const name = document.getElementById('step-name').value.trim();
-        const instruction = document.getElementById('step-instruction').value.trim();
-        const duration = document.getElementById('step-duration').value.trim();
-        const description = document.getElementById('step-description').value.trim();
-        const images = document.getElementById('step-images').files;
-
-        if (!instruction) {
-            alert('Step instruction is required');
-            return;
+    // ── Build hidden fields before submit
+    buildHiddenFields() {
+      const form = document.getElementById('recipe-form');
+      form.querySelectorAll('[name*="ingredients-"],[name*="steps-"]').forEach(f => f.remove());
+      
+      // Transfer main recipe images to the actual file input
+      if (this.imageFiles && this.imageFiles.length > 0) {
+        const recipeImagesInput = document.getElementById('recipe-images') || this.$refs.imgInput;
+        if (recipeImagesInput) {
+          const dt = new DataTransfer();
+          this.imageFiles.forEach(file => dt.items.add(file));
+          recipeImagesInput.files = dt.files;
         }
-
-        const step = {
-            id: stepCount,
-            number: steps.length + 1,
-            name: name,
-            instruction: instruction,
-            duration: duration,
-            description: description,
-            images: images
-        };
-
-        steps.push(step);
-        console.log('Added step:', step);
-        console.log('Total steps:', steps.length);
-        renderSteps();
-        createHiddenStepFields();
-        closeStepModal();
-        stepCount++;
-    });
-
-    // Render ingredients list
-    function renderIngredients() {
-        const container = document.getElementById('ingredients-list');
-        const noIngredientsMsg = document.getElementById('no-ingredients');
-
-        if (ingredients.length === 0) {
-            noIngredientsMsg.style.display = 'block';
-            return;
+      }
+      
+      // Add ingredient text fields and images
+      this.ingredients.forEach((ing, i) => {
+        [['name',ing.name],['quantity',ing.quantity||''],['unit',ing.unit||''],['notes',ing.notes||'']].forEach(([k,v]) => {
+          const inp = document.createElement('input');
+          inp.type = 'hidden'; inp.name = `ingredients-${i}-${k}`; inp.value = v;
+          form.appendChild(inp);
+        });
+        
+        // Add ingredient images if any
+        if (ing.images && ing.images.length > 0) {
+          const fileInput = document.createElement('input');
+          fileInput.type = 'file';
+          fileInput.name = `ingredients-${i}-images`;
+          fileInput.multiple = true;
+          fileInput.style.display = 'none';
+          
+          // Use DataTransfer to set files
+          const dt = new DataTransfer();
+          ing.images.forEach(file => dt.items.add(file));
+          fileInput.files = dt.files;
+          
+          form.appendChild(fileInput);
         }
-
-        noIngredientsMsg.style.display = 'none';
-
-        container.innerHTML = ingredients.map(ingredient => {
-            // Check if ingredient has images
-            const hasImages = ingredient.images && ingredient.images.length > 0;
-            const firstImage = hasImages ? ingredient.images[0] : null;
-
-            // Create image preview URL if available
-            let imagePreview = '';
-            if (hasImages && firstImage) {
-                const reader = new FileReader();
-                reader.onload = function (e) {
-                    const imgElement = document.querySelector(`[data-ingredient-id="${ingredient.id}"] .ingredient-image`);
-                    if (imgElement) {
-                        imgElement.src = e.target.result;
-                        imgElement.style.display = 'block';
-                        imgElement.parentElement.querySelector('.ingredient-icon').style.display = 'none';
-                    }
-                };
-                reader.readAsDataURL(firstImage);
-            }
-
-            return `
-            <div class="bg-gradient-to-r from-green-50 to-green-100 border border-green-200 rounded-lg p-3 flex justify-between items-center hover:shadow-sm transition-shadow group" data-ingredient-id="${ingredient.id}">
-                <div class="flex items-center space-x-3">
-                    <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden bg-green-500">
-                        <img class="ingredient-image w-full h-full object-cover rounded-full" style="display: none;" alt="${ingredient.name}">
-                        <i class="ingredient-icon fas fa-leaf text-white text-xs"></i>
-                    </div>
-                    <div>
-                        <div class="font-medium text-gray-900">${ingredient.name}</div>
-                        <div class="text-sm text-gray-600">
-                            ${ingredient.quantity || ingredient.unit ?
-                    `${ingredient.quantity || ''} ${ingredient.unit || ''}`.trim() :
-                    'As needed'
-                }
-                            ${ingredient.notes ? `• ${ingredient.notes}` : ''}
-                        </div>
-                        ${hasImages ? `<div class="text-xs text-green-600 mt-1"><i class="fas fa-camera mr-1"></i>${ingredient.images.length} image${ingredient.images.length > 1 ? 's' : ''}</div>` : ''}
-                    </div>
-                </div>
-                <button type="button" onclick="removeIngredient(${ingredient.id})"
-                    class="text-red-400 hover:text-red-600 ml-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-red-50">
-                    <i class="fas fa-trash text-sm"></i>
-                </button>
-            </div>
-        `;
-        }).join('') + `<div class="text-gray-500 text-sm" id="no-ingredients" style="display: none;">No ingredients added yet</div>`;
-    }
-
-    // Render steps list
-    function renderSteps() {
-        const container = document.getElementById('steps-list');
-        const noStepsMsg = document.getElementById('no-steps');
-
-        if (steps.length === 0) {
-            noStepsMsg.style.display = 'block';
-            return;
+      });
+      
+      // Add step text fields and images
+      this.steps.forEach((step, i) => {
+        [['step_number',step.number],['name',step.name||''],['instruction',step.instruction],['duration',step.duration||''],['description',step.description||'']].forEach(([k,v]) => {
+          const inp = document.createElement('input');
+          inp.type = 'hidden'; inp.name = `steps-${i}-${k}`; inp.value = v;
+          form.appendChild(inp);
+        });
+        
+        // Add step images if any
+        if (step.images && step.images.length > 0) {
+          const fileInput = document.createElement('input');
+          fileInput.type = 'file';
+          fileInput.name = `steps-${i}-images`;
+          fileInput.multiple = true;
+          fileInput.style.display = 'none';
+          
+          // Use DataTransfer to set files
+          const dt = new DataTransfer();
+          step.images.forEach(file => dt.items.add(file));
+          fileInput.files = dt.files;
+          
+          form.appendChild(fileInput);
         }
+      });
+    },
 
-        noStepsMsg.style.display = 'none';
+    // ── Toast
+    showToast(msg, type = 'info') {
+      this.toast = { show: true, msg, type };
+      setTimeout(() => this.toast.show = false, 3500);
+    },
 
-        container.innerHTML = steps.map((step, index) => {
-            // Check if step has images
-            const hasImages = step.images && step.images.length > 0;
-            const firstImage = hasImages ? step.images[0] : null;
-
-            // Create image preview URL if available
-            if (hasImages && firstImage) {
-                const reader = new FileReader();
-                reader.onload = function (e) {
-                    const imgElement = document.querySelector(`[data-step-id="${step.id}"] .step-image`);
-                    if (imgElement) {
-                        imgElement.src = e.target.result;
-                        imgElement.style.display = 'block';
-                        imgElement.parentElement.querySelector('.step-number').style.display = 'none';
-                    }
-                };
-                reader.readAsDataURL(firstImage);
-            }
-
-            return `
-            <div class="bg-gradient-to-r from-orange-50 to-orange-100 border border-orange-200 rounded-lg p-3 flex justify-between items-start hover:shadow-sm transition-shadow group" data-step-id="${step.id}">
-                <div class="flex space-x-3 flex-1">
-                    <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 overflow-hidden bg-orange-500">
-                        <img class="step-image w-full h-full object-cover rounded-full" style="display: none;" alt="Step ${index + 1}">
-                        <span class="step-number text-white text-xs font-bold">${index + 1}</span>
-                    </div>
-                    <div class="flex-1">
-                        <div class="font-medium text-gray-900 mb-1">
-                            ${step.name ? step.name : `Step ${index + 1}`}
-                        </div>
-                        <div class="text-sm text-gray-600 leading-relaxed">${step.instruction}</div>
-                        ${step.duration ? `<div class="flex items-center mt-2 text-xs text-orange-600">
-                            <i class="fas fa-clock mr-1"></i>
-                            ${step.duration} minutes
-                        </div>` : ''}
-                        ${step.description ? `<div class="text-xs text-gray-500 mt-1 italic">${step.description}</div>` : ''}
-                        ${hasImages ? `<div class="text-xs text-orange-600 mt-1"><i class="fas fa-camera mr-1"></i>${step.images.length} image${step.images.length > 1 ? 's' : ''}</div>` : ''}
-                    </div>
-                </div>
-                <button type="button" onclick="removeStep(${step.id})"
-                    class="text-red-400 hover:text-red-600 ml-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-red-50 flex-shrink-0">
-                    <i class="fas fa-trash text-sm"></i>
-                </button>
-            </div>
-        `;
-        }).join('') + `<div class="text-gray-500 text-sm" id="no-steps" style="display: none;">No steps added yet</div>`;
+    // ── Utilities
+    formatBytes(b) {
+      if (b < 1024*1024) return (b/1024).toFixed(1) + ' KB';
+      return (b/(1024*1024)).toFixed(1) + ' MB';
     }
-
-    // Remove ingredient
-    function removeIngredient(id) {
-        ingredients = ingredients.filter(ingredient => ingredient.id !== id);
-        renderIngredients();
-        createHiddenIngredientFields();
-    }
-
-    // Remove step
-    function removeStep(id) {
-        steps = steps.filter(step => step.id !== id);
-        // Renumber steps
-        steps.forEach((step, index) => {
-            step.number = index + 1;
-        });
-        renderSteps();
-        createHiddenStepFields();
-    }
-
-    // Create hidden form fields for ingredients
-    function createHiddenIngredientFields() {
-        const form = document.getElementById('recipe-form');
-        console.log('Creating hidden ingredient fields for', ingredients.length, 'ingredients');
-
-        // Remove existing ingredient fields from the form
-        form.querySelectorAll('[name*="ingredients-"]').forEach(field => field.remove());
-
-        ingredients.forEach((ingredient, index) => {
-            // Create hidden input fields with correct WTForms FieldList structure
-            const fields = [
-                { name: `ingredients-${index}-name`, value: ingredient.name },
-                { name: `ingredients-${index}-quantity`, value: ingredient.quantity || '' },
-                { name: `ingredients-${index}-unit`, value: ingredient.unit || '' },
-                { name: `ingredients-${index}-notes`, value: ingredient.notes || '' }
-            ];
-
-            fields.forEach(field => {
-                const input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = field.name;
-                input.value = field.value;
-                form.appendChild(input);
-                console.log('Created hidden field:', field.name, '=', field.value);
-            });
-        });
-    }
-
-    // Create hidden form fields for steps
-    function createHiddenStepFields() {
-        const form = document.getElementById('recipe-form');
-
-        // Remove existing step fields from the form
-        form.querySelectorAll('[name*="steps-"]').forEach(field => field.remove());
-
-        steps.forEach((step, index) => {
-            // Create hidden input fields with correct WTForms FieldList structure
-            const fields = [
-                { name: `steps-${index}-step_number`, value: step.number },
-                { name: `steps-${index}-instruction`, value: step.instruction },
-                { name: `steps-${index}-name`, value: step.name || '' },
-                { name: `steps-${index}-duration`, value: step.duration || '' },
-                { name: `steps-${index}-description`, value: step.description || '' }
-            ];
-
-            fields.forEach(field => {
-                const input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = field.name;
-                input.value = field.value;
-                form.appendChild(input);
-                console.log('Created hidden step field:', field.name, '=', field.value);
-            });
-        });
-    }
-
-    // Image upload handling with drag & drop
-    const uploadZone = document.getElementById('upload-zone');
-    const uploadArea = document.getElementById('upload-area');
-    const fileInput = document.getElementById('recipe-images');
-    const preview = document.getElementById('image-preview');
-    const progressContainer = document.getElementById('upload-progress');
-    const progressBar = document.getElementById('progress-bar');
-
-    // Click to upload
-    uploadArea.addEventListener('click', function () {
-        fileInput.click();
-    });
-
-    // Drag & drop functionality
-    uploadZone.addEventListener('dragover', function (e) {
-        e.preventDefault();
-        uploadZone.classList.add('border-indigo-500', 'bg-indigo-50');
-    });
-
-    uploadZone.addEventListener('dragleave', function (e) {
-        e.preventDefault();
-        uploadZone.classList.remove('border-indigo-500', 'bg-indigo-50');
-    });
-
-    uploadZone.addEventListener('drop', function (e) {
-        e.preventDefault();
-        uploadZone.classList.remove('border-indigo-500', 'bg-indigo-50');
-
-        const files = e.dataTransfer.files;
-        handleFiles(files);
-    });
-
-    // File input change
-    fileInput.addEventListener('change', function (e) {
-        handleFiles(e.target.files);
-    });
-
-    // Handle file processing
-    function handleFiles(files) {
-        if (files.length === 0) return;
-
-        // Show progress
-        progressContainer.classList.remove('hidden');
-        preview.classList.remove('hidden');
-        preview.innerHTML = '';
-
-        let loadedFiles = 0;
-        const totalFiles = files.length;
-
-        Array.from(files).forEach((file, index) => {
-            if (file.type.startsWith('image/')) {
-                // Validate file size (30MB max)
-                if (file.size > 30 * 1024 * 1024) {
-                    alert(`File ${file.name} is too large. Maximum size is 30MB.`);
-                    return;
-                }
-
-                const reader = new FileReader();
-                reader.onload = function (e) {
-                    console.log('FileReader loaded file:', file.name, 'data URL length:', e.target.result ? e.target.result.length : 'undefined');
-                    createImagePreview(e.target.result, file.name, index);
-                    loadedFiles++;
-
-                    // Update progress
-                    const progress = (loadedFiles / totalFiles) * 100;
-                    progressBar.style.width = progress + '%';
-
-                    // Hide progress when complete
-                    if (loadedFiles === totalFiles) {
-                        setTimeout(() => {
-                            progressContainer.classList.add('hidden');
-                        }, 500);
-                    }
-                };
-                reader.onerror = function (e) {
-                    console.error('FileReader error for file:', file.name, e);
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-    }
-
-    // Create image preview
-    function createImagePreview(src, filename, index) {
-        console.log('Creating image preview for:', filename, 'with src length:', src ? src.length : 'undefined');
-
-        const previewItem = document.createElement('div');
-        previewItem.className = 'relative group image-preview-item';
-        previewItem.innerHTML = `
-            <div class="relative overflow-hidden rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200 bg-white">
-                <img src="${src}" class="w-full h-24 object-cover bg-gray-100" alt="${filename}" onload="console.log('Image loaded:', '${filename}')" onerror="console.error('Image failed to load:', '${filename}')">
-                <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200"></div>
-                <button type="button" onclick="removeImage(${index})"
-                    class="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 text-xs opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 flex items-center justify-center">
-                    ×
-                </button>
-                <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-2">
-                    <p class="text-white text-xs truncate font-medium">${filename}</p>
-                </div>
-            </div>
-        `;
-        preview.appendChild(previewItem);
-    }
-
-    // Remove image
-    function removeImage(index) {
-        const previewItems = preview.children;
-        if (previewItems[index]) {
-            previewItems[index].remove();
-        }
-
-        // If no images left, hide preview
-        if (preview.children.length === 0) {
-            preview.classList.add('hidden');
-        }
-    }
-
-    // Form validation and submission
-    document.getElementById('recipe-form').addEventListener('submit', function (e) {
-        console.log('Form submission started');
-        console.log('Current ingredients:', ingredients.length);
-        console.log('Current steps:', steps.length);
-
-        // Clear previous error messages
-        clearErrorMessages();
-
-        const nameField = document.querySelector('[name="name"]');
-        let errors = [];
-
-        // Check recipe name
-        if (!nameField.value.trim()) {
-            errors.push('Recipe name is required.');
-        }
-
-        // Check ingredients
-        if (ingredients.length === 0) {
-            errors.push('At least one ingredient is required.');
-        }
-
-        // Check steps
-        if (steps.length === 0) {
-            errors.push('At least one cooking step is required.');
-        }
-
-        if (errors.length > 0) {
-            console.log('Validation errors:', errors);
-            e.preventDefault();
-            showErrorMessage('Validation Failed', errors);
-            return false;
-        }
-
-        // Ensure hidden fields are created before submission
-        console.log('Creating hidden fields for submission...');
-        createHiddenIngredientFields();
-        createHiddenStepFields();
-
-        // Show debug info
-        showDebugInfo();
-
-        // Show loading state
-        const submitBtn = document.querySelector('button[type="submit"]');
-        const originalText = submitBtn.textContent;
-        submitBtn.textContent = 'Creating Recipe...';
-        submitBtn.disabled = true;
-
-        console.log('Form is being submitted');
-
-        // Re-enable button if form submission fails
-        setTimeout(() => {
-            submitBtn.textContent = originalText;
-            submitBtn.disabled = false;
-            showErrorMessage('Form Submission Timeout', ['The form submission took too long. Please try again.']);
-        }, 10000);
-    });
-
-    // Ingredient modal image upload functionality
-    function setupIngredientImageUpload() {
-        const uploadZone = document.getElementById('ingredient-upload-zone');
-        const uploadArea = document.getElementById('ingredient-upload-area');
-        const fileInput = document.getElementById('ingredient-images');
-        const preview = document.getElementById('ingredient-image-preview');
-
-        // Click to upload
-        uploadArea.addEventListener('click', function () {
-            fileInput.click();
-        });
-
-        // Drag & drop functionality
-        uploadZone.addEventListener('dragover', function (e) {
-            e.preventDefault();
-            uploadZone.classList.add('border-green-500', 'bg-green-100');
-        });
-
-        uploadZone.addEventListener('dragleave', function (e) {
-            e.preventDefault();
-            uploadZone.classList.remove('border-green-500', 'bg-green-100');
-        });
-
-        uploadZone.addEventListener('drop', function (e) {
-            e.preventDefault();
-            uploadZone.classList.remove('border-green-500', 'bg-green-100');
-            const files = e.dataTransfer.files;
-            handleIngredientFiles(files);
-        });
-
-        // File input change
-        fileInput.addEventListener('change', function (e) {
-            handleIngredientFiles(e.target.files);
-        });
-    }
-
-    // Step modal image upload functionality
-    function setupStepImageUpload() {
-        const uploadZone = document.getElementById('step-upload-zone');
-        const uploadArea = document.getElementById('step-upload-area');
-        const fileInput = document.getElementById('step-images');
-        const preview = document.getElementById('step-image-preview');
-
-        // Click to upload
-        uploadArea.addEventListener('click', function () {
-            fileInput.click();
-        });
-
-        // Drag & drop functionality
-        uploadZone.addEventListener('dragover', function (e) {
-            e.preventDefault();
-            uploadZone.classList.add('border-orange-500', 'bg-orange-100');
-        });
-
-        uploadZone.addEventListener('dragleave', function (e) {
-            e.preventDefault();
-            uploadZone.classList.remove('border-orange-500', 'bg-orange-100');
-        });
-
-        uploadZone.addEventListener('drop', function (e) {
-            e.preventDefault();
-            uploadZone.classList.remove('border-orange-500', 'bg-orange-100');
-            const files = e.dataTransfer.files;
-            handleStepFiles(files);
-        });
-
-        // File input change
-        fileInput.addEventListener('change', function (e) {
-            handleStepFiles(e.target.files);
-        });
-    }
-
-    // Handle ingredient image files
-    function handleIngredientFiles(files) {
-        const preview = document.getElementById('ingredient-image-preview');
-
-        if (files.length === 0) return;
-
-        preview.classList.remove('hidden');
-        preview.innerHTML = '';
-
-        Array.from(files).forEach((file, index) => {
-            if (file.type.startsWith('image/')) {
-                // Validate file size (30MB max for modal images)
-                if (file.size > 30 * 1024 * 1024) {
-                    alert(`File ${file.name} is too large. Maximum size is 30MB.`);
-                    return;
-                }
-
-                const reader = new FileReader();
-                reader.onload = function (e) {
-                    createIngredientImagePreview(e.target.result, file.name, index);
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-    }
-
-    // Handle step image files
-    function handleStepFiles(files) {
-        const preview = document.getElementById('step-image-preview');
-
-        if (files.length === 0) return;
-
-        preview.classList.remove('hidden');
-        preview.innerHTML = '';
-
-        Array.from(files).forEach((file, index) => {
-            if (file.type.startsWith('image/')) {
-                // Validate file size (30MB max for modal images)
-                if (file.size > 30 * 1024 * 1024) {
-                    alert(`File ${file.name} is too large. Maximum size is 30MB.`);
-                    return;
-                }
-
-                const reader = new FileReader();
-                reader.onload = function (e) {
-                    createStepImagePreview(e.target.result, file.name, index);
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-    }
-
-    // Create ingredient image preview
-    function createIngredientImagePreview(src, filename, index) {
-        const preview = document.getElementById('ingredient-image-preview');
-        const previewItem = document.createElement('div');
-        previewItem.className = 'relative group image-preview-item';
-        previewItem.innerHTML = `
-            <div class="relative overflow-hidden rounded-lg shadow-sm border border-green-200 hover:shadow-md transition-all duration-200">
-                <img src="${src}" class="w-full h-16 object-cover" alt="${filename}">
-                <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200"></div>
-                <button type="button" onclick="removeIngredientImage(${index})"
-                    class="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 text-xs opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 flex items-center justify-center">
-                    ×
-                </button>
-                <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-1">
-                    <p class="text-white text-xs truncate font-medium">${filename}</p>
-                </div>
-            </div>
-        `;
-        preview.appendChild(previewItem);
-    }
-
-    // Create step image preview
-    function createStepImagePreview(src, filename, index) {
-        const preview = document.getElementById('step-image-preview');
-        const previewItem = document.createElement('div');
-        previewItem.className = 'relative group image-preview-item';
-        previewItem.innerHTML = `
-            <div class="relative overflow-hidden rounded-lg shadow-sm border border-orange-200 hover:shadow-md transition-all duration-200">
-                <img src="${src}" class="w-full h-16 object-cover" alt="${filename}">
-                <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200"></div>
-                <button type="button" onclick="removeStepImage(${index})"
-                    class="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 text-xs opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 flex items-center justify-center">
-                    ×
-                </button>
-                <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-1">
-                    <p class="text-white text-xs truncate font-medium">${filename}</p>
-                </div>
-            </div>
-        `;
-        preview.appendChild(previewItem);
-    }
-
-    // Remove ingredient image
-    function removeIngredientImage(index) {
-        const preview = document.getElementById('ingredient-image-preview');
-        const previewItems = preview.children;
-        if (previewItems[index]) {
-            previewItems[index].remove();
-        }
-
-        // If no images left, hide preview
-        if (preview.children.length === 0) {
-            preview.classList.add('hidden');
-        }
-    }
-
-    // Remove step image
-    function removeStepImage(index) {
-        const preview = document.getElementById('step-image-preview');
-        const previewItems = preview.children;
-        if (previewItems[index]) {
-            previewItems[index].remove();
-        }
-
-        // If no images left, hide preview
-        if (preview.children.length === 0) {
-            preview.classList.add('hidden');
-        }
-    }
-
-    // Clear modal previews when closing
-    function clearIngredientPreviews() {
-        const preview = document.getElementById('ingredient-image-preview');
-        preview.innerHTML = '';
-        preview.classList.add('hidden');
-    }
-
-    function clearStepPreviews() {
-        const preview = document.getElementById('step-image-preview');
-        preview.innerHTML = '';
-        preview.classList.add('hidden');
-    }
-
-    // Event listeners
-    document.addEventListener('DOMContentLoaded', function () {
-        document.getElementById('add-ingredient-btn').addEventListener('click', openIngredientModal);
-        document.getElementById('add-step-btn').addEventListener('click', openStepModal);
-
-        // Setup image upload functionality for modals
-        setupIngredientImageUpload();
-        setupStepImageUpload();
-    });
-
-    // Close modals when clicking outside
-    window.addEventListener('click', function (e) {
-        if (e.target.classList.contains('bg-black')) {
-            closeIngredientModal();
-            closeStepModal();
-        }
-    });
-
-    // Error handling and debug functions
-    function showErrorMessage(title, errors) {
-        // Remove existing error message
-        clearErrorMessages();
-
-        const errorDiv = document.createElement('div');
-        errorDiv.id = 'error-message';
-        errorDiv.className = 'fixed top-4 right-4 bg-red-50 border border-red-200 rounded-lg p-4 shadow-lg z-50 max-w-md';
-        errorDiv.innerHTML = `
-            <div class="flex">
-                <div class="flex-shrink-0">
-                    <i class="fas fa-exclamation-triangle text-red-400"></i>
-                </div>
-                <div class="ml-3">
-                    <h3 class="text-sm font-medium text-red-800">${title}</h3>
-                    <div class="mt-2 text-sm text-red-700">
-                        <ul class="list-disc pl-5 space-y-1">
-                            ${errors.map(error => `<li>${error}</li>`).join('')}
-                        </ul>
-                    </div>
-                </div>
-                <div class="ml-auto pl-3">
-                    <div class="-mx-1.5 -my-1.5">
-                        <button type="button" class="inline-flex bg-red-50 rounded-md p-1.5 text-red-500 hover:bg-red-100" onclick="clearErrorMessages()">
-                            <i class="fas fa-times text-sm"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        document.body.appendChild(errorDiv);
-
-        // Auto-remove after 10 seconds
-        setTimeout(() => {
-            clearErrorMessages();
-        }, 10000);
-    }
-
-    function clearErrorMessages() {
-        const existingError = document.getElementById('error-message');
-        if (existingError) {
-            existingError.remove();
-        }
-    }
-
-    function showDebugInfo() {
-        // Remove existing debug info
-        clearDebugInfo();
-
-        const debugDiv = document.createElement('div');
-        debugDiv.id = 'debug-info';
-        debugDiv.className = 'fixed bottom-4 left-4 bg-blue-50 border border-blue-200 rounded-lg p-4 shadow-lg z-50 max-w-md';
-
-        // Get hidden fields for debugging
-        const form = document.getElementById('recipe-form');
-        const ingredientFields = form.querySelectorAll('[name*="ingredients-"]');
-        const stepFields = form.querySelectorAll('[name*="steps-"]');
-
-        debugDiv.innerHTML = `
-            <div class="flex">
-                <div class="flex-shrink-0">
-                    <i class="fas fa-bug text-blue-400"></i>
-                </div>
-                <div class="ml-3">
-                    <h3 class="text-sm font-medium text-blue-800">Debug Information</h3>
-                    <div class="mt-2 text-xs text-blue-700 space-y-1">
-                        <div><strong>Ingredients:</strong> ${ingredients.length} (${ingredientFields.length} hidden fields)</div>
-                        <div><strong>Steps:</strong> ${steps.length} (${stepFields.length} hidden fields)</div>
-                        <div><strong>Recipe Images:</strong> ${document.getElementById('recipe-images').files.length} files</div>
-                        <div><strong>Form Action:</strong> ${document.getElementById('recipe-form').action}</div>
-                        <div><strong>Form Method:</strong> ${document.getElementById('recipe-form').method}</div>
-                        <div class="mt-2">
-                            <button type="button" class="text-blue-600 hover:text-blue-800 underline text-xs" onclick="showFullDebugInfo()">
-                                Show Full Debug Info
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                <div class="ml-auto pl-3">
-                    <div class="-mx-1.5 -my-1.5">
-                        <button type="button" class="inline-flex bg-blue-50 rounded-md p-1.5 text-blue-500 hover:bg-blue-100" onclick="clearDebugInfo()">
-                            <i class="fas fa-times text-sm"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        document.body.appendChild(debugDiv);
-
-        // Auto-remove after 15 seconds
-        setTimeout(() => {
-            clearDebugInfo();
-        }, 15000);
-    }
-
-    function clearDebugInfo() {
-        const existingDebug = document.getElementById('debug-info');
-        if (existingDebug) {
-            existingDebug.remove();
-        }
-    }
-
-    function showFullDebugInfo() {
-        const form = document.getElementById('recipe-form');
-        const allFields = form.querySelectorAll('input[type="hidden"]');
-
-        let debugInfo = '=== FULL DEBUG INFORMATION ===\n\n';
-        debugInfo += `Ingredients Array (${ingredients.length}):\n`;
-        ingredients.forEach((ing, i) => {
-            debugInfo += `  ${i}: ${JSON.stringify(ing, null, 2)}\n`;
-        });
-
-        debugInfo += `\nSteps Array (${steps.length}):\n`;
-        steps.forEach((step, i) => {
-            debugInfo += `  ${i}: ${JSON.stringify(step, null, 2)}\n`;
-        });
-
-        debugInfo += `\nHidden Form Fields (${allFields.length}):\n`;
-        allFields.forEach((field, i) => {
-            debugInfo += `  ${field.name} = "${field.value}"\n`;
-        });
-
-        debugInfo += `\nForm Data:\n`;
-        const formData = new FormData(document.getElementById('recipe-form'));
-        for (let [key, value] of formData.entries()) {
-            debugInfo += `  ${key} = "${value}"\n`;
-        }
-
-        console.log(debugInfo);
-
-        // Also show in a modal
-        const modal = document.createElement('div');
-        modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4';
-        modal.innerHTML = `
-            <div class="bg-white rounded-lg max-w-4xl w-full max-h-96 overflow-auto p-6">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-semibold">Full Debug Information</h3>
-                    <button type="button" class="text-gray-400 hover:text-gray-600" onclick="this.closest('.fixed').remove()">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-                <pre class="text-xs bg-gray-100 p-4 rounded overflow-auto max-h-80">${debugInfo}</pre>
-            </div>
-        `;
-        document.body.appendChild(modal);
-    }
-
-    // Check for flash messages and display them
-    window.addEventListener('DOMContentLoaded', function () {
-        // Check if there are any flash messages from the server
-        const flashMessages = document.querySelectorAll('.flash-message');
-        flashMessages.forEach(message => {
-            const type = message.classList.contains('error') ? 'error' : 'success';
-            const title = type === 'error' ? 'Server Error' : 'Success';
-            const text = message.textContent.trim();
-
-            if (type === 'error') {
-                showErrorMessage(title, [text]);
-            }
-        });
-    });
+  };
+}
 </script>
 
 {% endblock %}
