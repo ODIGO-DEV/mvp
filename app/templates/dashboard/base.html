@@ -269,6 +269,13 @@
                     </div>
 
                     <div style="margin-bottom: 0.5rem;">
+                        <a href="{{ url_for('shopping.index') }}" class="nav-link {% if request.endpoint.startswith('shopping.') %}active{% endif %}">
+                            <i class="fa-solid fa-cart-shopping"></i>
+                            Shopping List
+                        </a>
+                    </div>
+
+                    <div style="margin-bottom: 0.5rem;">
                         <a href="{{ url_for('community.feed') }}" class="nav-link {% if request.endpoint.startswith('community.') %}active{% endif %}">
                             <i class="fa-solid fa-users"></i>
                             Community Feed

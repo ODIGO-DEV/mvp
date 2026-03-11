@@ -29,29 +29,29 @@
                     <!-- Name -->
                     <div>
                         {{ form.name.label(class="block text-sm font-medium text-gray-600 mb-2") }}
-                        {{ form.name(class="input-focus block w-full rounded-xl bg-gray-100/50 border border-gray-300 px-4 py-3 text-gray-800 placeholder-gray-500 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm md:text-base", placeholder="Your Name") }}
+                        {{ form.name(class="block w-full rounded-xl bg-gray-100/50 border border-gray-300 px-4 py-3 text-gray-800 placeholder-gray-500 focus:border-green-500 focus:ring-2 focus:ring-green-500 focus:outline-none text-sm md:text-base transition-colors", placeholder="Your Name") }}
                     </div>
 
                     <!-- Email -->
                     <div>
                         {{ form.email.label(class="block text-sm font-medium text-gray-600 mb-2") }}
-                        {{ form.email(class="input-focus block w-full rounded-xl bg-gray-100/50 border border-gray-300 px-4 py-3 text-gray-800 placeholder-gray-500 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm md:text-base", placeholder="chef@example.com") }}
+                        {{ form.email(class="block w-full rounded-xl bg-gray-100/50 border border-gray-300 px-4 py-3 text-gray-800 placeholder-gray-500 focus:border-green-500 focus:ring-2 focus:ring-green-500 focus:outline-none text-sm md:text-base transition-colors", placeholder="chef@example.com") }}
                     </div>
 
                     <!-- Password -->
                     <div>
                         {{ form.password.label(class="block text-sm font-medium text-gray-600 mb-2") }}
-                        {{ form.password(class="input-focus block w-full rounded-xl bg-gray-100/50 border border-gray-300 px-4 py-3 text-gray-800 placeholder-gray-500 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm md:text-base", placeholder="Your secret ingredient") }}
+                        {{ form.password(class="block w-full rounded-xl bg-gray-100/50 border border-gray-300 px-4 py-3 text-gray-800 placeholder-gray-500 focus:border-green-500 focus:ring-2 focus:ring-green-500 focus:outline-none text-sm md:text-base transition-colors", placeholder="Your secret ingredient") }}
                     </div>
 
                     <!-- Confirm Password -->
                     <div>
                         {{ form.confirm_password.label(class="block text-sm font-medium text-gray-600 mb-2") }}
-                        {{ form.confirm_password(class="input-focus block w-full rounded-xl bg-gray-100/50 border border-gray-300 px-4 py-3 text-gray-800 placeholder-gray-500 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm md:text-base", placeholder="Confirm your secret ingredient") }}
+                        {{ form.confirm_password(class="block w-full rounded-xl bg-gray-100/50 border border-gray-300 px-4 py-3 text-gray-800 placeholder-gray-500 focus:border-green-500 focus:ring-2 focus:ring-green-500 focus:outline-none text-sm md:text-base transition-colors", placeholder="Confirm your secret ingredient") }}
                     </div>
 
                     <!-- Submit button -->
-                    {{ form.submit(class="button-hover w-full rounded-xl bg-gradient-to-r from-indigo-500 to-indigo-600 px-4 py-3 text-sm md:text-base font-semibold text-white shadow-lg hover:from-indigo-600 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 focus:ring-offset-white", value="Join the Culinary Community! 🍴") }}
+                    {{ form.submit(class="w-full rounded-xl bg-gradient-to-r from-green-500 to-green-600 px-4 py-3 text-sm md:text-base font-semibold text-white shadow-lg hover:from-green-600 hover:to-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 focus:ring-offset-white transition-all duration-200", value="Join the Culinary Community! 🍴") }}
                 </form>
 
                 <!-- Divider -->
@@ -86,7 +86,7 @@
                 <!-- Login link -->
                 <p class="mt-8 text-center text-sm md:text-base text-gray-600">
                     Already have an account? 
-                    <a href="{{ url_for('auth.login') }}" class="font-medium text-indigo-400 hover:text-indigo-300">Sign In</a>
+                    <a href="{{ url_for('auth.login') }}" class="font-medium text-green-600 hover:text-green-700">Sign In</a>
                 </p>
 
                 <!-- Featured countries preview -->
