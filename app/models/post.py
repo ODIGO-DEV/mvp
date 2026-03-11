@@ -10,7 +10,7 @@ class Post(db.Model):
     content = db.Column(db.Text, nullable=False)
     status = db.Column(db.String(50), default="draft")
 
-    user_id = db.Column(db.String(36), db.ForeignKey("users.id"))
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def __repr__(self):

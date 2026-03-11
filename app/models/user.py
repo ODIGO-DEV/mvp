@@ -39,6 +39,7 @@ class User(db.Model, UserMixin):
     collections = db.relationship("Collection", backref="owner", lazy=True)
     reviews = db.relationship("Review", backref="reviewer", lazy=True)
     stats = db.relationship("Stat", backref="user", lazy=True)
+    posts = db.relationship("Post", backref="author", lazy=True)
 
     # helpers
     def set_password(self, password):
