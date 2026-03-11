@@ -1,948 +1,631 @@
 {% extends "dashboard/base.html" %}
-{% block title %}Community Feed - ODiGO{% endblock %}
-{% block page_title %}Community Feed{% endblock %}
+{% block title %}Community Feed — ODiGO{% endblock %}
 {% block dashboard_content %}
 
-<!-- Header Section -->
-<section
-    class="bg-gradient-to-r from-indigo-700 to-indigo-600 text-white rounded-2xl p-6 sm:p-8 mb-6 relative overflow-hidden">
-    <div class="absolute inset-0 opacity-10">
-        <svg class="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">
-            <pattern id="pattern" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
-                <circle cx="10" cy="10" r="1" fill="white" />
-            </pattern>
-            <rect width="100%" height="100%" fill="url(#pattern)" />
-        </svg>
-    </div>
-    <div class="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div class="flex items-center">
-            <div class="bg-white/20 border border-white/30 backdrop-blur-sm rounded-full p-3 mr-4">
-                <i class="fa-solid fa-users text-2xl"></i>
-            </div>
-            <div>
-                <h1 class="text-2xl sm:text-3xl font-bold">Community Feed</h1>
-                <p class="text-indigo-100 text-sm sm:text-base mt-1">Share recipes, tips, and connect with fellow food
-                    lovers</p>
-            </div>
-        </div>
-        <div class="bg-white/20 border border-white/30 backdrop-blur-sm px-5 py-3 rounded-xl text-center">
-            <div class="text-2xl font-bold text-white">{{ (posts|length + recipes|length) }}</div>
-            <p class="text-xs text-indigo-100">Recent Posts</p>
-        </div>
-    </div>
-</section>
-
-<!-- Quick Stats -->
-<div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6">
-    {% set total_comments = 0 %}
-    {% for recipe in recipes %}
-    {% if recipe.comments %}
-    {% set total_comments = total_comments + recipe.comments|length %}
-    {% endif %}
-    {% endfor %}
-
-    {% set stats = [
-    {'color': 'from-indigo-600 to-indigo-700', 'title': 'Recipes', 'icon': 'fa-solid fa-utensils', 'count':
-    recipes|length},
-    {'color': 'from-indigo-500 to-indigo-600', 'title': 'Posts', 'icon': 'fa-solid fa-pen', 'count': posts|length},
-    {'color': 'from-indigo-700 to-indigo-800', 'title': 'Comments', 'icon': 'fa-solid fa-comments', 'count':
-    total_comments},
-    {'color': 'from-indigo-400 to-indigo-500', 'title': 'Active', 'icon': 'fa-solid fa-fire', 'count': 'Now'}
-    ] %}
-    {% for stat in stats %}
-    <div class="p-4 rounded-xl bg-gradient-to-br {{ stat.color }} text-white text-center shadow-md">
-        <div class="bg-white/20 w-10 h-10 flex items-center justify-center rounded-lg mx-auto mb-2">
-            <i class="{{ stat.icon }} w-5 h-5"></i>
-        </div>
-        <div class="font-semibold text-sm">{{ stat.title }}</div>
-        <div class="text-xs text-white/90 mt-0.5">{{ stat.count }}</div>
-    </div>
-    {% endfor %}
-</div>
-
-<!-- Filters and Search -->
-<div class="bg-white rounded-xl p-6 border border-gray-200 mb-6 shadow-sm">
-    <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        <div class="flex flex-wrap gap-2">
-            <button class="filter-btn active" data-filter="all">
-                <i class="fa-solid fa-globe mr-2"></i>All Posts
-            </button>
-            <button class="filter-btn" data-filter="recipes">
-                <i class="fa-solid fa-utensils mr-2"></i>Recipes
-            </button>
-            <button class="filter-btn" data-filter="posts">
-                <i class="fa-solid fa-pen mr-2"></i>Discussions
-            </button>
-            <button class="filter-btn" data-filter="trending">
-                <i class="fa-solid fa-fire mr-2"></i>Trending
-            </button>
-        </div>
-        <div class="flex items-center gap-3 w-full sm:w-auto">
-            <div class="relative flex-1 sm:flex-none">
-                <i class="fa-solid fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                <input type="text" id="feed-search" placeholder="Search posts..."
-                    class="w-full sm:w-64 pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-            </div>
-            <button id="create-post-btn"
-                class="px-4 py-2 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-lg hover:from-indigo-700 hover:to-indigo-800 transition-all whitespace-nowrap shadow-md">
-                <i class="fa-solid fa-plus mr-2"></i>Create Post
-            </button>
-        </div>
-    </div>
-</div>
-
-<!-- Post Creation Modal -->
-<div id="create-post-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-    <div class="bg-white rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto m-4 shadow-2xl">
-        <div class="flex justify-between items-center mb-6">
-            <div class="flex items-center">
-                <div
-                    class="bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-full w-12 h-12 flex items-center justify-center mr-4">
-                    {{ (current_user.name or 'U')[0].upper() }}
-                </div>
-                <div>
-                    <h2 class="text-2xl font-bold text-gray-800">Share with the Community</h2>
-                    <p class="text-sm text-gray-500">What's cooking, {{ current_user.name or 'Chef' }}?</p>
-                </div>
-            </div>
-            <button class="text-gray-400 hover:text-gray-600 text-2xl font-bold" id="close-create-modal">
-                <i class="fa-solid fa-times"></i>
-            </button>
-        </div>
-
-        <form method="POST" action="{{ url_for('community.feed') }}" class="space-y-6">
-            {{ post_form.hidden_tag() }}
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Post Title</label>
-                {{ post_form.title(class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2
-                focus:ring-indigo-500 focus:border-indigo-500 transition-colors", placeholder="What's the title of your
-                post?") }}
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Share your thoughts</label>
-                {{ post_form.content(class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2
-                focus:ring-indigo-500 focus:border-indigo-500 transition-colors resize-none", rows=6, placeholder="Share
-                your thoughts, cooking tips, or ask the community a question...") }}
-                <p class="text-xs text-gray-500 mt-1">Be respectful and helpful to fellow community members</p>
-            </div>
-
-            <div class="flex justify-between items-center pt-4 border-t">
-                <div class="flex items-center space-x-3">
-                    <button type="button"
-                        class="text-gray-400 hover:text-indigo-600 transition-colors p-2 rounded-lg hover:bg-gray-100">
-                        <i class="fa-solid fa-image text-lg"></i>
-                    </button>
-                    <button type="button"
-                        class="text-gray-400 hover:text-indigo-600 transition-colors p-2 rounded-lg hover:bg-gray-100">
-                        <i class="fa-solid fa-smile text-lg"></i>
-                    </button>
-                    <button type="button"
-                        class="text-gray-400 hover:text-indigo-600 transition-colors p-2 rounded-lg hover:bg-gray-100">
-                        <i class="fa-solid fa-hashtag text-lg"></i>
-                    </button>
-                </div>
-                <div class="flex gap-3">
-                    <button type="button" class="px-4 py-2 text-gray-600 hover:text-gray-800" id="cancel-create-post">
-                        Cancel
-                    </button>
-                    {{ post_form.submit(class="px-6 py-2 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white
-                    rounded-lg font-medium hover:from-indigo-700 hover:to-indigo-800 transition-all transform
-                    hover:scale-105") }}
-                </div>
-            </div>
-        </form>
-    </div>
-</div>
-
-{% set feed_items = (posts + recipes)|sort(attribute='created_at', reverse=True) %}
-
-<!-- Feed Content -->
-<div id="feed-container" class="space-y-6">
-    {% if feed_items %}
-    {% for item in feed_items %}
-    {% if item.__class__.__name__ == 'Post' %}
-    <!-- Discussion Post -->
-    <div class="bg-white rounded-xl p-6 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 feed-item discussion-post"
-        data-type="post">
-        <!-- Post Header -->
-        <div class="flex items-center justify-between mb-4">
-            <div class="flex items-center space-x-3">
-                <div
-                    class="bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-full w-12 h-12 flex items-center justify-center font-semibold">
-                    {{ (item.author.name or 'U')[0].upper() }}
-                </div>
-                <div>
-                    <h4 class="font-semibold text-gray-800">{{ item.author.name or 'Chef' }}</h4>
-                    <div class="flex items-center text-sm text-gray-500 space-x-2">
-                        <span>{{ item.created_at.strftime('%b %d, %Y') }}</span>
-                        <span>•</span>
-                        <span class="flex items-center">
-                            <i class="fa-solid fa-pen mr-1"></i>
-                            Discussion
-                        </span>
-                    </div>
-                </div>
-            </div>
-            <div class="flex items-center space-x-2">
-                <button class="text-gray-400 hover:text-gray-600 p-2 rounded-lg hover:bg-gray-100">
-                    <i class="fa-solid fa-bookmark"></i>
-                </button>
-                <button class="text-gray-400 hover:text-gray-600 p-2 rounded-lg hover:bg-gray-100">
-                    <i class="fa-solid fa-ellipsis"></i>
-                </button>
-            </div>
-        </div>
-
-        <!-- Post Content -->
-        <div class="mb-4">
-            <h3 class="text-xl font-bold text-gray-800 mb-3">{{ item.title }}</h3>
-            <div class="text-gray-700 leading-relaxed">
-                {% set content_preview = item.content[:200] %}
-                <p id="content-preview-{{ loop.index }}"
-                    class="{% if item.content|length > 200 %}line-clamp-3{% endif %}">
-                    {{ content_preview }}{% if item.content|length > 200 %}...{% endif %}
-                </p>
-                {% if item.content|length > 200 %}
-                <div id="content-full-{{ loop.index }}" class="hidden">
-                    {{ item.content }}
-                </div>
-                <button class="text-indigo-600 hover:text-indigo-800 text-sm font-medium mt-2 read-more-btn"
-                    data-target="{{ loop.index }}">
-                    Read More
-                </button>
-                {% endif %}
-            </div>
-        </div>
-
-        <!-- Post Actions -->
-        <div class="flex items-center justify-between pt-4 border-t border-gray-100">
-            <div class="flex items-center space-x-6">
-                <button class="flex items-center space-x-2 text-gray-500 hover:text-indigo-600 transition-colors">
-                    <i class="fa-solid fa-heart"></i>
-                    <span class="text-sm">Like</span>
-                </button>
-                <button class="flex items-center space-x-2 text-gray-500 hover:text-indigo-600 transition-colors">
-                    <i class="fa-solid fa-comment"></i>
-                    <span class="text-sm">Comment</span>
-                </button>
-                <button class="flex items-center space-x-2 text-gray-500 hover:text-indigo-600 transition-colors">
-                    <i class="fa-solid fa-share"></i>
-                    <span class="text-sm">Share</span>
-                </button>
-            </div>
-            <div class="text-xs text-gray-400">
-                {{ item.created_at.strftime('%H:%M') }}
-            </div>
-        </div>
-    </div>
-    {% elif item.__class__.__name__ == 'Recipe' %}
-    <!-- Recipe Post -->
-    <div class="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 feed-item recipe-post"
-        data-type="recipe">
-        <!-- Recipe Image -->
-        {% if item.images %}
-        <div class="relative">
-            <img src="{{ item.images[0].url }}" alt="{{ item.name }}" class="w-full h-56 object-cover rounded-t-xl">
-            <div class="absolute top-4 right-4">
-                <div
-                    class="bg-gradient-to-r from-orange-500 to-yellow-500 text-white px-3 py-1 rounded-full text-xs font-medium flex items-center">
-                    <i class="fa-solid fa-utensils mr-1"></i>
-                    Recipe
-                </div>
-            </div>
-        </div>
-        {% else %}
-        <div
-            class="w-full h-56 bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center rounded-t-xl">
-            <div class="text-center text-white">
-                <i class="fa-solid fa-utensils text-4xl mb-2"></i>
-                <p class="text-sm font-medium">{{ item.name }}</p>
-            </div>
-        </div>
-        {% endif %}
-
-        <div class="p-6">
-            <!-- Recipe Header -->
-            <div class="flex items-center justify-between mb-4">
-                <div class="flex items-center space-x-3">
-                    <div
-                        class="bg-gradient-to-r from-orange-500 to-yellow-500 text-white rounded-full w-12 h-12 flex items-center justify-center font-semibold">
-                        {{ (item.author.name or 'U')[0].upper() }}
-                    </div>
-                    <div>
-                        <h4 class="font-semibold text-gray-800">{{ item.author.name or 'Chef' }}</h4>
-                        <div class="flex items-center text-sm text-gray-500 space-x-2">
-                            <span>{{ item.created_at.strftime('%b %d, %Y') }}</span>
-                            <span>•</span>
-                            <span>{{ item.origin.country if item.origin else 'Global' }}</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="flex items-center space-x-2">
-                    <button class="text-gray-400 hover:text-gray-600 p-2 rounded-lg hover:bg-gray-100">
-                        <i class="fa-solid fa-bookmark"></i>
-                    </button>
-                    <button class="text-gray-400 hover:text-gray-600 p-2 rounded-lg hover:bg-gray-100">
-                        <i class="fa-solid fa-ellipsis"></i>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Recipe Content -->
-            <div class="mb-4">
-                <h3 class="text-xl font-bold text-gray-800 mb-2">{{ item.name }}</h3>
-
-                <!-- Recipe Meta -->
-                <div class="flex flex-wrap gap-2 mb-3">
-                    {% if item.category %}
-                    <span class="bg-indigo-100 text-indigo-800 px-2 py-1 rounded-full text-xs font-medium">
-                        {{ item.category.name }}
-                    </span>
-                    {% endif %}
-                    {% if item.prep_time %}
-                    <span
-                        class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium flex items-center">
-                        <i class="fa-solid fa-clock mr-1"></i>
-                        {{ item.prep_time }} min
-                    </span>
-                    {% endif %}
-                    {% if item.servings %}
-                    <span
-                        class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium flex items-center">
-                        <i class="fa-solid fa-users mr-1"></i>
-                        {{ item.servings }} servings
-                    </span>
-                    {% endif %}
-                </div>
-
-                <p class="text-gray-700 leading-relaxed mb-4">{{ item.description | truncate(120, True, '...') }}</p>
-            </div>
-
-            <!-- Recipe Actions -->
-            <div class="flex items-center justify-between pt-4 border-t border-gray-100">
-                <div class="flex items-center space-x-6">
-                    <button class="flex items-center space-x-2 text-gray-500 hover:text-orange-600 transition-colors">
-                        <i class="fa-solid fa-heart"></i>
-                        <span class="text-sm">Save</span>
-                    </button>
-                    <button class="flex items-center space-x-2 text-gray-500 hover:text-orange-600 transition-colors">
-                        <i class="fa-solid fa-comment"></i>
-                        <span class="text-sm">{{ item.comments|length if item.comments else 0 }}</span>
-                    </button>
-                    <button class="flex items-center space-x-2 text-gray-500 hover:text-orange-600 transition-colors">
-                        <i class="fa-solid fa-share"></i>
-                        <span class="text-sm">Share</span>
-                    </button>
-                </div>
-                <a href="{{ url_for('dashboard.view_recipe', recipe_id=item.id) }}"
-                    class="px-4 py-2 bg-gradient-to-r from-orange-600 to-yellow-600 text-white rounded-lg font-medium hover:from-orange-700 hover:to-yellow-700 transition-all transform hover:scale-105">
-                    View Recipe
-                </a>
-            </div>
-
-            <!-- Comments Section (Expandable) -->
-            {% if item.comments %}
-            <div class="mt-6 pt-4 border-t border-gray-100">
-                <button class="text-gray-600 hover:text-gray-800 text-sm font-medium mb-3 comment-toggle"
-                    data-recipe-id="{{ item.id }}">
-                    <i class="fa-solid fa-chevron-down mr-1"></i>
-                    View {{ item.comments|length }} comment{{ 's' if item.comments|length != 1 else '' }}
-                </button>
-
-                <div class="comments-section hidden" id="comments-{{ item.id }}">
-                    <!-- Add Comment Form -->
-                    <form method="post" action="{{ url_for('community.feed') }}"
-                        class="flex items-center space-x-2 mb-4">
-                        {{ comment_form.hidden_tag() }}
-                        <input type="hidden" name="recipe_id" value="{{ item.id }}">
-                        <div
-                            class="bg-gradient-to-r from-orange-500 to-yellow-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-xs font-semibold">
-                            {{ (current_user.name or 'U')[0].upper() }}
-                        </div>
-                        {{ comment_form.comment_text(class="flex-1 border border-gray-300 rounded-lg py-2 px-3 text-sm
-                        focus:ring-2 focus:ring-orange-500 focus:border-orange-500", placeholder="Add a comment...") }}
-                        {{ comment_form.submit(class="px-4 py-2 bg-gradient-to-r from-orange-600 to-yellow-600
-                        text-white rounded-lg text-sm font-medium hover:from-orange-700 hover:to-yellow-700
-                        transition-all") }}
-                    </form>
-
-                    <!-- Comments List -->
-                    <div class="space-y-3 max-h-64 overflow-y-auto">
-                        {% for c in item.comments|sort(attribute='created_at', reverse=True) %}
-                        <div class="flex items-start space-x-3">
-                            <div
-                                class="bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-xs font-semibold flex-shrink-0">
-                                {{ (c.author.name or 'U')[0].upper() }}
-                            </div>
-                            <div class="flex-1 bg-gray-50 rounded-lg p-3">
-                                <div class="flex items-center justify-between mb-1">
-                                    <p class="font-semibold text-gray-800 text-sm">{{ c.author.name or 'Anonymous' }}
-                                    </p>
-                                    <p class="text-xs text-gray-500">{{ c.created_at.strftime('%b %d, %H:%M') }}</p>
-                                </div>
-                                <p class="text-gray-700 text-sm">{{ c.comment_text }}</p>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
-            {% endif %}
-        </div>
-    </div>
-    {% endif %}
-    {% endfor %}
-    {% else %}
-    <!-- Empty State -->
-    <div class="bg-white rounded-xl p-12 border border-gray-200 shadow-sm text-center">
-        <div
-            class="bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
-            <i class="fa-solid fa-users text-3xl"></i>
-        </div>
-        <h3 class="text-xl font-bold text-gray-800 mb-3">Welcome to the Community!</h3>
-        <p class="text-gray-600 mb-6 max-w-md mx-auto">
-            Share your culinary creations, discover new recipes, and connect with fellow food enthusiasts.
-        </p>
-        <button id="create-first-post-btn"
-            class="px-6 py-3 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-lg font-medium hover:from-indigo-700 hover:to-indigo-800 transition-all transform hover:scale-105">
-            <i class="fa-solid fa-plus mr-2"></i>Create Your First Post
-        </button>
-    </div>
-    {% endif %}
-
-    <!-- Loading Indicator -->
-    <div class="loading-indicator" id="loading-indicator">
-        <div class="flex items-center justify-center space-x-2">
-            <div class="w-2 h-2 bg-indigo-600 rounded-full animate-bounce"></div>
-            <div class="w-2 h-2 bg-indigo-600 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
-            <div class="w-2 h-2 bg-indigo-600 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
-        </div>
-        <p class="text-gray-500 mt-2">Loading more posts...</p>
-    </div>
-</div>
-</div>
-{% endblock %}
-
-{% block scripts %}
 <style>
-    .filter-btn {
-        padding: 0.5rem 1rem;
-        font-size: 0.875rem;
-        font-weight: 500;
-        color: #4B5563;
-        background-color: #F3F4F6;
-        border-radius: 0.5rem;
-        transition: all 0.2s ease;
-        display: flex;
-        align-items: center;
-        border: none;
-        cursor: pointer;
-    }
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600;1,700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap');
 
-    .filter-btn:hover {
-        background-color: #E5E7EB;
-    }
+*, *::before, *::after { box-sizing: border-box; }
 
-    .filter-btn.active {
-        background: linear-gradient(to right, #4F46E5, #3730A3);
-        color: white;
-    }
+:root {
+  --ink:      #0f1117;
+  --ink-2:    #374151;
+  --muted:    #6b7280;
+  --border:   #e5e7eb;
+  --border-2: #f3f4f6;
+  --surface:  #f9fafb;
+  --white:    #ffffff;
+  --indigo:   #4f46e5;
+  --indigo-d: #4338ca;
+  --indigo-l: #eef2ff;
+  --indigo-m: #c7d2fe;
+  --green:    #16a34a;
+  --green-l:  #dcfce7;
+}
 
-    .feed-item {
-        transform: translateY(0);
-        transition: all 0.3s ease;
-    }
+.pf { font-family: 'Playfair Display', Georgia, serif; }
+.dm { font-family: 'DM Sans', system-ui, sans-serif; }
 
-    .feed-item:hover {
-        transform: scale(1.02);
-        box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    }
+/* ── HERO ── */
+.hero {
+  background: linear-gradient(140deg, #1e1b4b 0%, #312e81 35%, #4f46e5 70%, #6366f1 100%);
+  border-radius: 1.375rem; overflow: hidden; position: relative;
+  padding: 2.25rem 2rem;
+  box-shadow: 0 20px 48px -8px rgba(79,70,229,.32);
+}
+.hero-grid {
+  position: absolute; inset: 0; pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+.hero-glow {
+  position: absolute; pointer-events: none;
+  border-radius: 50%; filter: blur(72px); opacity: .35;
+}
+.hero-glow-1 { width: 320px; height: 320px; background: #818cf8; top: -80px; right: -40px; }
+.hero-glow-2 { width: 200px; height: 200px; background: #a78bfa; bottom: -60px; left: 20%; }
+.stat-pill {
+  background: rgba(255,255,255,.11);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,.17);
+  border-radius: .875rem;
+  padding: .625rem 1.125rem; text-align: center;
+  transition: background .2s; min-width: 68px;
+}
+.stat-pill:hover { background: rgba(255,255,255,.18); }
 
-    .line-clamp-3 {
-        display: -webkit-box;
-        -webkit-line-clamp: 3;
-        line-clamp: 3;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-    }
+/* ── TOOLBAR ── */
+.toolbar {
+  background: var(--white); border: 1.5px solid var(--border);
+  border-radius: 1.125rem; padding: .875rem 1.125rem;
+  display: flex; align-items: center; gap: .75rem; flex-wrap: wrap;
+}
+.filter-pill {
+  display: inline-flex; align-items: center; gap: .35rem;
+  padding: .375rem .875rem; border-radius: 9999px;
+  border: 1.5px solid var(--border); font-size: .8125rem; font-weight: 500;
+  color: var(--ink-2); background: var(--white); cursor: pointer;
+  transition: all .15s; font-family: 'DM Sans', sans-serif; white-space: nowrap;
+}
+.filter-pill:hover { border-color: var(--indigo-m); color: var(--indigo); background: var(--indigo-l); }
+.filter-pill.active { background: var(--indigo); color: #fff; border-color: var(--indigo); }
+.search-wrap { position: relative; flex: 1; min-width: 160px; max-width: 240px; }
+.search-wrap svg { position: absolute; left: .625rem; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; color: var(--muted); pointer-events: none; }
+.search-input {
+  width: 100%; border: 1.5px solid var(--border); border-radius: .625rem;
+  padding: .45rem .75rem .45rem 2.1rem; font-size: .8125rem;
+  color: var(--ink); font-family: 'DM Sans', sans-serif; background: var(--surface);
+  transition: border-color .15s, box-shadow .15s, background .15s;
+}
+.search-input:focus { outline: none; border-color: var(--indigo); box-shadow: 0 0 0 3px rgba(79,70,229,.11); background: var(--white); }
+.create-btn {
+  display: inline-flex; align-items: center; gap: .4rem;
+  padding: .5rem 1.1rem; border-radius: .625rem;
+  background: var(--indigo); color: #fff; font-size: .8125rem; font-weight: 600;
+  font-family: 'DM Sans', sans-serif; border: none; cursor: pointer;
+  transition: background .15s, box-shadow .15s, transform .1s;
+  box-shadow: 0 2px 8px rgba(79,70,229,.28); white-space: nowrap; flex-shrink: 0;
+}
+.create-btn:hover { background: var(--indigo-d); box-shadow: 0 4px 16px rgba(79,70,229,.35); transform: translateY(-1px); }
+.create-btn:active { transform: translateY(0); }
 
-    .animate-pulse-subtle {
-        animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-    }
+/* ── FEED CARDS ── */
+.feed-card {
+  background: var(--white); border: 1.5px solid var(--border);
+  border-radius: 1.125rem; overflow: hidden;
+  transition: border-color .2s, box-shadow .2s;
+}
+.feed-card:hover { border-color: var(--indigo-m); box-shadow: 0 8px 28px -6px rgba(79,70,229,.11); }
+.recipe-img-wrap { position: relative; overflow: hidden; height: 13rem; }
+.recipe-img-wrap img, .recipe-img-wrap .img-ph { width: 100%; height: 100%; object-fit: cover; transition: transform .38s ease; }
+.feed-card:hover .recipe-img-wrap img { transform: scale(1.04); }
+.img-ph { background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 52%, #ec4899 100%); display: flex; align-items: center; justify-content: center; }
+.recipe-img-badge {
+  position: absolute; top: .75rem; left: .75rem;
+  background: rgba(255,255,255,.92); backdrop-filter: blur(6px);
+  border-radius: 9999px; padding: .25rem .75rem;
+  font-size: .6875rem; font-weight: 700;
+  display: flex; align-items: center; gap: .3rem;
+  font-family: 'DM Sans', sans-serif;
+}
+.recipe-name-overlay {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  background: linear-gradient(to top, rgba(0,0,0,.62) 0%, transparent 100%);
+  padding: 2.5rem 1rem .875rem;
+}
+.card-body { padding: 1rem 1.25rem 1.25rem; }
 
-    @keyframes pulse-subtle {
+/* ── AVATAR ── */
+.av {
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-weight: 700; flex-shrink: 0; font-family: 'DM Sans', sans-serif; line-height: 1;
+}
+.av-md { width: 2.25rem; height: 2.25rem; font-size: .8125rem; }
+.av-sm { width: 1.875rem; height: 1.875rem; font-size: .6875rem; }
+.av-indigo { background: var(--indigo-l); color: var(--indigo); }
+.av-green  { background: var(--green-l);  color: var(--green); }
 
-        0%,
-        100% {
-            opacity: 1;
-        }
+/* ── META TAGS ── */
+.meta-tag {
+  display: inline-flex; align-items: center; gap: .25rem;
+  padding: .2rem .6rem; border-radius: 9999px;
+  font-size: .6875rem; font-weight: 600; font-family: 'DM Sans', sans-serif;
+}
+.tag-cat   { background: var(--indigo-l); color: var(--indigo); }
+.tag-time  { background: #fef3c7; color: #92400e; }
+.tag-serve { background: #e0f2fe; color: #0369a1; }
+.type-dot  {
+  display: inline-flex; align-items: center; gap: .3rem;
+  font-size: .6875rem; font-weight: 600; padding: .2rem .6rem;
+  border-radius: 9999px; font-family: 'DM Sans', sans-serif;
+}
+.dot-post   { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+.dot-recipe { background: var(--indigo-l); color: var(--indigo); border: 1px solid var(--indigo-m); }
 
-        50% {
-            opacity: 0.8;
-        }
-    }
+/* ── ACTION BUTTONS ── */
+.act-btn {
+  display: inline-flex; align-items: center; gap: .35rem;
+  padding: .35rem .7rem; border-radius: .5rem;
+  font-size: .8rem; font-weight: 500; color: var(--muted);
+  cursor: pointer; border: none; background: transparent;
+  transition: all .14s; font-family: 'DM Sans', sans-serif;
+}
+.act-btn:hover { color: var(--indigo); background: var(--indigo-l); }
+.act-btn.liked svg { fill: #ef4444; stroke: #ef4444; }
+.act-btn.liked { color: #ef4444; }
+.act-btn.liked:hover { background: #fef2f2; }
+.act-btn.view-link { color: var(--indigo); font-weight: 600; margin-left: auto; }
+.act-btn.view-link:hover { background: var(--indigo); color: #fff; }
 
-    /* Smooth transitions for interactions */
-    .feed-item .heart-animation {
-        transition: transform 0.2s ease, color 0.2s ease;
-    }
+/* ── COMMENTS ── */
+.comment-bubble { background: var(--surface); border-radius: .75rem; padding: .55rem .8rem; flex: 1; }
+.comment-section { border-top: 1.5px solid var(--border-2); padding-top: 1rem; margin-top: 1rem; }
+.comment-form-input {
+  flex: 1; border: 1.5px solid var(--border); border-radius: .625rem;
+  padding: .4rem .75rem; font-size: .8rem; background: var(--surface);
+  color: var(--ink); font-family: 'DM Sans', sans-serif;
+  transition: border-color .15s, box-shadow .15s;
+}
+.comment-form-input:focus { outline: none; border-color: var(--indigo); box-shadow: 0 0 0 3px rgba(79,70,229,.1); background: var(--white); }
+.comment-submit-btn {
+  font-size: .75rem; font-weight: 600; color: var(--indigo);
+  background: none; border: none; cursor: pointer; padding: 0 .25rem;
+  font-family: 'DM Sans', sans-serif; transition: color .14s; flex-shrink: 0;
+}
+.comment-submit-btn:hover { color: var(--indigo-d); }
 
-    .feed-item .heart-animation:hover {
-        transform: scale(1.1);
-    }
+/* ── READ MORE ── */
+.read-more-btn {
+  font-size: .75rem; font-weight: 600; color: var(--indigo);
+  background: none; border: none; cursor: pointer; padding: .125rem 0 0;
+  font-family: 'DM Sans', sans-serif;
+  display: inline-flex; align-items: center; gap: .2rem; transition: color .14s;
+}
+.read-more-btn:hover { color: var(--indigo-d); }
 
-    /* Enhanced modal animations */
-    #create-post-modal {
-        backdrop-filter: blur(4px);
-    }
+/* ── DATE DIVIDER ── */
+.feed-date-label {
+  display: flex; align-items: center; gap: .75rem;
+  font-size: .6875rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: .06em; color: var(--muted); margin: .25rem 0 -.25rem;
+  font-family: 'DM Sans', sans-serif;
+}
+.feed-date-label::before, .feed-date-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
 
-    #create-post-modal>div {
-        animation: modal-slide-in 0.3s ease-out;
-    }
+/* ── MODAL ── */
+.modal-back {
+  position: fixed; inset: 0; z-index: 70;
+  background: rgba(15,17,23,.45); backdrop-filter: blur(5px);
+  display: flex; align-items: center; justify-content: center; padding: 1rem;
+  opacity: 0; pointer-events: none; transition: opacity .2s;
+}
+.modal-back.open { opacity: 1; pointer-events: all; }
+.modal-box {
+  background: var(--white); border-radius: 1.375rem;
+  width: 100%; max-width: 36rem; max-height: 90vh; overflow-y: auto;
+  box-shadow: 0 40px 80px -16px rgba(0,0,0,.28);
+  transform: scale(.95) translateY(12px);
+  transition: transform .24s cubic-bezier(.34,1.36,.64,1);
+}
+.modal-back.open .modal-box { transform: scale(1) translateY(0); }
+.modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1.25rem 1.5rem 1.125rem; border-bottom: 1.5px solid var(--border-2);
+}
+.modal-body { padding: 1.25rem 1.5rem 1.5rem; }
+.form-label { display: block; font-size: .75rem; font-weight: 600; color: var(--ink-2); margin-bottom: .4rem; font-family: 'DM Sans', sans-serif; }
+.form-field {
+  width: 100%; border: 1.5px solid var(--border); border-radius: .625rem;
+  padding: .625rem .875rem; font-size: .875rem; color: var(--ink);
+  font-family: 'DM Sans', sans-serif; background: var(--surface);
+  transition: border-color .15s, box-shadow .15s, background .15s;
+}
+.form-field:focus { outline: none; border-color: var(--indigo); box-shadow: 0 0 0 3px rgba(79,70,229,.1); background: var(--white); }
+textarea.form-field { resize: none; }
+.close-btn {
+  width: 2rem; height: 2rem; border-radius: 50%;
+  background: var(--surface); border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--muted); transition: background .14s, color .14s;
+}
+.close-btn:hover { background: #f3f4f6; color: var(--ink); }
 
-    @keyframes modal-slide-in {
-        from {
-            opacity: 0;
-            transform: translateY(-20px) scale(0.95);
-        }
+/* ── EMPTY STATE ── */
+.empty-state {
+  background: var(--white); border: 1.5px solid var(--border);
+  border-radius: 1.375rem; padding: 5rem 2rem; text-align: center;
+}
+.empty-icon {
+  width: 4rem; height: 4rem; border-radius: 1.125rem;
+  background: var(--indigo-l); color: var(--indigo);
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 1.25rem; transform: rotate(4deg);
+}
 
-        to {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-        }
-    }
+/* ── TOAST ── */
+#toast-host { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 200; display: flex; flex-direction: column; gap: .5rem; pointer-events: none; }
+.toast {
+  background: var(--ink); color: #fff; padding: .625rem 1rem; border-radius: .625rem;
+  font-size: .8rem; font-family: 'DM Sans', sans-serif;
+  box-shadow: 0 8px 24px rgba(0,0,0,.2);
+  transform: translateX(130%); transition: transform .25s cubic-bezier(.4,0,.2,1);
+  pointer-events: all; display: flex; align-items: center; gap: .5rem; max-width: 280px;
+}
+.toast.in  { transform: translateX(0); }
+.toast.ok  { background: var(--green); }
+.toast.err { background: #dc2626; }
 
-    /* Custom scrollbar for comments */
-    .comments-section {
-        scrollbar-width: thin;
-        scrollbar-color: #CBD5E0 #F7FAFC;
-    }
-
-    .comments-section::-webkit-scrollbar {
-        width: 6px;
-    }
-
-    .comments-section::-webkit-scrollbar-track {
-        background: #F7FAFC;
-        border-radius: 3px;
-    }
-
-    .comments-section::-webkit-scrollbar-thumb {
-        background: #CBD5E0;
-        border-radius: 3px;
-    }
-
-    .comments-section::-webkit-scrollbar-thumb:hover {
-        background: #A0AEC0;
-    }
-
-    /* Loading state for infinite scroll */
-    .loading-indicator {
-        display: none;
-        text-align: center;
-        padding: 2rem;
-        color: #6B7280;
-    }
-
-    .loading-indicator.show {
-        display: block;
-    }
-
-    /* Improved textarea auto-resize */
-    textarea {
-        resize: none;
-        overflow: hidden;
-        min-height: 100px;
-    }
-
-    /* Enhanced button hover effects */
-    .action-button {
-        transition: all 0.2s ease;
-    }
-
-    .action-button:hover {
-        transform: translateY(-1px);
-    }
-
-    /* Recipe card enhancements */
-    .recipe-meta-tag {
-        transition: all 0.2s ease;
-    }
-
-    .recipe-meta-tag:hover {
-        transform: scale(1.05);
-    }
+/* ── ANIMATIONS ── */
+@keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.fu  { animation: fadeUp .32s ease both; }
+.fu1 { animation-delay: .05s; }
+.fu2 { animation-delay: .1s; }
+.fu3 { animation-delay: .15s; }
+.fu4 { animation-delay: .2s; }
 </style>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        // Modal functionality
-        const createPostBtn = document.getElementById('create-post-btn');
-        const createFirstPostBtn = document.getElementById('create-first-post-btn');
-        const createPostModal = document.getElementById('create-post-modal');
-        const closeCreateModal = document.getElementById('close-create-modal');
-        const cancelCreatePost = document.getElementById('cancel-create-post');
+{% set total_comments = namespace(n=0) %}
+{% for recipe in recipes %}{% if recipe.comments %}{% set total_comments.n = total_comments.n + recipe.comments|length %}{% endif %}{% endfor %}
+{% set feed_items = (posts + recipes)|sort(attribute='created_at', reverse=True) %}
 
-        function openCreatePostModal() {
-            if (createPostModal) {
-                createPostModal.classList.remove('hidden');
-                document.body.style.overflow = 'hidden';
+<div class="dm space-y-4">
 
-                // Focus on the title input
-                const titleInput = createPostModal.querySelector('input[name="title"]');
-                if (titleInput) {
-                    setTimeout(() => titleInput.focus(), 100);
-                }
-            }
-        }
+  <!-- ══ HERO ══ -->
+  <section class="hero fu">
+    <div class="hero-grid"></div>
+    <div class="hero-glow hero-glow-1"></div>
+    <div class="hero-glow hero-glow-2"></div>
+    <div class="relative z-10 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-5">
+      <div class="flex-1">
+        <p class="text-indigo-300 text-xs font-semibold tracking-widest uppercase mb-2">Shared Kitchen</p>
+        <h1 class="pf text-2xl sm:text-[1.875rem] font-bold text-white leading-tight">Community Feed</h1>
+        <p class="text-indigo-200 text-sm mt-1.5 mb-5">Share recipes, spark discussions, and connect with fellow food lovers</p>
+        <button class="create-btn" onclick="openModal()">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          New Post
+        </button>
+      </div>
+      <div class="flex gap-2.5 flex-wrap shrink-0">
+        <div class="stat-pill">
+          <div class="pf text-xl font-bold text-white">{{ recipes|length }}</div>
+          <p class="text-indigo-200 text-xs mt-0.5">Recipes</p>
+        </div>
+        <div class="stat-pill">
+          <div class="pf text-xl font-bold text-white">{{ posts|length }}</div>
+          <p class="text-indigo-200 text-xs mt-0.5">Posts</p>
+        </div>
+        <div class="stat-pill">
+          <div class="pf text-xl font-bold text-white">{{ total_comments.n }}</div>
+          <p class="text-indigo-200 text-xs mt-0.5">Comments</p>
+        </div>
+      </div>
+    </div>
+  </section>
 
-        if (createPostBtn) {
-            createPostBtn.addEventListener('click', openCreatePostModal);
-        }
+  <!-- ══ TOOLBAR ══ -->
+  <div class="toolbar fu fu1">
+    <button class="filter-pill active" data-filter="all">All</button>
+    <button class="filter-pill" data-filter="recipe">
+      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0118 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/></svg>
+      Recipes
+    </button>
+    <button class="filter-pill" data-filter="post">
+      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+      Discussions
+    </button>
+    <div class="search-wrap ml-auto">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/></svg>
+      <input type="text" id="feed-search" placeholder="Search…" class="search-input">
+    </div>
+    <button class="create-btn" onclick="openModal()">
+      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+      Create Post
+    </button>
+  </div>
 
-        if (createFirstPostBtn) {
-            createFirstPostBtn.addEventListener('click', openCreatePostModal);
-        }
+  <!-- ══ FEED ══ -->
+  <div id="feed-container" class="space-y-3 fu fu2">
 
-        function closeModal() {
-            if (createPostModal) {
-                createPostModal.classList.add('hidden');
-                document.body.style.overflow = '';
-            }
-        }
+    {% if feed_items %}
+      {% set prev_date = namespace(v='') %}
+      {% for item in feed_items %}
+        {% set item_date = item.created_at.strftime('%b %d, %Y') %}
+        {% if item_date != prev_date.v %}
+          <div class="feed-date-label">{{ item_date }}</div>
+          {% set prev_date.v = item_date %}
+        {% endif %}
 
-        if (closeCreateModal) {
-            closeCreateModal.addEventListener('click', closeModal);
-        }
+        {# ── DISCUSSION POST ── #}
+        {% if item.__class__.__name__ == 'Post' %}
+        <div class="feed-card p-5" data-type="post" data-title="{{ item.title|lower }}" data-author="{{ (item.author.name or '')|lower }}">
+          <div class="flex items-start gap-3 mb-3.5">
+            <div class="av av-md av-green">{{ (item.author.name or 'U')[0].upper() }}</div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-sm font-semibold text-gray-900">{{ item.author.name or 'Chef' }}</span>
+                <span class="type-dot dot-post">Discussion</span>
+                <time class="text-xs text-gray-400 ml-auto">{{ item.created_at.strftime('%H:%M') }}</time>
+              </div>
+              <p class="text-xs text-gray-400 mt-0.5">{{ item.created_at.strftime('%B %d, %Y') }}</p>
+            </div>
+          </div>
 
-        if (cancelCreatePost) {
-            cancelCreatePost.addEventListener('click', closeModal);
-        }
+          <h3 class="pf font-bold text-gray-900 text-[1.0625rem] leading-snug mb-2">{{ item.title }}</h3>
 
-        // Close modal when clicking outside
-        if (createPostModal) {
-            createPostModal.addEventListener('click', function (e) {
-                if (e.target === this) {
-                    closeModal();
-                }
-            });
-        }
+          <div class="text-gray-600 text-sm leading-relaxed mb-3.5">
+            <span id="post-preview-{{ loop.index }}">{{ item.content[:220] }}{% if item.content|length > 220 %}…{% endif %}</span>
+            {% if item.content|length > 220 %}
+            <span id="post-full-{{ loop.index }}" class="hidden">{{ item.content }}</span>
+            <button class="read-more-btn" data-idx="{{ loop.index }}">
+              Read more <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            {% endif %}
+          </div>
 
-        // Filter functionality
-        const filterBtns = document.querySelectorAll('.filter-btn');
-        const feedItems = document.querySelectorAll('.feed-item');
+          <div class="flex items-center gap-0.5 border-t border-gray-50 pt-3">
+            <button class="act-btn like-btn">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+              Like
+            </button>
+            <button class="act-btn" onclick="shareItem('{{ item.title }}')">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+              Share
+            </button>
+          </div>
+        </div>
 
-        filterBtns.forEach(btn => {
-            btn.addEventListener('click', function () {
-                const filter = this.dataset.filter;
+        {# ── RECIPE POST ── #}
+        {% elif item.__class__.__name__ == 'Recipe' %}
+        <div class="feed-card" data-type="recipe" data-title="{{ item.name|lower }}" data-author="{{ (item.author.name or '')|lower }}">
 
-                // Update active button
-                filterBtns.forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
+          <div class="recipe-img-wrap">
+            {% if item.images %}<img src="{{ item.images[0].url }}" alt="{{ item.name }}">
+            {% else %}<div class="img-ph"><svg class="w-10 h-10 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0118 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/></svg></div>{% endif %}
+            <div class="recipe-img-badge" style="color:#4f46e5">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0118 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/></svg>
+              Recipe
+            </div>
+            <div class="recipe-name-overlay">
+              <h3 class="pf font-bold text-white text-lg leading-snug drop-shadow-sm">{{ item.name }}</h3>
+            </div>
+          </div>
 
-                // Filter items
-                feedItems.forEach(item => {
-                    const itemType = item.dataset.type;
-
-                    if (filter === 'all') {
-                        item.style.display = '';
-                    } else if (filter === 'recipes' && itemType === 'recipe') {
-                        item.style.display = '';
-                    } else if (filter === 'posts' && itemType === 'post') {
-                        item.style.display = '';
-                    } else if (filter === 'trending') {
-                        // For now, show all items for trending
-                        item.style.display = '';
-                    } else {
-                        item.style.display = 'none';
-                    }
-                });
-            });
-        });
-
-        // Search functionality
-        const searchInput = document.getElementById('feed-search');
-        if (searchInput) {
-            let searchTimeout;
-            searchInput.addEventListener('input', function () {
-                clearTimeout(searchTimeout);
-                searchTimeout = setTimeout(() => {
-                    const searchTerm = this.value.toLowerCase();
-
-                    feedItems.forEach(item => {
-                        const title = item.querySelector('h3')?.textContent.toLowerCase() || '';
-                        const content = item.querySelector('p')?.textContent.toLowerCase() || '';
-                        const author = item.querySelector('h4')?.textContent.toLowerCase() || '';
-
-                        if (title.includes(searchTerm) || content.includes(searchTerm) || author.includes(searchTerm)) {
-                            item.style.display = '';
-                        } else {
-                            item.style.display = 'none';
-                        }
-                    });
-                }, 300);
-            });
-        }
-
-        // Read more functionality
-        const readMoreBtns = document.querySelectorAll('.read-more-btn');
-        readMoreBtns.forEach(btn => {
-            btn.addEventListener('click', function () {
-                const target = this.dataset.target;
-                const preview = document.getElementById(`content-preview-${target}`);
-                const full = document.getElementById(`content-full-${target}`);
-
-                if (preview && full) {
-                    if (preview.style.display === 'none') {
-                        preview.style.display = '';
-                        full.style.display = 'none';
-                        this.textContent = 'Read More';
-                    } else {
-                        preview.style.display = 'none';
-                        full.style.display = '';
-                        this.textContent = 'Show Less';
-                    }
-                }
-            });
-        });
-
-        // Comment toggle functionality
-        const commentToggles = document.querySelectorAll('.comment-toggle');
-        commentToggles.forEach(toggle => {
-            toggle.addEventListener('click', function () {
-                const recipeId = this.dataset.recipeId;
-                const commentsSection = document.getElementById(`comments-${recipeId}`);
-                const icon = this.querySelector('i');
-
-                if (commentsSection) {
-                    if (commentsSection.classList.contains('hidden')) {
-                        commentsSection.classList.remove('hidden');
-                        icon.classList.remove('fa-chevron-down');
-                        icon.classList.add('fa-chevron-up');
-                    } else {
-                        commentsSection.classList.add('hidden');
-                        icon.classList.remove('fa-chevron-up');
-                        icon.classList.add('fa-chevron-down');
-                    }
-                }
-            });
-        });
-
-        // Like button animation
-        const likeButtons = document.querySelectorAll('button:has(.fa-heart)');
-        likeButtons.forEach(btn => {
-            btn.addEventListener('click', function (e) {
-                e.preventDefault();
-                const heart = this.querySelector('.fa-heart');
-                if (heart) {
-                    heart.classList.add('animate-pulse-subtle');
-                    setTimeout(() => {
-                        heart.classList.remove('animate-pulse-subtle');
-                    }, 600);
-                }
-            });
-        });
-
-        // Infinite scroll (placeholder)
-        let loading = false;
-        window.addEventListener('scroll', function () {
-            if (loading) return;
-
-            const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
-
-            if (scrollTop + clientHeight >= scrollHeight - 5) {
-                // Placeholder for loading more content
-                console.log('Load more content...');
-            }
-        });
-
-        // Auto-resize textarea and character count
-        const textareas = document.querySelectorAll('textarea');
-        textareas.forEach(textarea => {
-            textarea.addEventListener('input', function () {
-                // Auto-resize
-                this.style.height = 'auto';
-                this.style.height = (this.scrollHeight) + 'px';
-
-                // Character count (if in modal)
-                if (this.name === 'content') {
-                    const charCount = this.value.length;
-                    const maxChars = 2000;
-                    let countDisplay = this.parentNode.querySelector('.char-count');
-
-                    if (!countDisplay) {
-                        countDisplay = document.createElement('div');
-                        countDisplay.className = 'char-count text-xs text-gray-500 mt-1 text-right';
-                        this.parentNode.appendChild(countDisplay);
-                    }
-
-                    countDisplay.textContent = `${charCount}/${maxChars}`;
-                    countDisplay.style.color = charCount > maxChars * 0.9 ? '#EF4444' : '#6B7280';
-                }
-            });
-        });
-
-        // Enhanced interaction feedback
-        const interactionButtons = document.querySelectorAll('button[class*="hover:"]');
-        interactionButtons.forEach(btn => {
-            btn.addEventListener('mousedown', function () {
-                this.style.transform = 'scale(0.95)';
-            });
-
-            btn.addEventListener('mouseup', function () {
-                this.style.transform = '';
-            });
-
-            btn.addEventListener('mouseleave', function () {
-                this.style.transform = '';
-            });
-        });
-
-        // Keyboard shortcuts
-        document.addEventListener('keydown', function (e) {
-            // Ctrl/Cmd + Enter to submit post
-            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-                const modal = document.getElementById('create-post-modal');
-                if (modal && !modal.classList.contains('hidden')) {
-                    const submitBtn = modal.querySelector('input[type="submit"]');
-                    if (submitBtn) {
-                        submitBtn.click();
-                    }
-                }
-            }
-
-            // Escape to close modal
-            if (e.key === 'Escape') {
-                closeModal();
-            }
-        });
-
-        // Toast notification system
-        function showToast(message, type = 'info') {
-            // Remove existing toasts
-            const existingToasts = document.querySelectorAll('.toast');
-            existingToasts.forEach(toast => toast.remove());
-
-            const toast = document.createElement('div');
-            toast.className = `toast fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg text-white transform transition-all duration-300 translate-x-full`;
-
-            // Set color based on type
-            switch (type) {
-                case 'success':
-                    toast.classList.add('bg-green-500');
-                    break;
-                case 'error':
-                    toast.classList.add('bg-red-500');
-                    break;
-                case 'warning':
-                    toast.classList.add('bg-yellow-500');
-                    break;
-                default:
-                    toast.classList.add('bg-indigo-500');
-            }
-
-            toast.innerHTML = `
-                <div class="flex items-center space-x-2">
-                    <i class="fa-solid ${type === 'success' ? 'fa-check' : type === 'error' ? 'fa-exclamation' : type === 'warning' ? 'fa-warning' : 'fa-info'}"></i>
-                    <span>${message}</span>
+          <div class="card-body">
+            <div class="flex items-center gap-2.5 mb-3">
+              <div class="av av-md av-indigo">{{ (item.author.name or 'U')[0].upper() }}</div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="text-sm font-semibold text-gray-900">{{ item.author.name or 'Chef' }}</span>
+                  <span class="type-dot dot-recipe">Recipe</span>
                 </div>
-            `;
+                <div class="flex items-center gap-1.5 text-xs text-gray-400 mt-0.5">
+                  <time>{{ item.created_at.strftime('%b %d, %Y') }}</time>
+                  {% if item.origin %}<span>·</span><span>{{ item.origin.name }}</span>{% endif %}
+                </div>
+              </div>
+            </div>
 
-            document.body.appendChild(toast);
+            <div class="flex flex-wrap gap-1.5 mb-3">
+              {% if item.category %}<span class="meta-tag tag-cat">{{ item.category.name }}</span>{% endif %}
+              {% if item.prep_time %}
+              <span class="meta-tag tag-time">
+                <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                {{ item.prep_time }}m
+              </span>{% endif %}
+              {% if item.servings %}
+              <span class="meta-tag tag-serve">
+                <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                {{ item.servings }} serves
+              </span>{% endif %}
+            </div>
 
-            // Animate in
-            setTimeout(() => {
-                toast.classList.remove('translate-x-full');
-            }, 100);
+            {% if item.description %}
+            <p class="text-gray-500 text-sm leading-relaxed line-clamp-2 mb-3">{{ item.description|striptags|truncate(140) }}</p>
+            {% endif %}
 
-            // Auto remove
-            setTimeout(() => {
-                toast.classList.add('translate-x-full');
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
-        }
+            <div class="flex items-center gap-0.5 border-t border-gray-50 pt-3 flex-wrap">
+              <button class="act-btn like-btn">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+                Save
+              </button>
+              <button class="act-btn comment-toggle-btn" data-id="{{ item.id }}">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                {{ item.comments|length if item.comments else 0 }}
+              </button>
+              <button class="act-btn" onclick="shareItem('{{ item.name }}')">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+                Share
+              </button>
+              <a href="{{ url_for('dashboard.view_recipe', recipe_id=item.id) }}" class="act-btn view-link">
+                View Recipe
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+              </a>
+            </div>
 
-        // Enhanced form validation
-        const postForm = document.querySelector('#create-post-modal form');
-        if (postForm) {
-            postForm.addEventListener('submit', function (e) {
-                const titleInput = this.querySelector('input[name="title"]');
-                const contentInput = this.querySelector('textarea[name="content"]');
+            <div class="comment-section hidden" id="comments-{{ item.id }}">
+              <form method="post" action="{{ url_for('community.feed') }}" class="flex items-center gap-2 mb-3">
+                {{ comment_form.hidden_tag() }}
+                <input type="hidden" name="recipe_id" value="{{ item.id }}">
+                <div class="av av-sm av-indigo shrink-0">{{ (current_user.name or 'U')[0].upper() }}</div>
+                {{ comment_form.comment_text(class="comment-form-input", placeholder="Add a comment…") }}
+                {{ comment_form.submit(class="comment-submit-btn") }}
+              </form>
+              {% if item.comments %}
+              <div class="space-y-2 max-h-52 overflow-y-auto">
+                {% for c in item.comments|sort(attribute='created_at', reverse=True) %}
+                <div class="flex gap-2">
+                  <div class="av av-sm av-green shrink-0">{{ (c.author.name or 'U')[0].upper() }}</div>
+                  <div class="comment-bubble">
+                    <div class="flex items-baseline gap-2 mb-0.5">
+                      <span class="text-xs font-semibold text-gray-800">{{ c.author.name or 'Anonymous' }}</span>
+                      <time class="text-[10px] text-gray-400">{{ c.created_at.strftime('%b %d · %H:%M') }}</time>
+                    </div>
+                    <p class="text-xs text-gray-600 leading-relaxed">{{ c.comment_text }}</p>
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% endif %}
+      {% endfor %}
 
-                if (!titleInput.value.trim()) {
-                    e.preventDefault();
-                    showToast('Please enter a title for your post', 'error');
-                    titleInput.focus();
-                    return;
-                }
+    {% else %}
+    <div class="empty-state fu fu3">
+      <div class="empty-icon">
+        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+      </div>
+      <h3 class="pf text-xl font-bold text-gray-900 mb-2">Welcome to the Community!</h3>
+      <p class="text-gray-500 text-sm mb-6 max-w-sm mx-auto">Share your culinary creations and connect with fellow food enthusiasts.</p>
+      <button class="create-btn" onclick="openModal()">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        Create First Post
+      </button>
+    </div>
+    {% endif %}
 
-                if (!contentInput.value.trim()) {
-                    e.preventDefault();
-                    showToast('Please add some content to your post', 'error');
-                    contentInput.focus();
-                    return;
-                }
+  </div>
+</div>
 
-                if (contentInput.value.length > 2000) {
-                    e.preventDefault();
-                    showToast('Post content is too long (maximum 2000 characters)', 'error');
-                    contentInput.focus();
-                    return;
-                }
+<!-- ══ CREATE POST MODAL ══ -->
+<div class="modal-back dm" id="create-modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="flex items-center gap-3">
+        <div class="av av-md av-indigo">{{ (current_user.name or 'U')[0].upper() }}</div>
+        <div>
+          <h2 class="pf text-lg font-bold text-gray-900">Share with the Community</h2>
+          <p class="text-xs text-gray-400">What's cooking, {{ current_user.name or 'Chef' }}?</p>
+        </div>
+      </div>
+      <button class="close-btn" onclick="closeModal()">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <form method="POST" action="{{ url_for('community.feed') }}" id="post-form" class="modal-body space-y-4">
+      {{ post_form.hidden_tag() }}
+      <div>
+        <label class="form-label">Title</label>
+        {{ post_form.title(class="form-field", placeholder="Give your post a title…") }}
+      </div>
+      <div>
+        <label class="form-label">Content</label>
+        {{ post_form.content(class="form-field", rows=5, id="post-content", placeholder="Share your thoughts, a cooking tip, or ask the community a question…") }}
+        <div class="flex items-center justify-between mt-1.5">
+          <p class="text-xs text-gray-400">Be respectful and helpful</p>
+          <span class="text-xs text-gray-400" id="char-count">0 / 2000</span>
+        </div>
+      </div>
+      <div class="flex items-center justify-end gap-3 pt-3 border-t border-gray-100">
+        <button type="button" onclick="closeModal()" class="text-sm text-gray-500 hover:text-gray-700 font-medium transition-colors">Cancel</button>
+        {{ post_form.submit(class="create-btn cursor-pointer", value="Post", id="post-submit") }}
+      </div>
+    </form>
+  </div>
+</div>
 
-                // Show loading state
-                const submitBtn = this.querySelector('input[type="submit"]');
-                const originalText = submitBtn.value;
-                submitBtn.value = 'Posting...';
-                submitBtn.disabled = true;
+<div id="toast-host"></div>
 
-                // Re-enable after a delay (in case of network issues)
-                setTimeout(() => {
-                    submitBtn.value = originalText;
-                    submitBtn.disabled = false;
-                }, 5000);
-            });
-        }
+<script>
+function openModal() {
+  document.getElementById('create-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  setTimeout(() => { const f = document.querySelector('#post-form [name="title"]'); if (f) f.focus(); }, 160);
+}
+function closeModal() {
+  document.getElementById('create-modal').classList.remove('open');
+  document.body.style.overflow = '';
+}
 
-        // Like button with optimistic updates
-        document.querySelectorAll('button').forEach(btn => {
-            if (btn.querySelector('.fa-heart')) {
-                btn.addEventListener('click', function (e) {
-                    e.preventDefault();
-
-                    const heart = this.querySelector('.fa-heart');
-                    const isLiked = heart.classList.contains('fa-solid');
-
-                    // Toggle heart state
-                    if (isLiked) {
-                        heart.classList.remove('fa-solid');
-                        heart.classList.add('fa-regular');
-                        heart.style.color = '';
-                    } else {
-                        heart.classList.remove('fa-regular');
-                        heart.classList.add('fa-solid');
-                        heart.style.color = '#EF4444';
-
-                        // Animate
-                        heart.style.transform = 'scale(1.3)';
-                        setTimeout(() => {
-                            heart.style.transform = '';
-                        }, 200);
-                    }
-
-                    // In a real app, you'd send an API request here
-                    // showToast(isLiked ? 'Post unliked' : 'Post liked', 'success');
-                });
-            }
-        });
-
-        // Smooth scroll to new posts (if any)
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('new_post')) {
-            showToast('Your post has been shared with the community!', 'success');
-            // Remove the parameter from URL
-            window.history.replaceState({}, document.title, window.location.pathname);
-        }
+document.querySelectorAll('.filter-pill').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.filter-pill').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    const f = this.dataset.filter;
+    document.querySelectorAll('.feed-card').forEach(c => {
+      c.style.display = (f === 'all' || c.dataset.type === f) ? '' : 'none';
     });
+  });
+});
+
+let st;
+document.getElementById('feed-search').addEventListener('input', function() {
+  clearTimeout(st);
+  st = setTimeout(() => {
+    const q = this.value.toLowerCase().trim();
+    document.querySelectorAll('.feed-card').forEach(c => {
+      c.style.display = (!q || (c.dataset.title||'').includes(q) || (c.dataset.author||'').includes(q)) ? '' : 'none';
+    });
+  }, 220);
+});
+
+document.addEventListener('click', e => {
+  const btn = e.target.closest('.read-more-btn');
+  if (!btn) return;
+  const idx = btn.dataset.idx;
+  const prev = document.getElementById(`post-preview-${idx}`);
+  const full = document.getElementById(`post-full-${idx}`);
+  const exp = !full.classList.contains('hidden');
+  full.classList.toggle('hidden', exp);
+  prev.classList.toggle('hidden', !exp);
+  btn.firstChild.textContent = exp ? 'Read more ' : 'Show less ';
+});
+
+document.querySelectorAll('.comment-toggle-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    const sec = document.getElementById(`comments-${this.dataset.id}`);
+    if (sec) sec.classList.toggle('hidden');
+  });
+});
+
+document.querySelectorAll('.like-btn').forEach(btn => {
+  btn.addEventListener('click', function() { this.classList.toggle('liked'); });
+});
+
+function shareItem(title) {
+  if (navigator.share) { navigator.share({ title, url: location.href }).catch(() => {}); }
+  else { navigator.clipboard?.writeText(location.href).then(() => toast('Link copied!', 'ok')).catch(() => toast('Copy failed')); }
+}
+
+const pc = document.getElementById('post-content');
+const cc = document.getElementById('char-count');
+if (pc && cc) pc.addEventListener('input', function() {
+  const n = this.value.length;
+  cc.textContent = `${n} / 2000`;
+  cc.style.color = n > 1800 ? '#ef4444' : '';
+});
+
+document.getElementById('post-form').addEventListener('submit', function(e) {
+  const t = this.querySelector('[name="title"]')?.value.trim();
+  const c = this.querySelector('[name="content"]')?.value.trim();
+  if (!t) { e.preventDefault(); toast('Please enter a title', 'err'); return; }
+  if (!c) { e.preventDefault(); toast('Please add some content', 'err'); return; }
+  if (c.length > 2000) { e.preventDefault(); toast('Content too long', 'err'); return; }
+  const btn = document.getElementById('post-submit');
+  if (btn) { btn.value = 'Posting…'; btn.disabled = true; }
+});
+
+document.getElementById('create-modal').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+function toast(msg, type = '') {
+  const host = document.getElementById('toast-host');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  host.appendChild(el);
+  requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('in')));
+  setTimeout(() => { el.classList.remove('in'); setTimeout(() => el.remove(), 300); }, 3000);
+}
+
+if (new URLSearchParams(location.search).get('new_post')) {
+  toast('Your post is live!', 'ok');
+  history.replaceState({}, '', location.pathname);
+}
 </script>
+
 {% endblock %}

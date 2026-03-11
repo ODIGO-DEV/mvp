@@ -29,6 +29,9 @@ class MealEntry(db.Model):
     recipe_id = db.Column(db.Integer, db.ForeignKey("recipes.id"), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+    # Relationship to Recipe
+    recipe = db.relationship("Recipe", backref="meal_entries", lazy=True)
+
     def __repr__(self):
         return f"<MealEntry {self.meal_type} recipe={self.recipe_id}>"
 
