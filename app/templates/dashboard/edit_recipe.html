@@ -1,0 +1,865 @@
+{% extends "dashboard/base.html" %}
+{% block title %}Edit Recipe{% endblock %}
+{% block dashboard_content %}
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
+
+  :root {
+    --indigo: #6366f1;
+    --indigo-dark: #4f46e5;
+    --indigo-light: #eef2ff;
+  }
+
+  .page-font  { font-family: 'DM Sans', sans-serif; }
+  .disp-font  { font-family: 'Syne', sans-serif; }
+
+  /* ── Upload zone ── */
+  .drop-zone {
+    transition: border-color .2s, background .2s, transform .2s;
+  }
+  .drop-zone.over {
+    border-color: var(--indigo);
+    background: var(--indigo-light);
+    transform: scale(1.01);
+  }
+
+  /* ── Tab pill ── */
+  .tab-pill { transition: background .15s, color .15s, box-shadow .15s; }
+  .tab-pill.active {
+    background: var(--indigo);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(99,102,241,.3);
+  }
+
+  /* ── Card item ── */
+  .list-item { transition: box-shadow .2s, transform .2s; }
+  .list-item:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,.07); }
+
+  /* ── Modal ── */
+  [x-cloak] { display: none !important; }
+  .modal-box {
+    animation: modalIn .22s cubic-bezier(.34,1.56,.64,1) both;
+  }
+  @keyframes modalIn {
+    from { opacity:0; transform: scale(.94) translateY(10px); }
+    to   { opacity:1; transform: scale(1)  translateY(0); }
+  }
+
+  /* ── Image thumb ── */
+  .img-thumb { animation: fadeUp .25s ease both; }
+  @keyframes fadeUp {
+    from { opacity:0; transform:translateY(8px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+
+  /* ── YouTube preview ── */
+  .yt-embed { aspect-ratio: 16/9; }
+
+  /* ── Step / ingredient accent ── */
+  .step-badge   { background: linear-gradient(135deg,#f97316,#fb923c); }
+  .ingr-badge   { background: linear-gradient(135deg,#22c55e,#4ade80); }
+
+  /* scrollbar */
+  .slim-scroll::-webkit-scrollbar { width: 4px; }
+  .slim-scroll::-webkit-scrollbar-track { background:#f1f5f9; border-radius:2px; }
+  .slim-scroll::-webkit-scrollbar-thumb { background:#cbd5e1; border-radius:2px; }
+</style>
+
+<div class="page-font" x-data="recipePage()" x-init="init()">
+
+  <!-- ══ STICKY HEADER ═══════════════════════════════════════════════ -->
+  <div class="bg-white border-b border-gray-100  px-0 py-3 mb-6">
+    <div class="flex items-center justify-between gap-4">
+      <div>
+        <nav class="flex items-center gap-1.5 text-xs text-gray-400 mb-0.5">
+          <a href="{{ url_for('dashboard.index') }}" class="hover:text-indigo-500 transition-colors">Home</a>
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          <a href="{{ url_for('dashboard.my_recipes') }}" class="hover:text-indigo-500 transition-colors">My Recipes</a>
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          <span class="text-gray-600 font-medium">Edit Recipe</span>
+        </nav>
+        <h1 class="disp-font text-2xl font-bold text-gray-900 tracking-tight">Edit Recipe</h1>
+      </div>
+      <div class="flex items-center gap-2 shrink-0">
+        <a href="{{ url_for('dashboard.my_recipes') }}"
+          class="px-4 py-2 text-sm border border-gray-200 rounded-lg text-gray-600 hover:border-gray-300 hover:bg-gray-50 transition-all">
+          Cancel
+        </a>
+        <button type="submit" form="recipe-form"
+          class="inline-flex items-center gap-2 px-5 py-2 text-sm font-medium bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg shadow-sm shadow-indigo-200 transition-all">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+          <span class="hidden sm:inline">Update Recipe</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Flash -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+    <div class="mb-4 px-4 py-3 rounded-lg text-sm {{ 'bg-red-50 text-red-700 border border-red-200' if category == 'error' else 'bg-emerald-50 text-emerald-700 border border-emerald-200' }}">
+      {{ message }}
+    </div>
+    {% endfor %}
+  {% endif %}
+  {% endwith %}
+
+  <!-- ══ FORM ════════════════════════════════════════════════════════ -->
+  <form id="recipe-form" method="POST" action="{{ url_for('dashboard.edit_recipe', recipe_id=recipe.id) }}" enctype="multipart/form-data">
+    {{ form.hidden_tag() }}
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+
+      <!-- ── COL 1 · Basic Info ─────────────────────────────────── -->
+      <div class="lg:col-span-1 space-y-5">
+
+        <div class="bg-white border border-gray-100 rounded-xl p-5 shadow-sm">
+          <h2 class="disp-font text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <span class="w-6 h-6 bg-indigo-50 rounded-md flex items-center justify-center">
+              <svg class="w-3.5 h-3.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </span>
+            Basic Info
+          </h2>
+          <div class="space-y-3">
+            <div>
+              {{ form.name.label(class="block text-xs font-medium text-gray-600 mb-1") }}
+              {{ form.name(class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors", placeholder="e.g. Grandma's Lasagna") }}
+            </div>
+            <div>
+              {{ form.description.label(class="block text-xs font-medium text-gray-600 mb-1") }}
+              {{ form.description(class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors resize-none", rows=3, placeholder="What makes this recipe special?") }}
+            </div>
+            <div>
+              {{ form.category_id.label(class="block text-xs font-medium text-gray-600 mb-1") }}
+              {{ form.category_id(class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors bg-white") }}
+            </div>
+            <div>
+              {{ form.origin_id.label(class="block text-xs font-medium text-gray-600 mb-1") }}
+              {{ form.origin_id(class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors bg-white") }}
+            </div>
+            <label class="flex items-center gap-2.5 cursor-pointer select-none">
+              {{ form.public(class="w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500") }}
+              <span class="text-sm text-gray-700">{{ form.public.label.text }}</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- ── Ingredients ── -->
+        <div class="bg-white border border-gray-100 rounded-xl p-5 shadow-sm">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="disp-font text-base font-semibold text-gray-900 flex items-center gap-2">
+              <span class="w-6 h-6 bg-green-50 rounded-md flex items-center justify-center">
+                <svg class="w-3.5 h-3.5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+              </span>
+              Ingredients
+            </h2>
+            <button type="button" @click="openModal('ingredient')"
+              class="inline-flex items-center gap-1.5 text-xs font-medium bg-green-50 hover:bg-green-100 text-green-700 px-3 py-1.5 rounded-lg transition-colors">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+              Add
+            </button>
+          </div>
+
+          <div id="ingredients-list" class="space-y-2 max-h-64 overflow-y-auto slim-scroll">
+            <template x-if="ingredients.length === 0">
+              <p class="text-gray-400 text-sm text-center py-4">No ingredients yet</p>
+            </template>
+            <template x-for="(ing, idx) in ingredients" :key="ing.id">
+              <div class="list-item bg-green-50 border border-green-100 rounded-lg px-3 py-2.5 flex items-center justify-between group">
+                <div class="flex items-center gap-2.5 min-w-0 flex-1">
+                  <div class="ingr-badge w-7 h-7 rounded-full flex items-center justify-center shrink-0">
+                    <svg class="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 2a1 1 0 011 1v1h1a1 1 0 010 2H6v1a1 1 0 01-2 0V6H3a1 1 0 010-2h1V3a1 1 0 011-1zm0 10a1 1 0 011 1v1h1a1 1 0 110 2H6v1a1 1 0 11-2 0v-1H3a1 1 0 110-2h1v-1a1 1 0 011-1zM12 2a1 1 0 01.967.744L14.146 7.2 17.5 9.134a1 1 0 010 1.732l-3.354 1.935-1.18 4.455a1 1 0 01-1.933 0L9.854 12.8 6.5 10.866a1 1 0 010-1.732l3.354-1.935 1.18-4.455A1 1 0 0112 2z" clip-rule="evenodd"/></svg>
+                  </div>
+                  <div class="min-w-0 flex-1">
+                    <div class="text-sm font-medium text-gray-800 truncate" x-text="ing.name"></div>
+                    <div class="text-xs text-gray-500 truncate">
+                      <span x-text="[ing.quantity, ing.unit].filter(Boolean).join(' ') || 'As needed'"></span>
+                      <span x-show="ing.notes" class="ml-1" x-text="'· ' + ing.notes"></span>
+                    </div>
+                    <!-- Image previews -->
+                    <div x-show="ing.imagePreviews && ing.imagePreviews.length > 0" class="flex gap-1 mt-1.5">
+                      <template x-for="(preview, i) in ing.imagePreviews.slice(0, 3)" :key="i">
+                        <img :src="preview" class="w-8 h-8 rounded object-cover border border-green-200">
+                      </template>
+                      <span x-show="ing.imagePreviews.length > 3" class="flex items-center justify-center w-8 h-8 rounded bg-green-200 text-green-700 text-[10px] font-bold border border-green-300" x-text="'+' + (ing.imagePreviews.length - 3)"></span>
+                    </div>
+                  </div>
+                </div>
+                <button type="button" @click="removeIngredient(ing.id)"
+                  class="shrink-0 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all p-1 rounded">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                </button>
+              </div>
+            </template>
+          </div>
+        </div>
+
+        <!-- ── Steps ── -->
+        <div class="bg-white border border-gray-100 rounded-xl p-5 shadow-sm">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="disp-font text-base font-semibold text-gray-900 flex items-center gap-2">
+              <span class="w-6 h-6 bg-orange-50 rounded-md flex items-center justify-center">
+                <svg class="w-3.5 h-3.5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+              </span>
+              Cooking Steps
+            </h2>
+            <button type="button" @click="openModal('step')"
+              class="inline-flex items-center gap-1.5 text-xs font-medium bg-orange-50 hover:bg-orange-100 text-orange-700 px-3 py-1.5 rounded-lg transition-colors">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+              Add
+            </button>
+          </div>
+
+          <div id="steps-list" class="space-y-2 max-h-64 overflow-y-auto slim-scroll">
+            <template x-if="steps.length === 0">
+              <p class="text-gray-400 text-sm text-center py-4">No steps yet</p>
+            </template>
+            <template x-for="(step, idx) in steps" :key="step.id">
+              <div class="list-item bg-orange-50 border border-orange-100 rounded-lg px-3 py-2.5 flex items-start justify-between group">
+                <div class="flex items-start gap-2.5 min-w-0 flex-1">
+                  <div class="step-badge w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-0.5">
+                    <span class="text-white text-xs font-bold" x-text="idx + 1"></span>
+                  </div>
+                  <div class="min-w-0 flex-1">
+                    <div class="text-sm font-medium text-gray-800" x-text="step.name || ('Step ' + (idx + 1))"></div>
+                    <div class="text-xs text-gray-500 line-clamp-2 mt-0.5" x-text="step.instruction"></div>
+                    <div x-show="step.duration" class="text-xs text-orange-600 mt-1 flex items-center gap-1">
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                      <span x-text="step.duration + ' min'"></span>
+                    </div>
+                    <!-- Image previews -->
+                    <div x-show="step.imagePreviews && step.imagePreviews.length > 0" class="flex gap-1 mt-1.5">
+                      <template x-for="(preview, i) in step.imagePreviews.slice(0, 3)" :key="i">
+                        <img :src="preview" class="w-8 h-8 rounded object-cover border border-orange-200">
+                      </template>
+                      <span x-show="step.imagePreviews.length > 3" class="flex items-center justify-center w-8 h-8 rounded bg-orange-200 text-orange-700 text-[10px] font-bold border border-orange-300" x-text="'+' + (step.imagePreviews.length - 3)"></span>
+                    </div>
+                  </div>
+                </div>
+                <button type="button" @click="removeStep(step.id)"
+                  class="shrink-0 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all p-1 rounded mt-0.5">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                </button>
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── COL 2+3 · Media ───────────────────────────────────── -->
+      <div class="lg:col-span-2 space-y-5">
+
+        <!-- Images card -->
+        <div class="bg-white border border-gray-100 rounded-xl p-5 shadow-sm">
+          <h2 class="disp-font text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <span class="w-6 h-6 bg-indigo-50 rounded-md flex items-center justify-center">
+              <svg class="w-3.5 h-3.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            </span>
+            Recipe Photos
+          </h2>
+
+          <!-- Drop zone -->
+          <div id="img-drop-zone"
+            class="drop-zone border-2 border-dashed border-gray-200 rounded-xl p-8 text-center cursor-pointer hover:border-indigo-300 hover:bg-indigo-50/40 mb-4"
+            @click="$refs.imgInput.click()"
+            @dragover.prevent="$el.classList.add('over')"
+            @dragleave.prevent="$el.classList.remove('over')"
+            @drop.prevent="handleImageDrop($event)">
+            {{ form.recipe_images(class="hidden", multiple=True, accept="image/*", id="recipe-images", x__ref="imgInput") }}
+            <input type="file" x-ref="imgInput" multiple accept="image/*" class="hidden" @change="handleImageFiles($event.target.files)">
+            <div class="w-12 h-12 bg-indigo-50 rounded-xl mx-auto mb-3 flex items-center justify-center">
+              <svg class="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            </div>
+            <p class="text-sm font-medium text-gray-600 mb-0.5">Drop photos here or <span class="text-indigo-600">browse</span></p>
+            <p class="text-xs text-gray-400">PNG, JPG, WEBP · max 30 MB each</p>
+          </div>
+
+          <!-- Preview grid -->
+          <div x-show="imagePreviews.length > 0" class="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-2">
+            <template x-for="(img, idx) in imagePreviews" :key="idx">
+              <div class="img-thumb relative group aspect-square rounded-lg overflow-hidden border border-gray-100">
+                <img :src="img.src" :alt="img.name" class="w-full h-full object-cover">
+                <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors"></div>
+                <button type="button" @click="removeImage(idx)"
+                  class="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-xs">
+                  ×
+                </button>
+                <div x-show="idx === 0"
+                  class="absolute bottom-1 left-1 text-[9px] font-bold bg-indigo-600 text-white px-1.5 py-0.5 rounded-full">
+                  Cover
+                </div>
+              </div>
+            </template>
+          </div>
+        </div>
+
+        <!-- ── VIDEO SECTION ───────────────────────────────────── -->
+        <div class="bg-white border border-gray-100 rounded-xl p-5 shadow-sm">
+          <h2 class="disp-font text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <span class="w-6 h-6 bg-red-50 rounded-md flex items-center justify-center">
+              <svg class="w-3.5 h-3.5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.069A1 1 0 0121 8.82v6.361a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/></svg>
+            </span>
+            Recipe Video
+            <span class="text-xs font-normal text-gray-400 ml-1">optional</span>
+          </h2>
+
+          <!-- Tab toggle -->
+          <div class="flex items-center bg-gray-100 rounded-lg p-0.5 w-fit mb-5 gap-0.5">
+            <button type="button" @click="videoTab = 'youtube'"
+              :class="videoTab === 'youtube' ? 'tab-pill active' : 'tab-pill text-gray-500 hover:text-gray-700'"
+              class="flex items-center gap-1.5 px-4 py-1.5 rounded-md text-sm font-medium transition-all">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+              YouTube
+            </button>
+            <button type="button" @click="videoTab = 'upload'"
+              :class="videoTab === 'upload' ? 'tab-pill active' : 'tab-pill text-gray-500 hover:text-gray-700'"
+              class="flex items-center gap-1.5 px-4 py-1.5 rounded-md text-sm font-medium transition-all">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+              Upload Video
+            </button>
+          </div>
+
+          <!-- ── YouTube tab ── -->
+          <div x-show="videoTab === 'youtube'" x-transition.opacity>
+            <div class="relative mb-3">
+              <div class="absolute left-3 top-1/2 -translate-y-1/2">
+                <svg class="w-4 h-4 text-red-400" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+              </div>
+              <input type="text" x-model="youtubeUrl" name="youtube_url"
+                @input.debounce.500ms="parseYoutube()"
+                placeholder="Paste YouTube URL — e.g. https://youtube.com/watch?v=..."
+                class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors pl-9 pr-20">
+              <button type="button" x-show="youtubeUrl" @click="youtubeUrl=''; youtubeEmbed=''; youtubeError=''"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 hover:text-gray-600">Clear</button>
+            </div>
+
+            <!-- Error -->
+            <p x-show="youtubeError" class="text-xs text-red-500 mb-3" x-text="youtubeError"></p>
+
+            <!-- Embed preview -->
+            <div x-show="youtubeEmbed" x-transition class="rounded-xl overflow-hidden border border-gray-100 shadow-sm">
+              <div class="yt-embed">
+                <iframe
+                  :src="'https://www.youtube.com/embed/' + youtubeEmbed + '?rel=0&modestbranding=1'"
+                  class="w-full h-full" frameborder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowfullscreen>
+                </iframe>
+              </div>
+              <input type="hidden" name="youtube_embed_id" :value="youtubeEmbed">
+              <div class="flex items-center justify-between px-4 py-2.5 bg-gray-50 border-t border-gray-100">
+                <div class="flex items-center gap-2 text-xs text-gray-500">
+                  <svg class="w-3.5 h-3.5 text-red-500" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                  YouTube video linked
+                </div>
+                <button type="button" @click="youtubeUrl=''; youtubeEmbed=''"
+                  class="text-xs text-red-400 hover:text-red-600 transition-colors">Remove</button>
+              </div>
+            </div>
+
+            <!-- Placeholder when empty -->
+            <div x-show="!youtubeEmbed && !youtubeError" class="mt-3 rounded-xl border-2 border-dashed border-gray-100 py-8 text-center text-gray-400">
+              <svg class="w-8 h-8 mx-auto mb-2 opacity-40" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+              <p class="text-xs">Paste a YouTube link above to preview</p>
+            </div>
+          </div>
+
+          <!-- ── Upload tab ── -->
+          <div x-show="videoTab === 'upload'" x-transition.opacity>
+            <!-- Drop zone -->
+            <div x-show="!videoFile"
+              class="drop-zone border-2 border-dashed border-gray-200 rounded-xl p-8 text-center cursor-pointer hover:border-indigo-300 hover:bg-indigo-50/40"
+              @click="$refs.vidInput.click()"
+              @dragover.prevent="$el.classList.add('over')"
+              @dragleave.prevent="$el.classList.remove('over')"
+              @drop.prevent="handleVideoDrop($event)">
+              <input type="file" x-ref="vidInput" accept="video/mp4,video/webm,video/mov,video/avi,video/quicktime" name="recipe_video" class="hidden" @change="handleVideoFile($event.target.files[0])">
+              <div class="w-12 h-12 bg-gray-50 rounded-xl mx-auto mb-3 flex items-center justify-center">
+                <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10l4.553-2.069A1 1 0 0121 8.82v6.361a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/></svg>
+              </div>
+              <p class="text-sm font-medium text-gray-600 mb-0.5">Drop a video or <span class="text-indigo-600">browse</span></p>
+              <p class="text-xs text-gray-400">MP4, WebM, MOV, AVI · max 500 MB</p>
+            </div>
+
+            <!-- Video preview -->
+            <div x-show="videoFile" x-transition class="rounded-xl overflow-hidden border border-gray-100 shadow-sm">
+              <video :src="videoPreviewUrl" controls class="w-full max-h-64 bg-black" style="display:block"></video>
+              <div class="flex items-center justify-between px-4 py-2.5 bg-gray-50 border-t border-gray-100">
+                <div class="flex items-center gap-2 min-w-0">
+                  <svg class="w-4 h-4 text-indigo-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.069A1 1 0 0121 8.82v6.361a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/></svg>
+                  <span class="text-xs text-gray-600 truncate" x-text="videoFile ? videoFile.name : ''"></span>
+                  <span class="text-xs text-gray-400 shrink-0" x-text="videoFile ? formatBytes(videoFile.size) : ''"></span>
+                </div>
+                <button type="button" @click="removeVideo()"
+                  class="text-xs text-red-400 hover:text-red-600 transition-colors shrink-0 ml-2">Remove</button>
+              </div>
+            </div>
+
+            <!-- Size warning -->
+            <div x-show="videoSizeError" class="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p class="text-xs text-red-600" x-text="videoSizeError"></p>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- end col 2+3 -->
+    </div><!-- end grid -->
+  </form>
+
+  <!-- ══ INGREDIENT MODAL (same as add_recipe.html) ═════════════════ -->
+  <div x-show="modal === 'ingredient'" x-cloak x-transition.opacity
+    class="fixed inset-0 z-50 flex items-center justify-center px-4"
+    @keydown.escape.window="modal = null">
+    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="modal = null"></div>
+    <div x-show="modal === 'ingredient'" x-transition class="modal-box relative bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden">
+      <div class="flex items-center justify-between p-5 border-b border-gray-100">
+        <div class="flex items-center gap-2.5">
+          <div class="ingr-badge w-8 h-8 rounded-lg flex items-center justify-center">
+            <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 2a1 1 0 011 1v1h1a1 1 0 010 2H6v1a1 1 0 01-2 0V6H3a1 1 0 010-2h1V3a1 1 0 011-1z" clip-rule="evenodd"/></svg>
+          </div>
+          <h3 class="disp-font font-semibold text-gray-900">Add Ingredient</h3>
+        </div>
+        <button @click="modal = null" class="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="p-5 space-y-3" @keydown.enter.prevent>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Name <span class="text-red-400">*</span></label>
+          <input type="text" x-model="ingForm.name" placeholder="e.g. Chicken breast" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" @keydown.enter.prevent x-ref="ingNameInput">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Quantity</label>
+            <input type="text" x-model="ingForm.quantity" placeholder="2" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Unit</label>
+            <input type="text" x-model="ingForm.unit" placeholder="cups" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Notes <span class="text-gray-400 font-normal">(optional)</span></label>
+          <input type="text" x-model="ingForm.notes" placeholder="diced, room temperature…" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
+        </div>
+
+        <!-- mini image upload -->
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Photos <span class="text-gray-400 font-normal">(optional)</span></label>
+          <div class="drop-zone border border-dashed border-green-200 rounded-lg p-3 text-center cursor-pointer hover:border-green-400 hover:bg-green-50/50 transition-all"
+            @click="$refs.ingImgInput.click()">
+            <input type="file" x-ref="ingImgInput" multiple accept="image/*" class="hidden" @change="handleModalImages('ing', $event.target.files)">
+            <p class="text-xs text-gray-500">Click to add photos</p>
+          </div>
+          <div x-show="ingForm.imagePreviews.length > 0" class="grid grid-cols-4 gap-1.5 mt-2">
+            <template x-for="(img, i) in ingForm.imagePreviews" :key="i">
+              <div class="relative aspect-square rounded overflow-hidden group">
+                <img :src="img" class="w-full h-full object-cover">
+                <button type="button" @click="ingForm.imagePreviews.splice(i,1)"
+                  class="absolute top-0.5 right-0.5 w-4 h-4 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 text-[10px] flex items-center justify-center">×</button>
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-2.5 px-5 pb-5">
+        <button type="button" @click="modal = null"
+          class="px-4 py-2 text-sm border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">Cancel</button>
+        <button type="button" @click="saveIngredient()"
+          class="px-5 py-2 text-sm font-medium bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors shadow-sm">
+          Add Ingredient
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ STEP MODAL (same as add_recipe.html) ══════════════════════ -->
+  <div x-show="modal === 'step'" x-cloak x-transition.opacity
+    class="fixed inset-0 z-50 flex items-center justify-center px-4"
+    @keydown.escape.window="modal = null">
+    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="modal = null"></div>
+    <div x-show="modal === 'step'" x-transition class="modal-box relative bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto slim-scroll">
+      <div class="flex items-center justify-between p-5 border-b border-gray-100 sticky top-0 bg-white">
+        <div class="flex items-center gap-2.5">
+          <div class="step-badge w-8 h-8 rounded-lg flex items-center justify-center">
+            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+          </div>
+          <h3 class="disp-font font-semibold text-gray-900">Add Cooking Step</h3>
+        </div>
+        <button @click="modal = null" class="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="p-5 space-y-3">
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Step Title <span class="text-gray-400 font-normal">(optional)</span></label>
+          <input type="text" x-model="stepForm.name" placeholder="e.g. Prepare the sauce" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Instructions <span class="text-red-400">*</span></label>
+          <textarea x-model="stepForm.instruction" placeholder="Describe what to do…" rows="3" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors resize-none"></textarea>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Duration (min)</label>
+            <input type="number" x-model="stepForm.duration" placeholder="15" min="1" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Tip <span class="text-gray-400 font-normal">(optional)</span></label>
+            <input type="text" x-model="stepForm.description" placeholder="Pro tip…" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
+          </div>
+        </div>
+
+        <!-- mini image upload -->
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Photos <span class="text-gray-400 font-normal">(optional)</span></label>
+          <div class="drop-zone border border-dashed border-orange-200 rounded-lg p-3 text-center cursor-pointer hover:border-orange-400 hover:bg-orange-50/50 transition-all"
+            @click="$refs.stepImgInput.click()">
+            <input type="file" x-ref="stepImgInput" multiple accept="image/*" class="hidden" @change="handleModalImages('step', $event.target.files)">
+            <p class="text-xs text-gray-500">Click to add step photos</p>
+          </div>
+          <div x-show="stepForm.imagePreviews.length > 0" class="grid grid-cols-4 gap-1.5 mt-2">
+            <template x-for="(img, i) in stepForm.imagePreviews" :key="i">
+              <div class="relative aspect-square rounded overflow-hidden group">
+                <img :src="img" class="w-full h-full object-cover">
+                <button type="button" @click="stepForm.imagePreviews.splice(i,1)"
+                  class="absolute top-0.5 right-0.5 w-4 h-4 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 text-[10px] flex items-center justify-center">×</button>
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-2.5 px-5 pb-5">
+        <button type="button" @click="modal = null"
+          class="px-4 py-2 text-sm border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">Cancel</button>
+        <button type="button" @click="saveStep()"
+          class="px-5 py-2 text-sm font-medium bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors shadow-sm">
+          Add Step
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ TOAST ══════════════════════════════════════════════════════ -->
+  <div x-show="toast.show" x-cloak x-transition
+    class="fixed top-4 right-4 z-50 flex items-center gap-2.5 px-4 py-3 rounded-xl shadow-lg text-sm font-medium"
+    :class="toast.type === 'error' ? 'bg-red-500 text-white' : 'bg-gray-900 text-white'">
+    <svg x-show="toast.type === 'error'" class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+    <span x-text="toast.msg"></span>
+  </div>
+
+</div><!-- end x-data -->
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function recipePage() {
+  return {
+    // ── modals & state
+    modal: null,
+    toast: { show: false, msg: '', type: 'info' },
+
+    // ── ingredients
+    ingredients: [],
+    ingCount: 0,
+    ingForm: { name:'', quantity:'', unit:'', notes:'', images:[], imagePreviews:[] },
+
+    // ── steps
+    steps: [],
+    stepCount: 0,
+    stepForm: { name:'', instruction:'', duration:'', description:'', images:[], imagePreviews:[] },
+
+    // ── images
+    imagePreviews: [],
+    imageFiles: [],
+
+    // ── video
+    videoTab: 'youtube',
+    youtubeUrl: '',
+    youtubeEmbed: '',
+    youtubeError: '',
+    videoFile: null,
+    videoPreviewUrl: '',
+    videoSizeError: '',
+
+    init() {
+      // Load existing recipe data
+      this.loadExistingRecipeData();
+
+      // form submit handler
+      document.getElementById('recipe-form').addEventListener('submit', (e) => {
+        if (!this.validateForm(e)) return;
+        this.buildHiddenFields();
+      });
+    },
+
+    // Load existing recipe data (ingredients, steps, images, video)
+    loadExistingRecipeData() {
+      // Load ingredients
+      {% if recipe.ingredients %}
+      const existingIngredients = [
+        {% for ing in recipe.ingredients %}
+        {
+          name: {{ ing.name | tojson }},
+          quantity: {{ ing.quantity | tojson }},
+          unit: {{ ing.unit | tojson }},
+          notes: {{ ing.notes | tojson }}
+        }{{ ',' if not loop.last else '' }}
+        {% endfor %}
+      ];
+      existingIngredients.forEach(ing => {
+        this.ingredients.push({
+          id: this.ingCount++,
+          name: ing.name || '',
+          quantity: ing.quantity || '',
+          unit: ing.unit || '',
+          notes: ing.notes || '',
+          images: [],
+          imagePreviews: []
+        });
+      });
+      {% endif %}
+      
+      // Load steps
+      {% if recipe.steps %}
+      const existingSteps = [
+        {% for step in recipe.steps %}
+        {
+          step_number: {{ step.step_number | tojson }},
+          name: {{ step.name | tojson }},
+          instruction: {{ step.instruction | tojson }},
+          duration: {{ step.duration | tojson }},
+          description: {{ step.description | tojson }}
+        }{{ ',' if not loop.last else '' }}
+        {% endfor %}
+      ];
+      existingSteps.forEach(step => {
+        this.steps.push({
+          id: this.stepCount++,
+          number: step.step_number || this.steps.length + 1,
+          name: step.name || '',
+          instruction: step.instruction || '',
+          duration: step.duration || '',
+          description: step.description || '',
+          images: [],
+          imagePreviews: []
+        });
+      });
+      {% endif %}
+
+      // Load existing images
+      {% if recipe.images %}
+      {% for image in recipe.images %}
+      this.imagePreviews.push({
+        src: '{{ image.url }}',
+        name: 'existing-image-{{ loop.index }}'
+      });
+      {% endfor %}
+      {% endif %}
+
+      // Load existing video
+      {% if recipe.videos and recipe.videos|length > 0 %}
+      const videoUrl = '{{ recipe.videos[0].video_url }}';
+      if (videoUrl.includes('youtube.com/embed/')) {
+        const embedId = videoUrl.split('youtube.com/embed/')[1].split('?')[0];
+        this.youtubeEmbed = embedId;
+        this.youtubeUrl = 'https://www.youtube.com/watch?v=' + embedId;
+        this.videoTab = 'youtube';
+      } else {
+        // It's an uploaded video
+        this.videoPreviewUrl = videoUrl;
+        this.videoFile = { name: 'Existing video' };
+        this.videoTab = 'upload';
+      }
+      {% endif %}
+    },
+
+    // ── Modal helpers
+    openModal(type) {
+      this.modal = type;
+      if (type === 'ingredient') {
+        this.ingForm = { name:'', quantity:'', unit:'', notes:'', images:[], imagePreviews:[] };
+        this.$nextTick(() => this.$refs.ingNameInput && this.$refs.ingNameInput.focus());
+      } else {
+        this.stepForm = { name:'', instruction:'', duration:'', description:'', images:[], imagePreviews:[] };
+      }
+    },
+
+    // ── Ingredients
+    saveIngredient() {
+      if (!this.ingForm.name.trim()) {
+        this.showToast('Ingredient name is required', 'error'); return;
+      }
+      this.ingredients.push({ ...this.ingForm, id: this.ingCount++ });
+      this.modal = null;
+    },
+    removeIngredient(id) {
+      this.ingredients = this.ingredients.filter(i => i.id !== id);
+    },
+
+    // ── Steps
+    saveStep() {
+      if (!this.stepForm.instruction.trim()) {
+        this.showToast('Step instruction is required', 'error'); return;
+      }
+      this.steps.push({ ...this.stepForm, id: this.stepCount++, number: this.steps.length + 1 });
+      this.modal = null;
+    },
+    removeStep(id) {
+      this.steps = this.steps.filter(s => s.id !== id);
+      this.steps.forEach((s, i) => s.number = i + 1);
+    },
+
+    // ── Image upload (main)
+    handleImageDrop(e) {
+      document.getElementById('img-drop-zone').classList.remove('over');
+      this.handleImageFiles(e.dataTransfer.files);
+    },
+    handleImageFiles(files) {
+      Array.from(files).forEach(file => {
+        if (!file.type.startsWith('image/')) return;
+        if (file.size > 30 * 1024 * 1024) { this.showToast(file.name + ' exceeds 30 MB', 'error'); return; }
+        const reader = new FileReader();
+        reader.onload = e => {
+          this.imagePreviews.push({ src: e.target.result, name: file.name });
+          this.imageFiles.push(file);
+        };
+        reader.readAsDataURL(file);
+      });
+    },
+    removeImage(idx) {
+      this.imagePreviews.splice(idx, 1);
+      this.imageFiles.splice(idx, 1);
+    },
+
+    // ── Modal image upload
+    handleModalImages(target, files) {
+      const form = target === 'ing' ? this.ingForm : this.stepForm;
+      Array.from(files).forEach(file => {
+        if (!file.type.startsWith('image/')) return;
+        const reader = new FileReader();
+        reader.onload = e => form.imagePreviews.push(e.target.result);
+        reader.readAsDataURL(file);
+        form.images.push(file);
+      });
+    },
+
+    // ── Video upload
+    handleVideoDrop(e) {
+      e.target.classList.remove('over');
+      const file = e.dataTransfer.files[0];
+      if (file) this.handleVideoFile(file);
+    },
+    handleVideoFile(file) {
+      this.videoSizeError = '';
+      if (!file) return;
+      const allowed = ['video/mp4','video/webm','video/quicktime','video/avi','video/mov'];
+      if (!allowed.includes(file.type) && !file.name.match(/\.(mp4|webm|mov|avi)$/i)) {
+        this.videoSizeError = 'Unsupported format. Please use MP4, WebM, MOV, or AVI.'; return;
+      }
+      if (file.size > 500 * 1024 * 1024) {
+        this.videoSizeError = 'File too large. Maximum size is 500 MB.'; return;
+      }
+      this.videoFile = file;
+      this.videoPreviewUrl = URL.createObjectURL(file);
+    },
+    removeVideo() {
+      this.videoFile = null;
+      if (this.videoPreviewUrl) URL.revokeObjectURL(this.videoPreviewUrl);
+      this.videoPreviewUrl = '';
+    },
+
+    // ── YouTube parser
+    parseYoutube() {
+      this.youtubeEmbed = '';
+      this.youtubeError = '';
+      if (!this.youtubeUrl.trim()) return;
+
+      const patterns = [
+        /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/,
+        /^([a-zA-Z0-9_-]{11})$/,
+      ];
+      for (const p of patterns) {
+        const m = this.youtubeUrl.match(p);
+        if (m) { this.youtubeEmbed = m[1]; return; }
+      }
+      this.youtubeError = 'Could not find a valid YouTube video ID in that URL.';
+    },
+
+    // ── Validation
+    validateForm(e) {
+      const name = document.querySelector('[name="name"]')?.value?.trim();
+      const errors = [];
+      if (!name) errors.push('Recipe name is required.');
+      if (this.ingredients.length === 0) errors.push('Add at least one ingredient.');
+      if (this.steps.length === 0) errors.push('Add at least one cooking step.');
+      if (errors.length) {
+        e.preventDefault();
+        this.showToast(errors[0], 'error');
+        return false;
+      }
+      return true;
+    },
+
+    // ── Build hidden fields before submit
+    buildHiddenFields() {
+      const form = document.getElementById('recipe-form');
+      form.querySelectorAll('[name^="ingredient_"],[name^="step_"]').forEach(f => f.remove());
+      
+      // Add ingredient array fields
+      this.ingredients.forEach((ing, i) => {
+        const addField = (name, value) => {
+          const inp = document.createElement('input');
+          inp.type = 'hidden';
+          inp.name = name;
+          inp.value = value || '';
+          form.appendChild(inp);
+        };
+        
+        addField('ingredient_names[]', ing.name);
+        addField('ingredient_quantities[]', ing.quantity);
+        addField('ingredient_units[]', ing.unit);
+        addField('ingredient_notes[]', ing.notes);
+      });
+      
+      // Add step array fields
+      this.steps.forEach((step, i) => {
+        const addField = (name, value) => {
+          const inp = document.createElement('input');
+          inp.type = 'hidden';
+          inp.name = name;
+          inp.value = value || '';
+          form.appendChild(inp);
+        };
+        
+        addField('step_numbers[]', step.number || i + 1);
+        addField('step_names[]', step.name);
+        addField('step_instructions[]', step.instruction);
+        addField('step_durations[]', step.duration);
+        addField('step_descriptions[]', step.description);
+      });
+    },
+
+    // ── Toast
+    showToast(msg, type = 'info') {
+      this.toast = { show: true, msg, type };
+      setTimeout(() => this.toast.show = false, 3500);
+    },
+
+    // ── Utilities
+    formatBytes(b) {
+      if (b < 1024*1024) return (b/1024).toFixed(1) + ' KB';
+      return (b/(1024*1024)).toFixed(1) + ' MB';
+    }
+  };
+}
+</script>
+
+{% endblock %}
