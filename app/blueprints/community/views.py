@@ -6,6 +6,7 @@ from app.models.recipe import Recipe
 from app.models.comment import Comment
 from app.models.post import Post
 from app.models.image import Image
+from app.models.category import Category
 from app.blueprints.community.forms import PostForm, CommentForm
 from app.services.upload import upload_service
 
@@ -72,7 +73,19 @@ def feed():
                     flash("Failed to post comment", "error")
             return redirect(url_for("community.feed"))
 
-    recipes = Recipe.query.filter(Recipe.public == True).order_by(Recipe.created_at.desc()).limit(20).all()
+    recipes = (
+        Recipe.query
+        .options(
+            joinedload(Recipe.images),
+            joinedload(Recipe.comments).joinedload(Comment.author),
+            joinedload(Recipe.author),
+            joinedload(Recipe.category)
+        )
+        .filter(Recipe.public == True)
+        .order_by(Recipe.created_at.desc())
+        .limit(20)
+        .all()
+    )
     posts = (
         Post.query
         .options(joinedload(Post.images), joinedload(Post.author))
