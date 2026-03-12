@@ -8,7 +8,7 @@ from app.models.post import Post
 from app.models.comment import Comment
 from app.extensions import db
 from sqlalchemy import or_, desc, func, case
-from app.blueprints.dashboard.forms import RecipeForm, CommentForm
+from app.blueprints.dashboard.forms import RecipeForm, CommentForm, SettingsForm
 from app.models.step import Step
 from app.models.ingredients import Ingredient
 from app.models.image import Image
@@ -502,7 +502,7 @@ def delete_recipe(recipe_id):
 def add_comment(recipe_id):
     form = CommentForm()
     if form.validate_on_submit():
-        comment = Comment(comment_text=form.comment_text.data, recipe_id=recipe_id, user_id=current_user.id)
+        comment = Comment(content=form.comment_text.data, recipe_id=recipe_id, user_id=current_user.id)
         db.session.add(comment)
         db.session.commit()
         flash("Comment posted!", "success")

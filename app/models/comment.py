@@ -17,4 +17,4 @@ class Comment(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def __repr__(self):
-        return f"<Comment {self.comment_text[:20]}>"
+        return f"<Comment {self.content[:20]}>"

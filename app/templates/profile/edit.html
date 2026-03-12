@@ -1,0 +1,116 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Edit Profile - ODiGO{% endblock %}
+
+{% block dashboard_content %}
+<div class="max-w-3xl mx-auto">
+    <div class="bg-white rounded-xl p-6 border border-gray-200">
+        <div class="flex items-center justify-between mb-6">
+            <h1 class="text-2xl font-bold text-gray-900">Edit Profile</h1>
+            <a href="{{ url_for('profile.index') }}" class="text-sm text-gray-600 hover:text-gray-900">
+                <i class="fa-solid fa-arrow-left mr-2"></i>Back to Profile
+            </a>
+        </div>
+
+        <form method="POST" action="{{ url_for('profile.edit') }}" class="space-y-6">
+            <!-- Name -->
+            <div>
+                <label for="name" class="block text-sm font-medium text-gray-700 mb-2">
+                    Full Name
+                </label>
+                <input
+                    type="text"
+                    name="name"
+                    id="name"
+                    value="{{ user.name }}"
+                    required
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                >
+            </div>
+
+            <!-- Email -->
+            <div>
+                <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
+                    Email Address
+                </label>
+                <input
+                    type="email"
+                    name="email"
+                    id="email"
+                    value="{{ user.email }}"
+                    required
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                >
+            </div>
+
+            <!-- Phone -->
+            <div>
+                <label for="phone" class="block text-sm font-medium text-gray-700 mb-2">
+                    Phone Number
+                    <span class="text-gray-500 font-normal">(optional)</span>
+                </label>
+                <input
+                    type="tel"
+                    name="phone"
+                    id="phone"
+                    value="{{ user.phone or '' }}"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                >
+            </div>
+
+            <!-- Account Information -->
+            <div class="border-t border-gray-200 pt-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Account Information</h3>
+                <div class="space-y-3 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Account Type:</span>
+                        <span class="font-medium text-gray-900">{{ user.role|capitalize }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Auth Provider:</span>
+                        <span class="font-medium text-gray-900">{{ user.auth_provider|capitalize }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Account Status:</span>
+                        {% if user.is_active %}
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            <i class="fa-solid fa-check-circle mr-1"></i>Active
+                        </span>
+                        {% else %}
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            <i class="fa-solid fa-times-circle mr-1"></i>Inactive
+                        </span>
+                        {% endif %}
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Verification Status:</span>
+                        {% if user.is_verified %}
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            <i class="fa-solid fa-badge-check mr-1"></i>Verified
+                        </span>
+                        {% else %}
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                            <i class="fa-solid fa-exclamation-circle mr-1"></i>Not Verified
+                        </span>
+                        {% endif %}
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Member Since:</span>
+                        <span class="font-medium text-gray-900">{{ user.created_at.strftime('%B %d, %Y') }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="flex items-center justify-end gap-4 border-t border-gray-200 pt-6">
+                <a href="{{ url_for('profile.index') }}" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                    Cancel
+                </a>
+                <button type="submit" class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">
+                    <i class="fa-solid fa-save mr-2"></i>Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
