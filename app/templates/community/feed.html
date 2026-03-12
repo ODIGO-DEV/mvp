@@ -93,29 +93,162 @@
 
 /* ── FEED CARDS ── */
 .feed-card {
-  background: var(--white); border: 1.5px solid var(--border);
-  border-radius: 1.125rem; overflow: hidden;
-  transition: border-color .2s, box-shadow .2s;
+  background: var(--white); 
+  border: 1.5px solid var(--border);
+  border-radius: 1.25rem; 
+  overflow: hidden;
+  transition: all .25s cubic-bezier(.4,0,.2,1);
+  box-shadow: 0 1px 3px rgba(0,0,0,.04);
 }
-.feed-card:hover { border-color: var(--indigo-m); box-shadow: 0 8px 28px -6px rgba(79,70,229,.11); }
-.recipe-img-wrap { position: relative; overflow: hidden; height: 13rem; }
-.recipe-img-wrap img, .recipe-img-wrap .img-ph { width: 100%; height: 100%; object-fit: cover; transition: transform .38s ease; }
-.feed-card:hover .recipe-img-wrap img { transform: scale(1.04); }
-.img-ph { background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 52%, #ec4899 100%); display: flex; align-items: center; justify-content: center; }
+.feed-card:hover { 
+  border-color: var(--indigo-m); 
+  box-shadow: 0 8px 24px -6px rgba(79,70,229,.12);
+  transform: translateY(-1px);
+}
+
+.post-content-text {
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1.6;
+  margin-bottom: 0.75rem;
+}
+
+.post-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-weight: 700;
+  color: var(--ink);
+  font-size: 1.25rem;
+  line-height: 1.4;
+  margin-bottom: 0.625rem;
+}
+
+.post-meta-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  background: #ede9fe;
+  color: #6d28d9;
+  border: 1px solid #ddd6fe;
+}
+
+/* ── POST IMAGES (Twitter-like) ── */
+.post-image-container {
+  position: relative;
+  background: #f7f9fa;
+  overflow: hidden;
+  margin: 0.75rem 0;
+  border-radius: 1rem;
+}
+.post-image-single {
+  width: 100%;
+  max-height: 500px;
+  display: block;
+}
+.post-image-single img {
+  width: 100%;
+  height: 100%;
+  max-height: 500px;
+  object-fit: cover;
+  background: #f7f9fa;
+  display: block;
+  cursor: pointer;
+  transition: filter .2s;
+}
+.post-image-single img:hover {
+  filter: brightness(0.95);
+}
+.post-image-grid {
+  display: grid;
+  gap: 2px;
+  background: #f7f9fa;
+  border-radius: 1rem;
+  overflow: hidden;
+}
+.post-image-grid-2 {
+  grid-template-columns: repeat(2, 1fr);
+  max-height: 400px;
+}
+.post-image-grid-3 {
+  grid-template-columns: repeat(2, 1fr);
+  max-height: 400px;
+}
+.post-image-grid-3 img:first-child {
+  grid-row: span 2;
+  height: 100%;
+}
+.post-image-grid-4 {
+  grid-template-columns: repeat(2, 1fr);
+  max-height: 400px;
+}
+.post-image-grid img {
+  width: 100%;
+  height: 100%;
+  min-height: 200px;
+  object-fit: cover;
+  cursor: pointer;
+  transition: filter .2s;
+}
+.post-image-grid img:hover {
+  filter: brightness(0.95);
+}
+.post-image-more-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0,0,0,0.75);
+  color: white;
+  padding: 12px 20px;
+  border-radius: 24px;
+  font-size: 15px;
+  font-weight: 700;
+  backdrop-filter: blur(12px);
+  pointer-events: none;
+}
+
+.recipe-img-wrap { 
+  position: relative; 
+  overflow: hidden; 
+  height: 14rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+.recipe-img-wrap img, .recipe-img-wrap .img-ph { 
+  width: 100%; 
+  height: 100%; 
+  object-fit: cover; 
+  transition: transform .38s ease; 
+}
+.feed-card:hover .recipe-img-wrap img { transform: scale(1.06); }
+.img-ph { 
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 52%, #ec4899 100%); 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+}
 .recipe-img-badge {
-  position: absolute; top: .75rem; left: .75rem;
-  background: rgba(255,255,255,.92); backdrop-filter: blur(6px);
-  border-radius: 9999px; padding: .25rem .75rem;
-  font-size: .6875rem; font-weight: 700;
-  display: flex; align-items: center; gap: .3rem;
+  position: absolute; top: .875rem; left: .875rem;
+  background: rgba(255,255,255,.95); 
+  backdrop-filter: blur(10px);
+  border-radius: 9999px; 
+  padding: .35rem .9rem;
+  font-size: .7rem; 
+  font-weight: 700;
+  display: flex; 
+  align-items: center; 
+  gap: .35rem;
   font-family: 'DM Sans', sans-serif;
+  box-shadow: 0 2px 12px rgba(0,0,0,.1);
 }
 .recipe-name-overlay {
   position: absolute; bottom: 0; left: 0; right: 0;
-  background: linear-gradient(to top, rgba(0,0,0,.62) 0%, transparent 100%);
-  padding: 2.5rem 1rem .875rem;
+  background: linear-gradient(to top, rgba(0,0,0,.75) 0%, rgba(0,0,0,.3) 50%, transparent 100%);
+  padding: 3rem 1.25rem 1rem;
 }
-.card-body { padding: 1rem 1.25rem 1.25rem; }
+.card-body { padding: 1.125rem 1.35rem 1.35rem; }
 
 /* ── AVATAR ── */
 .av {
@@ -146,16 +279,16 @@
 
 /* ── ACTION BUTTONS ── */
 .act-btn {
-  display: inline-flex; align-items: center; gap: .35rem;
-  padding: .35rem .7rem; border-radius: .5rem;
-  font-size: .8rem; font-weight: 500; color: var(--muted);
+  display: inline-flex; align-items: center; gap: .4rem;
+  padding: .5rem .875rem; border-radius: .625rem;
+  font-size: .8125rem; font-weight: 500; color: var(--muted);
   cursor: pointer; border: none; background: transparent;
-  transition: all .14s; font-family: 'DM Sans', sans-serif;
+  transition: all .16s; font-family: 'DM Sans', sans-serif;
 }
 .act-btn:hover { color: var(--indigo); background: var(--indigo-l); }
 .act-btn.liked svg { fill: #ef4444; stroke: #ef4444; }
 .act-btn.liked { color: #ef4444; }
-.act-btn.liked:hover { background: #fef2f2; }
+.act-btn.liked:hover { background: #fef2f2; color: #dc2626; }
 .act-btn.view-link { color: var(--indigo); font-weight: 600; margin-left: auto; }
 .act-btn.view-link:hover { background: var(--indigo); color: #fff; }
 
@@ -264,11 +397,110 @@ textarea.form-field { resize: none; }
 .fu2 { animation-delay: .1s; }
 .fu3 { animation-delay: .15s; }
 .fu4 { animation-delay: .2s; }
+
+/* ── IMAGE LIGHTBOX ── */
+.lightbox-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.95);
+  z-index: 9999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  cursor: zoom-out;
+  animation: fadeIn 0.2s;
+}
+.lightbox-overlay.active {
+  display: flex;
+}
+.lightbox-image {
+  max-width: 90vw;
+  max-height: 90vh;
+  object-fit: contain;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+  animation: zoomIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.lightbox-close {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.lightbox-close:hover {
+  background: rgba(255,255,255,0.2);
+  transform: scale(1.1);
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes zoomIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ── IMPROVED FEED LAYOUT ── */
+.feed-container-max {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.feed-section-title {
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.feed-section-title::before {
+  content: '';
+  width: 4px;
+  height: 24px;
+  background: linear-gradient(to bottom, var(--indigo), var(--indigo-d));
+  border-radius: 4px;
+}
+
+/* ── RESPONSIVE IMPROVEMENTS ── */
+@media (max-width: 640px) {
+  .hero {
+    padding: 1.75rem 1.5rem;
+  }
+  .post-title {
+    font-size: 1.125rem;
+  }
+  .toolbar {
+    padding: 0.75rem 1rem;
+  }
+  .feed-card {
+    margin-left: -0.25rem;
+    margin-right: -0.25rem;
+    border-radius: 1rem;
+  }
+}
 </style>
 
-{% set total_comments = namespace(n=0) %}
-{% for recipe in recipes %}{% if recipe.comments %}{% set total_comments.n = total_comments.n + recipe.comments|length %}{% endif %}{% endfor %}
-{% set feed_items = (posts + recipes)|sort(attribute='created_at', reverse=True) %}
+{% set feed_items = posts|sort(attribute='created_at', reverse=True) %}
 
 <div class="dm space-y-4">
 
@@ -279,9 +511,9 @@ textarea.form-field { resize: none; }
     <div class="hero-glow hero-glow-2"></div>
     <div class="relative z-10 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-5">
       <div class="flex-1">
-        <p class="text-indigo-300 text-xs font-semibold tracking-widest uppercase mb-2">Shared Kitchen</p>
-        <h1 class="pf text-2xl sm:text-[1.875rem] font-bold text-white leading-tight">Community Feed</h1>
-        <p class="text-indigo-200 text-sm mt-1.5 mb-5">Share recipes, spark discussions, and connect with fellow food lovers</p>
+        <p class="text-indigo-300 text-xs font-semibold tracking-widest uppercase mb-2">Community</p>
+        <h1 class="pf text-2xl sm:text-[1.875rem] font-bold text-white leading-tight">Discussion Feed</h1>
+        <p class="text-indigo-200 text-sm mt-1.5 mb-5">Share your thoughts, ask questions, and connect with fellow food enthusiasts</p>
         <button class="create-btn" onclick="openModal()">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
           New Post
@@ -289,16 +521,17 @@ textarea.form-field { resize: none; }
       </div>
       <div class="flex gap-2.5 flex-wrap shrink-0">
         <div class="stat-pill">
-          <div class="pf text-xl font-bold text-white">{{ recipes|length }}</div>
-          <p class="text-indigo-200 text-xs mt-0.5">Recipes</p>
-        </div>
-        <div class="stat-pill">
           <div class="pf text-xl font-bold text-white">{{ posts|length }}</div>
           <p class="text-indigo-200 text-xs mt-0.5">Posts</p>
         </div>
         <div class="stat-pill">
-          <div class="pf text-xl font-bold text-white">{{ total_comments.n }}</div>
-          <p class="text-indigo-200 text-xs mt-0.5">Comments</p>
+          {% set posts_with_images = posts | selectattr('images') | list %}
+          <div class="pf text-xl font-bold text-white">{{ posts_with_images|length }}</div>
+          <p class="text-indigo-200 text-xs mt-0.5">With Media</p>
+        </div>
+        <div class="stat-pill">
+          <div class="pf text-xl font-bold text-white">{{ current_user.name[0].upper() if current_user.name else 'U' }}</div>
+          <p class="text-indigo-200 text-xs mt-0.5">Active</p>
         </div>
       </div>
     </div>
@@ -306,14 +539,13 @@ textarea.form-field { resize: none; }
 
   <!-- ══ TOOLBAR ══ -->
   <div class="toolbar fu fu1">
-    <button class="filter-pill active" data-filter="all">All</button>
-    <button class="filter-pill" data-filter="recipe">
-      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0118 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/></svg>
-      Recipes
+    <button class="filter-pill active" data-filter="all">
+      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+      All Posts
     </button>
-    <button class="filter-pill" data-filter="post">
-      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-      Discussions
+    <button class="filter-pill" data-filter="images">
+      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+      With Images
     </button>
     <div class="search-wrap ml-auto">
       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/></svg>
@@ -329,168 +561,111 @@ textarea.form-field { resize: none; }
   <div id="feed-container" class="fu fu2">
 
     {% if feed_items %}
-      <!-- Recipe Grid Section -->
-      {% set recipe_items = feed_items | selectattr('__class__.__name__', 'equalto', 'Recipe') | list %}
-      {% if recipe_items %}
-      <div class="mb-6">
-        <div class="flex items-center gap-3 mb-4">
-          <h2 class="pf text-xl font-bold text-gray-900">Recipes</h2>
-          <span class="text-sm text-gray-500">({{ recipe_items|length }})</span>
-        </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {% for item in recipe_items %}
-          <div class="feed-card" data-type="recipe" data-title="{{ item.name|lower }}" data-author="{{ (item.author.name or '')|lower }}">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-5">
+          {% for item in feed_items %}
 
-            <div class="recipe-img-wrap">
-              {% if item.images %}<img src="{{ item.images[0].url }}" alt="{{ item.name }}">
-              {% else %}<div class="img-ph"><svg class="w-10 h-10 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0118 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/></svg></div>{% endif %}
-              <div class="recipe-img-badge" style="color:#4f46e5">
-                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0118 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/></svg>
-                Recipe
-              </div>
-              <div class="recipe-name-overlay">
-                <h3 class="pf font-bold text-white text-lg leading-snug drop-shadow-sm">{{ item.name }}</h3>
-              </div>
-            </div>
-
-            <div class="card-body">
-              <div class="flex items-center gap-2.5 mb-3">
-                <div class="av av-md av-indigo">{{ (item.author.name or 'U')[0].upper() }}</div>
-                <div class="flex-1 min-w-0">
-                  <div class="flex items-center gap-2 flex-wrap">
-                    <span class="text-sm font-semibold text-gray-900">{{ item.author.name or 'Chef' }}</span>
-                  </div>
-                  <div class="flex items-center gap-1.5 text-xs text-gray-400 mt-0.5">
-                    <time>{{ item.created_at.strftime('%b %d, %Y') }}</time>
-                    {% if item.origin %}<span>·</span><span>{{ item.origin.name }}</span>{% endif %}
-                  </div>
+        {# ── POST CARD ── #}
+        <div class="feed-card" data-type="post" data-title="{{ (item.title or '')|lower }}" data-author="{{ (item.author.name or '')|lower }}" data-has-images="{{ 'true' if item.images and item.images|length > 0 else 'false' }}">
+          
+          <div class="p-5">
+            {# Author Header #}
+            <div class="flex items-start gap-3 mb-4">
+              <div class="av av-md av-green">{{ (item.author.name or 'U')[0].upper() }}</div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 flex-wrap mb-1">
+                  <span class="text-[15px] font-semibold text-gray-900">{{ item.author.name or 'Chef' }}</span>
+                  <span class="text-xs text-gray-400">·</span>
+                  <time class="text-xs text-gray-500">{{ item.created_at.strftime('%b %d, %Y at %H:%M') }}</time>
                 </div>
-              </div>
-
-              <div class="flex flex-wrap gap-1.5 mb-3">
-                {% if item.category %}<span class="meta-tag tag-cat">{{ item.category.name }}</span>{% endif %}
-                {% if item.prep_time %}
-                <span class="meta-tag tag-time">
-                  <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                  {{ item.prep_time }}m
-                </span>{% endif %}
-                {% if item.servings %}
-                <span class="meta-tag tag-serve">
-                  <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                  {{ item.servings }} serves
-                </span>{% endif %}
-              </div>
-
-              {% if item.description %}
-              <p class="text-gray-500 text-sm leading-relaxed line-clamp-2 mb-3">{{ item.description|striptags|truncate(140) }}</p>
-              {% endif %}
-
-              <div class="flex items-center gap-0.5 border-t border-gray-50 pt-3 flex-wrap">
-                <button class="act-btn like-btn">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
-                  Save
-                </button>
-                <button class="act-btn comment-toggle-btn" data-id="{{ item.id }}">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-                  {{ item.comments|length if item.comments else 0 }}
-                </button>
-                <a href="{{ url_for('dashboard.view_recipe', recipe_id=item.id) }}" class="act-btn view-link ml-auto">
-                  View
-                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                </a>
-              </div>
-
-              <div class="comment-section hidden" id="comments-{{ item.id }}">
-                <form method="post" action="{{ url_for('community.feed') }}" class="flex items-center gap-2 mb-3">
-                  {{ comment_form.hidden_tag() }}
-                  <input type="hidden" name="recipe_id" value="{{ item.id }}">
-                  <div class="av av-sm av-indigo shrink-0">{{ (current_user.name or 'U')[0].upper() }}</div>
-                  {{ comment_form.comment_text(class="comment-form-input", placeholder="Add a comment…") }}
-                  {{ comment_form.submit(class="comment-submit-btn") }}
-                </form>
-                {% if item.comments %}
-                <div class="space-y-2 max-h-52 overflow-y-auto">
-                  {% for c in item.comments|sort(attribute='created_at', reverse=True) %}
-                  <div class="flex gap-2">
-                    <div class="av av-sm av-green shrink-0">{{ (c.author.name or 'U')[0].upper() }}</div>
-                    <div class="comment-bubble">
-                      <div class="flex items-baseline gap-2 mb-0.5">
-                        <span class="text-xs font-semibold text-gray-800">{{ c.author.name or 'Anonymous' }}</span>
-                        <time class="text-[10px] text-gray-400">{{ c.created_at.strftime('%b %d · %H:%M') }}</time>
-                      </div>
-                      <p class="text-xs text-gray-600 leading-relaxed">{{ c.comment_text }}</p>
-                    </div>
-                  </div>
-                  {% endfor %}
-                </div>
+                {% if item.images and item.images|length > 0 %}
+                <span class="post-meta-badge">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                  {{ item.images|length }} {{ 'image' if item.images|length == 1 else 'images' }}
+                </span>
                 {% endif %}
               </div>
             </div>
-          </div>
-          {% endfor %}
-        </div>
-      </div>
-      {% endif %}
 
-      <!-- Discussion Posts Section -->
-      {% set post_items = feed_items | selectattr('__class__.__name__', 'equalto', 'Post') | list %}
-      {% if post_items %}
-      <div>
-        <div class="flex items-center gap-3 mb-4">
-          <h2 class="pf text-xl font-bold text-gray-900">Discussions</h2>
-          <span class="text-sm text-gray-500">({{ post_items|length }})</span>
-        </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {% for item in post_items %}
+            {# Title #}
+            {% if item.title %}
+            <h3 class="post-title">{{ item.title }}</h3>
+            {% endif %}
 
-        {# ── DISCUSSION POST ── #}
-        <div class="feed-card p-4" data-type="post" data-title="{{ item.title|lower }}" data-author="{{ (item.author.name or '')|lower }}">
-          <div class="flex items-start gap-3 mb-3">
-            <div class="av av-md av-green">{{ (item.author.name or 'U')[0].upper() }}</div>
-            <div class="flex-1 min-w-0">
-              <div class="flex items-center gap-2 flex-wrap">
-                <span class="text-sm font-semibold text-gray-900">{{ item.author.name or 'Chef' }}</span>
-                <span class="type-dot dot-post">Discussion</span>
-              </div>
-              <time class="text-xs text-gray-400 mt-0.5 block">{{ item.created_at.strftime('%b %d, %Y · %H:%M') }}</time>
+            {# Content with Read More #}
+            <div class="post-content-text">
+              <span id="post-preview-{{ loop.index }}">{{ item.content[:320] }}{% if item.content|length > 320 %}…{% endif %}</span>
+              {% if item.content|length > 320 %}
+              <span id="post-full-{{ loop.index }}" class="hidden">{{ item.content }}</span>
+              <button class="read-more-btn" data-idx="{{ loop.index }}">
+                Read more <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+              </button>
+              {% endif %}
+            </div>
+
+            <!-- Post Images (if any) -->
+            {% if item.images and item.images|length > 0 %}
+            <!-- DEBUG: Post {{ item.id }} has {{ item.images|length }} image(s) -->
+            <div class="post-image-container">
+              {% if item.images|length == 1 %}
+                <div class="post-image-single">
+                  <img src="{{ item.images[0].url }}" alt="Post image" loading="lazy" onclick="viewImage('{{ item.images[0].url }}')">
+                </div>
+              {% elif item.images|length == 2 %}
+                <div class="post-image-grid post-image-grid-2">
+                  {% for img in item.images[:2] %}
+                    <img src="{{ img.url }}" alt="Post image" loading="lazy" onclick="viewImage('{{ img.url }}')">
+                  {% endfor %}
+                </div>
+              {% elif item.images|length == 3 %}
+                <div class="post-image-grid post-image-grid-3">
+                  <img src="{{ item.images[0].url }}" alt="Post image" loading="lazy" onclick="viewImage('{{ item.images[0].url }}')">
+                  <img src="{{ item.images[1].url }}" alt="Post image" loading="lazy" onclick="viewImage('{{ item.images[1].url }}')">
+                  <img src="{{ item.images[2].url }}" alt="Post image" loading="lazy" onclick="viewImage('{{ item.images[2].url }}')">
+                </div>
+              {% else %}
+                <div class="post-image-grid post-image-grid-4" style="position: relative;">
+                  {% for img in item.images[:4] %}
+                    <img src="{{ img.url }}" alt="Post image" loading="lazy" onclick="viewImage('{{ img.url }}')" {% if loop.index == 4 and item.images|length > 4 %}style="filter: brightness(0.5);"{% endif %}>
+                  {% endfor %}
+                  {% if item.images|length > 4 %}
+                    <div class="post-image-more-overlay">
+                      +{{ item.images|length - 4 }}
+                    </div>
+                  {% endif %}
+                </div>
+              {% endif %}
+            </div>
+            {% else %}
+            <!-- DEBUG: Post {{ item.id }} has no images -->
+            {% endif %}
+
+            {# Action Buttons #}
+            <div class="flex items-center gap-1 border-t border-gray-100 pt-3 mt-4">
+              <button class="act-btn like-btn">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+                Like
+              </button>
+              <button class="act-btn">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                Comment
+              </button>
+              <button class="act-btn" onclick="shareItem('{{ item.title or 'Post' }}')">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+                Share
+              </button>
             </div>
           </div>
-
-          <h3 class="pf font-bold text-gray-900 text-[1.0625rem] leading-snug mb-2 line-clamp-2">{{ item.title }}</h3>
-
-          <div class="text-gray-600 text-sm leading-relaxed mb-3.5 line-clamp-3">
-            <span id="post-preview-{{ loop.index }}">{{ item.content[:180] }}{% if item.content|length > 180 %}…{% endif %}</span>
-            {% if item.content|length > 180 %}
-            <span id="post-full-{{ loop.index }}" class="hidden">{{ item.content }}</span>
-            <button class="read-more-btn" data-idx="{{ loop.index }}">
-              Read more <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-            </button>
-            {% endif %}
-          </div>
-
-          <div class="flex items-center gap-0.5 border-t border-gray-50 pt-2.5">
-            <button class="act-btn like-btn">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
-              Like
-            </button>
-            <button class="act-btn" onclick="shareItem('{{ item.title }}')">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
-              Share
-            </button>
-          </div>
         </div>
           {% endfor %}
-        </div>
       </div>
-      {% endif %}
 
     {% else %}
     <div class="empty-state fu fu3">
       <div class="empty-icon">
-        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
       </div>
-      <h3 class="pf text-xl font-bold text-gray-900 mb-2">Welcome to the Community!</h3>
-      <p class="text-gray-500 text-sm mb-6 max-w-sm mx-auto">Share your culinary creations and connect with fellow food enthusiasts.</p>
+      <h3 class="pf text-xl font-bold text-gray-900 mb-2">Start the Conversation!</h3>
+      <p class="text-gray-500 text-sm mb-6 max-w-sm mx-auto">Be the first to share your thoughts, ask a question, or spark a discussion in the community.</p>
       <button class="create-btn" onclick="openModal()">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
         Create First Post
@@ -508,26 +683,41 @@ textarea.form-field { resize: none; }
       <div class="flex items-center gap-3">
         <div class="av av-md av-indigo">{{ (current_user.name or 'U')[0].upper() }}</div>
         <div>
-          <h2 class="pf text-lg font-bold text-gray-900">Share with the Community</h2>
-          <p class="text-xs text-gray-400">What's cooking, {{ current_user.name or 'Chef' }}?</p>
+          <h2 class="pf text-lg font-bold text-gray-900">Create a Post</h2>
+          <p class="text-xs text-gray-400">Share your thoughts with the community</p>
         </div>
       </div>
       <button class="close-btn" onclick="closeModal()">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
       </button>
     </div>
-    <form method="POST" action="{{ url_for('community.feed') }}" id="post-form" class="modal-body space-y-4">
+    <form method="POST" action="{{ url_for('community.feed') }}" id="post-form" class="modal-body space-y-4" enctype="multipart/form-data">
       {{ post_form.hidden_tag() }}
       <div>
-        <label class="form-label">Title</label>
+        <label class="form-label">Title (Optional)</label>
         {{ post_form.title(class="form-field", placeholder="Give your post a title…") }}
       </div>
       <div>
         <label class="form-label">Content</label>
-        {{ post_form.content(class="form-field", rows=5, id="post-content", placeholder="Share your thoughts, a cooking tip, or ask the community a question…") }}
+        {{ post_form.content(class="form-field", rows=5, id="post-content", placeholder="Share your thoughts, a cooking tip, or ask the community a question…", required=true) }}
         <div class="flex items-center justify-between mt-1.5">
           <p class="text-xs text-gray-400">Be respectful and helpful</p>
           <span class="text-xs text-gray-400" id="char-count">0 / 2000</span>
+        </div>
+      </div>
+      <div>
+        <label class="form-label">Images (Optional)</label>
+        <div class="relative">
+          <input type="file" name="images" id="post-images" multiple accept="image/*" class="hidden">
+          <button type="button" onclick="document.getElementById('post-images').click()" 
+                  class="w-full border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-indigo-400 hover:bg-indigo-50 transition-all">
+            <svg class="w-8 h-8 mx-auto mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            </svg>
+            <p class="text-sm text-gray-600 font-medium">Click to upload images</p>
+            <p class="text-xs text-gray-400 mt-1">PNG, JPG, GIF up to 10MB each</p>
+          </button>
+          <div id="image-preview" class="mt-3 grid grid-cols-3 gap-2"></div>
         </div>
       </div>
       <div class="flex items-center justify-end gap-3 pt-3 border-t border-gray-100">
@@ -540,6 +730,12 @@ textarea.form-field { resize: none; }
 
 <div id="toast-host"></div>
 
+<!-- Image Lightbox -->
+<div id="image-lightbox" class="lightbox-overlay" onclick="closeLightbox()">
+  <button class="lightbox-close" onclick="closeLightbox()" aria-label="Close">×</button>
+  <img id="lightbox-img" src="" alt="Full size image" class="lightbox-image" onclick="event.stopPropagation()">
+</div>
+
 <script>
 function openModal() {
   document.getElementById('create-modal').classList.add('open');
@@ -549,6 +745,8 @@ function openModal() {
 function closeModal() {
   document.getElementById('create-modal').classList.remove('open');
   document.body.style.overflow = '';
+  document.getElementById('post-form').reset();
+  document.getElementById('image-preview').innerHTML = '';
 }
 
 document.querySelectorAll('.filter-pill').forEach(btn => {
@@ -557,7 +755,11 @@ document.querySelectorAll('.filter-pill').forEach(btn => {
     this.classList.add('active');
     const f = this.dataset.filter;
     document.querySelectorAll('.feed-card').forEach(c => {
-      c.style.display = (f === 'all' || c.dataset.type === f) ? '' : 'none';
+      if (f === 'all') {
+        c.style.display = '';
+      } else if (f === 'images') {
+        c.style.display = c.dataset.hasImages === 'true' ? '' : 'none';
+      }
     });
   });
 });
@@ -601,6 +803,24 @@ function shareItem(title) {
   else { navigator.clipboard?.writeText(location.href).then(() => toast('Link copied!', 'ok')).catch(() => toast('Copy failed')); }
 }
 
+function viewImage(url) {
+  const lb = document.getElementById('image-lightbox');
+  const img = document.getElementById('lightbox-img');
+  if (lb && img) {
+    img.src = url;
+    lb.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+}
+
+function closeLightbox() {
+  const lb = document.getElementById('image-lightbox');
+  if (lb) {
+    lb.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+}
+
 const pc = document.getElementById('post-content');
 const cc = document.getElementById('char-count');
 if (pc && cc) pc.addEventListener('input', function() {
@@ -610,14 +830,50 @@ if (pc && cc) pc.addEventListener('input', function() {
 });
 
 document.getElementById('post-form').addEventListener('submit', function(e) {
-  const t = this.querySelector('[name="title"]')?.value.trim();
   const c = this.querySelector('[name="content"]')?.value.trim();
-  if (!t) { e.preventDefault(); toast('Please enter a title', 'err'); return; }
   if (!c) { e.preventDefault(); toast('Please add some content', 'err'); return; }
   if (c.length > 2000) { e.preventDefault(); toast('Content too long', 'err'); return; }
   const btn = document.getElementById('post-submit');
   if (btn) { btn.value = 'Posting…'; btn.disabled = true; }
 });
+
+// Image preview functionality
+document.getElementById('post-images').addEventListener('change', function(e) {
+  const preview = document.getElementById('image-preview');
+  preview.innerHTML = '';
+  const files = Array.from(e.target.files);
+  
+  if (files.length > 0) {
+    files.forEach((file, index) => {
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const div = document.createElement('div');
+          div.className = 'relative aspect-square rounded-lg overflow-hidden group';
+          div.innerHTML = `
+            <img src="${e.target.result}" class="w-full h-full object-cover" alt="Preview ${index + 1}">
+            <button type="button" onclick="removeImage(${index})" 
+                    class="absolute top-1 right-1 w-6 h-6 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs">
+              ×
+            </button>
+          `;
+          preview.appendChild(div);
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  }
+});
+
+function removeImage(index) {
+  const input = document.getElementById('post-images');
+  const dt = new DataTransfer();
+  const files = Array.from(input.files);
+  files.splice(index, 1);
+  files.forEach(file => dt.items.add(file));
+  input.files = dt.files;
+  input.dispatchEvent(new Event('change'));
+}
 
 document.getElementById('create-modal').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
@@ -636,6 +892,22 @@ if (new URLSearchParams(location.search).get('new_post')) {
   toast('Your post is live!', 'ok');
   history.replaceState({}, '', location.pathname);
 }
+
+// Debug: Log post image information on page load
+document.addEventListener('DOMContentLoaded', function() {
+  const postCards = document.querySelectorAll('.feed-card[data-type="post"]');
+  const imageContainers = document.querySelectorAll('.post-image-container');
+  console.log(`🔍 Feed Debug: Found ${postCards.length} post cards`);
+  console.log(`🔍 Feed Debug: Found ${imageContainers.length} post cards with images`);
+  
+  imageContainers.forEach((container, idx) => {
+    const images = container.querySelectorAll('img');
+    console.log(`📸 Post ${idx + 1}: ${images.length} image(s)`);
+    images.forEach((img, imgIdx) => {
+      console.log(`  - Image ${imgIdx + 1}: ${img.src}`);
+    });
+  });
+});
 </script>
 
 {% endblock %}

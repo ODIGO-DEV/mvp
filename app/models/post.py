@@ -12,6 +12,9 @@ class Post(db.Model):
 
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    images = db.relationship("Image", backref="post", lazy=True, foreign_keys="Image.post_id")
 
     def __repr__(self):
         return f"<POST {self.status}>"

@@ -12,6 +12,7 @@ class Image(db.Model):
     recipe_id = db.Column(db.Integer, db.ForeignKey("recipes.id"), nullable=True)
     ingredient_id = db.Column(db.Integer, db.ForeignKey("ingredients.id"), nullable=True)
     step_id = db.Column(db.Integer, db.ForeignKey("steps.id"), nullable=True)
+    post_id = db.Column(db.Integer, db.ForeignKey("posts.id"), nullable=True)
 
     # Image metadata
     alt_text = db.Column(db.String(255))
@@ -32,6 +33,8 @@ class Image(db.Model):
             return 'ingredient'
         elif self.step_id:
             return 'step'
+        elif self.post_id:
+            return 'post'
         return None
 
     @property
@@ -43,4 +46,6 @@ class Image(db.Model):
             return self.ingredient_id
         elif self.step_id:
             return self.step_id
+        elif self.post_id:
+            return self.post_id
         return None
